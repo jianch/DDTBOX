@@ -33,10 +33,10 @@ elseif STUDY.analysis_mode==3 % SVR (regression) with libsvm
 elseif STUDY.analysis_mode==4 % SVR (regression continuous) with libsvm
     model = svmtrain(Labels,Samples,'-s 3 -t 0 -c 0.1');
 elseif STUDY.analysis_mode==5 % SVM classification with liblinear
-   model = train(Labels,sparse(Samples),'-s 2 -c 1');
+   model = train(Labels,sparse(Samples),'-s 0 -c 1');
 end
 %__________________________________________________________________________    
-		
+
 %% define samples and labels for testing
 Samples=vectors_test;
 Labels=labels_test;
@@ -45,12 +45,12 @@ Labels=labels_test;
 %% prediction
 %__________________________________________________________________________
 
-if sum(STUDY.analysis_mode == [1 3 4 5]) % libsvm
+if sum(STUDY.analysis_mode == [1 3 4]) % libsvm
     [predicted_label, accuracy, decision_values] = svmpredict(Labels, Samples, model); 
 elseif sum(STUDY.analysis_mode == [2]) % LDA
     % to be implemented in a future version
 elseif sum(STUDY.analysis_mode == [5]) % liblinear
-    [predicted_label, accuracy, decision_values] = predict(Labels, Samples, model); 
+    [predicted_label, accuracy, decision_values] = predict(Labels, sparse(Samples), model); 
 end
 
 if sum(STUDY.analysis_mode==[1]) % SVM classification with libsvm
@@ -149,7 +149,7 @@ elseif sum(STUDY.analysis_mode==[5]) % SVM classification with liblinear
     % calculating feature weights
     %w = model.SVs' * model.sv_coef;
     %b = -model.rho;
-    w = model.w;
+    w = model.w';
 
     feat_weights=zeros(size(w,1),3);
     
@@ -159,6 +159,7 @@ elseif sum(STUDY.analysis_mode==[5]) % SVM classification with liblinear
         feat_weights(:,3)=abs(w);
     end
 
+    disp(accuracy)
     % extracting accuracy for 2-classes 
     if STUDY.nconds==2
 
