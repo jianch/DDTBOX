@@ -13,6 +13,10 @@ function DEMO_config_v2
 % This script is the configuration script for the DDTBOX. All
 % study-specific information for decoding, regression and groupl-level
 % analyses are specified here.
+%
+%__________________________________________________________________________
+%
+% Variable naming convention: STRUCTURE_NAME.example_variable
 
 global SLIST
 global SBJTODO

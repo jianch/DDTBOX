@@ -12,13 +12,17 @@ function display_group_results_erp(ANALYSIS)
 %
 % This script is will plot results from the group analysis 
 
+%__________________________________________________________________________
+%
+% Variable naming convention: STRUCTURE_NAME.example_variable
+
 %% GENERAL PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
 % post-processing script = 2 - needed for interaction with other scripts to regulate
 % functions such as saving data, calling specific sub-sets of parameters
 global CALL_MODE
-CALL_MODE=3;
+CALL_MODE = 3;
 
 global DCGTODO;
 global SLIST;
@@ -30,16 +34,16 @@ global SLIST;
 PLOT.FigPos = [100 100 800 400];
 
 % define x/y-axis__________________________________________________________
-PLOT.Y_min = 40;
-PLOT.Y_max = 70;
-PLOT.Ysteps = 5;
+PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
+PLOT.Y_max = 70; % Y axis upper bound (in % accuracy)
+PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
 
-PLOT.X_min = 1;
+PLOT.X_min = 1; % X axis lower bound (first time point)
 PLOT.X_max = ANALYSIS.xaxis_scale(2,end);
 PLOT.Xsteps = ANALYSIS.step_width_ms;
 
-PLOT.Ytick=[PLOT.Y_min:PLOT.Ysteps:PLOT.Y_max];
-PLOT.Xtick=[ANALYSIS.xaxis_scale(1,1) : ANALYSIS.xaxis_scale(1,end)];
+PLOT.Ytick = [PLOT.Y_min:PLOT.Ysteps:PLOT.Y_max];
+PLOT.Xtick = [ANALYSIS.xaxis_scale(1,1) : ANALYSIS.xaxis_scale(1,end)];
 
 PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero; 
 
@@ -49,51 +53,51 @@ PLOT.Sign.LinePos = [PLOT.Y_min+0.5 PLOT.Y_max-0.5];
 PLOT.Sign.LineWidth = 10;
 
 % define properties of main plot___________________________________________
-PLOT.Res.Line='-ks';
-PLOT.Res.LineWidth=2;
-PLOT.Res.MarkerEdgeColor='k';
-PLOT.Res.MarkerFaceColor='w';
-PLOT.Res.MarkerSize=5;
+PLOT.Res.Line = '-ks';
+PLOT.Res.LineWidth = 2;
+PLOT.Res.MarkerEdgeColor = 'k';
+PLOT.Res.MarkerFaceColor = 'w';
+PLOT.Res.MarkerSize = 5;
 
-PLOT.Res.Error='k';
-PLOT.Res.ErrorLine='none';
-PLOT.Res.ErrorLineWidth=0.5;
+PLOT.Res.Error = 'k';
+PLOT.Res.ErrorLine = 'none';
+PLOT.Res.ErrorLineWidth = 0.5;
 
 % define properties of permutation / chance plot___________________________
-PLOT.PermRes.Line='-ks';
-PLOT.PermRes.LineWidth=2;
-PLOT.PermRes.MarkerEdgeColor='b';
-PLOT.PermRes.MarkerFaceColor='w';
-PLOT.PermRes.MarkerSize=5;
+PLOT.PermRes.Line = '-ks';
+PLOT.PermRes.LineWidth = 2;
+PLOT.PermRes.MarkerEdgeColor = 'b';
+PLOT.PermRes.MarkerFaceColor = 'w';
+PLOT.PermRes.MarkerSize = 5;
 
-PLOT.PermRes.Error='b';
-PLOT.PermRes.ErrorLine='none';
-PLOT.PermRes.ErrorLineWidth=0.5;
+PLOT.PermRes.Error = 'b';
+PLOT.PermRes.ErrorLine = 'none';
+PLOT.PermRes.ErrorLineWidth = 0.5;
 
 % define label / title properties__________________________________________
-PLOT.xlabel.FontSize=12;
-PLOT.ylabel.FontSize=12;
+PLOT.xlabel.FontSize = 12;
+PLOT.ylabel.FontSize = 12;
 
-PLOT.xlabel.FontWeight='b';
-PLOT.ylabel.FontWeight='b';
+PLOT.xlabel.FontWeight = 'b';
+PLOT.ylabel.FontWeight = 'b';
 
-PLOT.xlabel.Text='Time-steps [ms]';
-PLOT.ylabel.Text='Classification Accuracy [%]';
+PLOT.xlabel.Text = 'Time-steps [ms]';
+PLOT.ylabel.Text = 'Classification Accuracy [%]';
 
-PLOT.PointZero.Color='r';
-PLOT.PointZero.LineWidth=3;
-PLOT.PointZero.Point = find(ANALYSIS.data(3,:)==1);
+PLOT.PointZero.Color = 'r';
+PLOT.PointZero.LineWidth = 3;
+PLOT.PointZero.Point = find(ANALYSIS.data(3,:) == 1);
 
 if ANALYSIS.stmode == 1
-    PLOT.TileString='Spatial Class ';
+    PLOT.TileString = 'Spatial Class ';
 elseif ANALYSIS.stmode == 2
-    PLOT.TileString='Temporal Class ';
+    PLOT.TileString = 'Temporal Class ';
 elseif ANALYSIS.stmode == 3
-    PLOT.TileString='Spatiotemporal Class ';
+    PLOT.TileString = 'Spatiotemporal Class ';
 end
 
-PLOT.TitleFontSize=14;
-PLOT.TitleFontWeight='b';
+PLOT.TitleFontSize = 14;
+PLOT.TitleFontWeight = 'b';
 %__________________________________________________________________________
 
 %% PLOT THE RESULTS
@@ -110,30 +114,30 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
     
     % plot the information time-course for each analysis
     %______________________________________________________________________
-    for ana=1:size(ANALYSIS.RES.mean_subj_acc,1)
+    for ana = 1:size(ANALYSIS.RES.mean_subj_acc,1)
         
-        fighandle=figure('Position',PLOT.FigPos);
+        fighandle = figure('Position',PLOT.FigPos);
         
         % get results to plot
         %__________________________________________________________________
-        temp_data(1,:)=ANALYSIS.RES.mean_subj_acc(ana,:);
-        temp_se(1,:)=ANALYSIS.RES.se_subj_acc(ana,:);
+        temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
+        temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
         
         % get permutation results to plot
         %__________________________________________________________________
         if ANALYSIS.permstats == 1
-            temp_perm_data(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2))=ANALYSIS.chancelevel;
-            temp_perm_se(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2))=zeros;
+            temp_perm_data(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = ANALYSIS.chancelevel;
+            temp_perm_se(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = zeros;
         elseif ANALYSIS.permstats == 2
-            temp_perm_data(1,:)=ANALYSIS.RES.mean_subj_perm_acc(ana,:);
-            temp_perm_se(1,:)=ANALYSIS.RES.se_subj_perm_acc(ana,:);
+            temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
+            temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
         end
         
         % mark significant points
         %__________________________________________________________________
         
         if ANALYSIS.disp.sign == 1
-            for step=1:size(temp_data,2)
+            for step = 1:size(temp_data,2)
                 
                 % plot if found significant...
                 if ANALYSIS.RES.h_ttest(ana,step) == 1
@@ -162,7 +166,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         
         %% plot permutation / chance results
         %__________________________________________________________________
-        if ANALYSIS.permdisp==1
+        if ANALYSIS.permdisp == 1
             
             plot(temp_perm_data,PLOT.PermRes.Line,'LineWidth',PLOT.PermRes.LineWidth,'MarkerEdgeColor',PLOT.PermRes.MarkerEdgeColor,...
                 'MarkerFaceColor',PLOT.PermRes.MarkerFaceColor,'MarkerSize',PLOT.PermRes.MarkerSize);
