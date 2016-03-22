@@ -1,5 +1,7 @@
+[![DOI](https://zenodo.org/badge/20756/DDTBOX/DDTBOX.svg)](https://zenodo.org/badge/latestdoi/20756/DDTBOX/DDTBOX)
 # DDTBOX
 Decision Decoding Toolbox
+
 
 Copyright (c) 2013--2016 Stefan Bode and contributors.
 
