@@ -26,15 +26,8 @@ Labels = labels_train;
 
 %% training 
 %__________________________________________________________________________
-if STUDY.analysis_mode == 1 % SVM classification
-    model = svmtrain(Labels,Samples,'-s 0 -t 0 -c 1');
-elseif STUDY.analysis_mode == 2 % LDA classifcation
-    % to be implemented in future version
-elseif STUDY.analysis_mode == 3 % SVR (regression)
-    model = svmtrain(Labels,Samples,'-s 3 -t 0 -c 0.1');
-elseif STUDY.analysis_mode == 4 % SVR (regression continuous)
-    model = svmtrain(Labels,Samples,'-s 3 -t 0 -c 0.1');
-end
+model = svmtrain(Labels,Samples, STUDY.backend_flags.all_flags);
+
 %__________________________________________________________________________    
 		
 %% define samples and labels for testing

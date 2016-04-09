@@ -137,6 +137,56 @@ if STUDY.perm_test == 1
     fprintf('Random-label analysis will be based on %d analyses.\n',STUDY.n_all_permutation);
 end
 
+%__________________________________________________________________________
+% LibSVM flags
+% LibSVM requires input flags (strings) to specify the type of model that will be used for decoding.
+% WARNING: Do not change these flags unless you really know what you are doing!!!
+
+% For the full list of flags and their options see https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+% The following flags are currently used as defaults in DDTBox
+
+% -s svm_type : set the type of support vector machine
+% 	0 -- C-Support Vector Classification
+% 	1 -- nu-Support Vector Classification
+% 	2 -- one-class Support Vector Machine
+% 	3 -- epsilon-Support Vector Regression
+% 	4 -- nu-Support Vector Regression
+% -t kernel_type : set type of kernel function
+% 	0 -- linear: u'*v
+% 	1 -- polynomial: (gamma*u'*v + coef0)^degree
+% 	2 -- radial basis function: exp(-gamma*|u-v|^2)
+% 	3 -- sigmoid: tanh(gamma*u'*v + coef0)
+% -c cost : cost parameter
+
+% Defaults:
+% Support Vector Classification - '-s 0 -t 0 -c 1'
+% Support Vector Regression - '-s 3 -t 0 -c 0.1'
+% Support Vector Regression (continuous) - '-s 3 -t 0 -c 0.1'
+
+
+if STUDY.analysis_mode == 1 % SVM classification
+    STUDY.backend_flags.svm_type = 0;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 1;
+    STUDY.backend_flags.extra_flags = []; % To input extra flag types
+elseif STUDY.analysis_mode == 2 % LDA classifcation
+    % to be implemented in future version
+elseif STUDY.analysis_mode == 3 % SVR (regression)
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = []; 
+elseif STUDY.analysis_mode == 4 % SVR (regression continuous)
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = [];
+end
+
+% Merging all flags into a single string
+STUDY.backend_flags.all_flags = ['-s ' int2str(STUDY.backend_flags.svm_type) ' -t ' ...
+    int2str(STUDY.backend_flags.kernel_type) ' -c ' num2str(STUDY.backend_flags.cost) ...
+    STUDY.backend_flags.extra_flags];
 
 %% SECTION 2: READ IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % basic data in: eeg_sorted_cond{run,cond}(timepoints,channels,trials)
