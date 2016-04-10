@@ -23,6 +23,8 @@ alphaLevel = 0.05; % Critical p-value
 
 nIterations = 100; % Number of bootstrap samples to take in strong FWER control permutation testing
 
+KTMS_u = 1; % u parameter of the KTMS GFWER control procedure
+
 % Extra distributions to make for permutation-based procedures
 nRealEffects = 8; % Number of real effects in the data.
 meanDiffRealEffects = 1; % Mean effect magnitude
@@ -237,12 +239,12 @@ for iteration = 1:nIterations
     for test = 1:nTests
         temp(test, 1:nSubjects) = randsample(sample(test, 1:nSubjects), nSubjects, true); % Draw a bootstrap sample (i.e. with replacement)
         [~, ~, ~, temp_stats] = ttest(temp(test, 1:nSubjects), 0, 'Alpha', alphaLevel);
-        t_stat(test, iteration) = temp_stats.tstat;
+        t_stat(test, iteration) = abs(temp_stats.tstat);
     end    
     
     % Get the maximum t-value within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
-    t_max(iteration) = max(abs(t_stat(:, iteration)));
+    t_max(iteration) = max(t_stat(:, iteration));
 end
 
 % Calculating the 95th percentile of t_max values (used as decision
@@ -319,11 +321,26 @@ for test = 1:nTests
             clusterCounter = clusterCounter + 1;
             clusterMassVector(clusterCounter) = abs(realEffect_t(test));
             clusterLocations(test) = clusterCounter;
+            % Tagging as positive or negative sign effect
+            if realEffect_t < 0
+                t_sign(test) = -1;
+            else
+                t_sign(test) = 1;
+            end
+            
         elseif test > 1
-            if realEffect_h(test - 1) == 1
-                clusterMassVector(clusterCounter) = clusterMassVector(clusterCounter) + abs(realEffect_t(test));
-                clusterLocations(test) = clusterCounter;
-            elseif clusterPermTest_h(test - 1) == 0
+            % Tagging as positive or negative sign effect
+            if realEffect_t < 0
+                t_sign(test) = -1;
+            else
+                t_sign(test) = 1;
+            end
+            % Add to the same cluster only if the previous test was sig.
+            % and of the same sign (direction).
+            if realEffect_h(test - 1) == 1 && t_sign(test - 1) == t_sign(test)
+                    clusterMassVector(clusterCounter) = clusterMassVector(clusterCounter) + abs(realEffect_t(test));
+                    clusterLocations(test) = clusterCounter;
+            else
                 clusterCounter = clusterCounter + 1;
                 clusterMassVector(clusterCounter) = abs(realEffect_t(test));
                 clusterLocations(test) = clusterCounter;
@@ -338,13 +355,69 @@ for clusterNo = 1:length(clusterMassVector);
     end
 end
 
+
+%% KTMS Generalised FWER Control Using Permutation Testing
+
+KTMS_sig_effect_locations = zeros(1, nTests);
+% Sort p-values from smallest to largest
+sorted_p = sort(realEffect_p);
+% Automatically reject the u smallest hypotheses (u is set by user as KTMS_u variable).
+KTMS_autoRejectAlpha = sorted_p(KTMS_u);
+
+KTMS_sig_effect_locations(realEffect_p <= KTMS_autoRejectAlpha) = 1; % Mark tests with u smallest p-values as statistically significant.
+
+% Run strong FWER control permutation test but use u + 1th most extreme
+% test statistic.
+KTMS_t_max = zeros(1, nIterations);
+t_stat = zeros(nTests, nIterations);
+
+for iteration = 1:nIterations
+    
+    % Draw a random sample for each test
+    for test = 1:nTests
+        temp(test, 1:nSubjects) = randsample(sample(test, 1:nSubjects), nSubjects, true); % Draw a bootstrap sample (i.e. with replacement)
+        [~, ~, ~, temp_stats] = ttest(temp(test, 1:nSubjects), 0, 'Alpha', alphaLevel);
+        t_stat(test, iteration) = abs(temp_stats.tstat);
+    end    
+    
+    % Get the maximum t-value within the family of tests and store in a
+    % vector. This is to create a null hypothesis distribution.
+    t_sorted = sort(t_stat(:, iteration), 'descend');
+    
+    KTMS_t_max(iteration) = t_sorted(KTMS_u + 1);
+end
+
+% Calculating the 95th percentile of t_max values (used as decision
+% critieria for statistical significance)
+KTMS_Null_Cutoff = prctile(KTMS_t_max, ((1 - alphaLevel) * 100));
+
+
+% Checking whether each test statistic is above the specified threshold:
+for test = 1:nTests
+    if abs(realEffect_t(test)) > KTMS_Null_Cutoff;
+        KTMS_sig_effect_locations(test) = 1;
+    end
+end
+
+
+
+
+
+
+
+
+
+%% Comparing Permutation Test Outcomes
 % Show tests with real effects and the results of t(max) and
 % cluster-corrected permutatation tests:
 figure;
 A(1,1:nTests) = realEffectLocations;
 A(2,1:nTests) = permTest_h;
 A(3,1:nTests) = clusterCorrected_Sig_Tests;
+A(4,1:nTests) = KTMS_sig_effect_locations;
 imagesc(A);
+
+
 
 %% Calculate the FWER/FDR of the tests
 FWER.uncorrected = sum(h) / nTests;
@@ -353,5 +426,9 @@ FWER.holm = sum(holm_h) / nTests;
 FWER.BenHoch = sum(BenHoch_h) / nTests;
 FWER.BenYek = sum(BenYek_h) / nTests;
 FWER.BKY = sum(BKY_Stage2_h) / nTests;
-NSigTests.permTest = sum(permTest_h) / nTests; % For when there are no true effects
-NSigTests.clusterPermTest = sum(clusterCorrected_Sig_Tests) / nTests; % For when there are no true effects
+
+% Calculate how many tests were found to be statistically-significant with
+% mixed true + false effects
+NSigTests.permTest = sum(permTest_h) / nTests; 
+NSigTests.clusterPermTest = sum(clusterCorrected_Sig_Tests) / nTests; 
+NSigTests.KTMS_sig_effect_locations = sum(KTMS_sig_effect_locations) / nTests; 
