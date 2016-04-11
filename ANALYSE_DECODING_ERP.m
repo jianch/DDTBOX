@@ -58,11 +58,20 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.window_width_ms = 10; % width of sliding window in ms
     ANALYSIS.step_width_ms = 10; % step size with which sliding window is moved through the trial
     
-    ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
+    ANALYSIS.permstats = 1; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 0; % Bonferroni-correction for multiple comparisons: 0=no / 1=yes  
+    ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
+    % 0 = no correction
+    % 1 = Bonferroni correction
+    % 2 = Holm-Bonferroni correction
+    % 3 = Strong FWER Control Permutation Test
+    % 4 = Cluster-Based Permutation Test
+    % 5 = KTMS Generalised FWER Control
+    % 6 = Benjamini-Hochberg FDR Control
+    % 7 = Benjamini-Krieger-Yekutieli FDR Control
+    % 8 = Benjamini-Yekutieli FDR Control
     
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
@@ -262,13 +271,7 @@ for s = 1:ANALYSIS.nsbj
 
         end
         
-        % adjust for multiple comparisons 
         
-        ANALYSIS.allsteps = size(ANALYSIS.data,2); % Calculate the number of tests (number of windows to analyse)
-        
-        % DF NOTE: The next 10 lines of code do not look like they are
-        % related to multiple comparisons correction. Move to a different
-        % section?
         if STUDY.analysis_mode == 1 || STUDY.analysis_mode == 2
             if size(ANALYSIS.dcg_todo,2) == 1
                 ANALYSIS.DCG = SLIST.dcg_labels{ANALYSIS.dcg_todo};
@@ -280,11 +283,6 @@ for s = 1:ANALYSIS.nsbj
             ANALYSIS.DCG = 'SVR_regression';
         end
         
-        if ANALYSIS.multcompstats == 1
-            ANALYSIS.pstatsuse = ANALYSIS.pstats / ANALYSIS.allsteps; % Bonferroni correction
-        elseif ANALYSIS.multcompstats ~= 1
-            ANALYSIS.pstatsuse = ANALYSIS.pstats;
-        end
                 
     end % of if s == 1 statement
     
@@ -365,7 +363,9 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         if ANALYSIS.permstats == 1
             
             % chance level = 100 / number conditions
-            [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstatsuse); % simply against chance
+            [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstats); % simply against chance
+            T = otherstats.tstat;
+            clear otherstats;
             
         % test against permutation test results    
         elseif ANALYSIS.permstats == 2
@@ -373,8 +373,10 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
             % against average permuted distribution
             if ANALYSIS.drawmode == 1
                 
-                [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.all_subj_perm_acc(:,na,step),ANALYSIS.pstatsuse);
-            
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.all_subj_perm_acc(:,na,step),ANALYSIS.pstats);
+                T = otherstats.tstat;
+                clear otherstats;
+                
             % against one randomly drawn value (from all cross-val repetitions for each participant) for stricter test    
             elseif ANALYSIS.drawmode == 2
                 
@@ -385,20 +387,242 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                     clear drawone;
                 end % sbj
                 
-                [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.draw_subj_perm_acc(:,na,step),ANALYSIS.pstatsuse);
-                
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.draw_subj_perm_acc(:,na,step),ANALYSIS.pstats);
+                T = otherstats.tstat;
+                clear otherstats;
             end % if ANALYSIS.drawmode
             
         end % if ANALYSIS.permstats
        
         ANALYSIS.RES.p_ttest(na,step) = P; clear P;
-        ANALYSIS.RES.h_ttest(na,step) = H; clear H;
+        ANALYSIS.RES.h_ttest_uncorrected(na,step) = H; clear H;
+        ANALYSIS.RES.t_ttest(na,step) = T; clear T;
             
     end % of for step = 1:size(ANALYSIS.RES.mean_subj_acc,2) loop
     
 end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
 
 fprintf('All group statistics performed.\n');
+
+%% CORRECTION FOR MULTIPLE COMPARISONS
+%__________________________________________________________________________
+
+ANALYSIS.RES.h_ttest = zeros(size(ANALYSIS.RES.mean_subj_acc,1), size(ANALYSIS.RES.mean_subj_acc,2));
+n_total_steps = size(ANALYSIS.RES.mean_subj_acc,2); % Moving to this variable for easier interpretation of the code
+
+switch ANALYSIS.multcompstats
+
+    case 0 % No correction for multiple comparisons
+        
+    ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
+
+%__________________________________________________________________________
+
+    case 1 % Bonferroni Correction
+    
+    ANALYSIS.pstats_bonferroni_corrected = ANALYSIS.pstats / ANALYSIS.allsteps; % Bonferroni correction
+    
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        for step = 1:n_total_steps % step
+            % Test against Bonferroni-corrected threshold
+            if ANALYSIS.RES.p_ttest(na,step) < ANALYSIS.pstats_bonferroni_corrected
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            end
+        end
+    end
+    
+%__________________________________________________________________________    
+    
+    case 2 % Holm-Bonferroni Correction
+        
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+        foundCritAlpha = 0; % Reset to signify we have not found Holm-corrected critical alpha level
+        
+        % Find critical alpha level (sig. for all smaller p-values than this)
+        for holmStep = 1:n_total_steps
+           if sorted_p(holmStep) > ANALYSIS.pstats / (n_total_steps + 1 - holmStep) & foundCritAlpha == 0
+               ANALYSIS.holm_corrected_alpha = sorted_p(holmStep);
+               foundCritAlpha = 1;
+           end
+        end
+
+        if ~exist('ANALYSIS.holm_corrected_alpha', 'var') % If all null hypotheses are rejected
+            ANALYSIS.holm_corrected_alpha(na) = ANALYSIS.pstats;
+        end
+        
+        % Declare tests significant if they are smaller than the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANAYSIS.RES.p_ttest(na, step) < ANALYSIS.holm_corrected_alpha(na)   
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end      
+    end % of for na loop
+        
+%__________________________________________________________________________    
+    
+    case 3 % Strong FWER Control Permutation Test
+    
+
+
+%__________________________________________________________________________    
+    
+    case 4 % Cluster-Based Permutation Test
+    
+    
+    
+%__________________________________________________________________________    
+    
+    case 5 % KTMS Generalised FWER Control
+    
+    
+%__________________________________________________________________________    
+    
+    case 6 % Benjamini-Hochberg FDR Control
+        
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+        
+        % Find critical k value
+        for benhoch_step = 1:n_total_steps
+            if sorted_p(benhoch_step) <= (benhoch_step / n_total_steps) * ANALYSIS.pstats
+                ANALYSIS.benhoch_critical_alpha(na) = sorted_p(benhoch_step);
+            end
+        end
+        % If no steps are significant set critical alpha to zero
+        if ~exist('benhoch_critical_alpha', 'var')
+            ANALYSIS.benhoch_critical_alpha(na) = 0;
+        end
+    
+        % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANAYSIS.RES.p_ttest(na, step) <= ANALYSIS.benhoch_critical_alpha(na)   
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end     
+    end % of for na loop
+           
+%__________________________________________________________________________    
+    
+    case 7 % Benjamini-Krieger-Yekutieli FDR Control
+    
+        % Here a family of tests is defined as all steps within a given analysis
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            
+            % Stage 1: Estimate the number of false null hypotheses using the modified
+            % alpha level.
+
+            % Sort p-values from smallest to largest
+            sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+            
+            % Find critical k value (see tutorial notes)
+            for BKY_step = 1:n_total_steps
+                if sorted_p(BKY_step) <= (BKY_step / n_total_steps) * (ANALYSIS.pstats / ( 1 + ANALYSIS.pstats));
+                    BKY_stage1_critical_alpha = sorted_p(BKY_step);
+                end
+            end
+            % If no tests are significant set critical alpha to zero
+            if ~exist('BKY_stage1_critical_alpha', 'var')
+                BKY_stage1_critical_alpha = 0;
+            end
+            
+            % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+            BKY_stage1_h = zeros(1, n_total_steps); % Preallocate for speed
+            for step = 1:n_total_steps
+                if ANAYSIS.RES.p_ttest(na, step) <= BKY_stage1_critical_alpha   
+                    BKY_stage1_h(step) = 1;
+                else
+                    BKY_stage1_h(step) = 0;
+                end
+            end
+            
+            % Count the number of rejected null hypotheses (for use in step 2)
+            BKY_stage1_n_rejections = sum(BKY_stage1_h);
+
+            if BKY_stage1_n_rejections == 0; % if no null hypotheses were rejected
+                ANALYSIS.RES.h_ttest(na,1:n_total_steps) = 0; % Don't reject any hypotheses
+                
+            elseif BKY_stage1_n_rejections == n_total_steps; % if all null hypotheseses were rejected
+                ANALYSIS.RES.h_ttest(na,1:n_total_steps) = 1; % Reject all hypotheses
+                
+            else % If some (but not all) null hypotheses were rejected  
+                for step = 1:n_total_steps
+                    if sorted_p(step) <= (step / n_total_steps) * ( (n_total_steps / (n_total_steps - BKY_stage1_n_rejections) ) * (ANALYSIS.pstats / ( 1 + ANALYSIS.pstats)) );
+                        BKY_stage2_critical_alpha = sorted_p(step);
+                    end
+                end
+
+                % If no tests are significant set critical alpha to zero
+                if ~exist('BKY_stage2_critical_alpha', 'var')
+                    BKY_stage2_critical_alpha = 0;
+                end
+
+                % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+                for step = 1:n_total_steps
+                    if ANAYSIS.RES.p_ttest(na, step) <= BKY_stage2_critical_alpha   
+                        ANALYSIS.RES.h_ttest(na,1:step) = 1;
+                    else
+                        ANALYSIS.RES.h_ttest(na,1:step) = 0;
+                    end
+                end
+
+            end % of if BKY_stage1_n_rejections
+  
+        end % of for na loop
+          
+%__________________________________________________________________________    
+    
+    case 8 % Benjamini-Yekutieli FDR Control
+    
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+        
+        % j values precalculated to help calculate the Benjamini-Yekutieli critical alpha
+        j_values = zeros(1,n_total_steps);
+        for j_iteration = 1:n_total_steps
+            j_values(j_iteration) = 1 / j_iteration;
+        end
+        
+        % Find critical k value (see tutorial notes)
+        for benyek_step = 1:n_total_steps
+            
+            if sorted_p(benyek_Step) <= (benyek_step / n_total_steps * sum(j_values)) * ANALYSIS.pstats
+                benyek_critical_alpha = sorted_p(benyek_step);
+            end
+        end
+        % If no tests are significant set critical alpha to zero
+        if ~exist('benyek_critical_alpha', 'var')
+            benyek_critical_alpha = 0;
+        end
+        
+        % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANAYSIS.RES.p_ttest(na, step) <= benyek_critical_alpha             
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end
+    end % of for na loop
+    
+%__________________________________________________________________________    
+    % If some other option is chosen then do not correct, but notify user
+    otherwise
+        fprintf('Unavailable multiple comparisons option chosen. Will use uncorrected p-values \n');
+        ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
+end % of ANALYSIS.multcompstats switch
+
 
 %% FEATURE WEIGHT ANALYSIS
 %__________________________________________________________________________
