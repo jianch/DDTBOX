@@ -62,7 +62,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 5; % Correction for multiple comparisons: 
+    ANALYSIS.multcompstats = 4; % Correction for multiple comparisons: 
     % 0 = no correction
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
@@ -74,6 +74,7 @@ if input_mode == 0 % Hard-coded input
     % 8 = Benjamini-Yekutieli FDR Control
     ANALYSIS.nIterations = 100; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
     ANALYSIS.KTMS_u = 3; % u parameter of the KTMS GFWER control procedure
+    ANALYSIS.cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
     
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
@@ -137,6 +138,9 @@ elseif input_mode == 1 % Prompted manual input
     end
     if ANALYSIS.multcompstats == 5
        ANALYSIS.KTMS_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
+    end
+    if ANALYSIS.multcompstats == 4
+       ANALYSIS.cluster_test_alpha = input('Enter the significance threshold for detecting effects at individual time points (e.g. 0.05): '); 
     end
     
     % specify display options
@@ -501,10 +505,6 @@ case 3 % Strong FWER Control Permutation Test
     % testing and see what the results would look like.
     
     
-    % Get mean permutation test decoding accuracies
-    M(:,:) = mean(ANALYSIS.RES.all_subj_perm_acc,1);
-    ANALYSIS.RES.mean_subj_perm_acc(:,:) = M'; clear M;
-    
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
     % Generate t(max) distribution from the null data (use permutation results
@@ -544,29 +544,122 @@ case 3 % Strong FWER Control Permutation Test
 %__________________________________________________________________________    
 
 case 4 % Cluster-Based Permutation Test
+ 
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    
+            % Generate a maximum cluster mass distribution from the permutation
+            % test results
+            max_cluster_mass = zeros(1, ANALYSIS.nIterations);
+            cluster_perm_test_h = zeros(n_total_steps, ANALYSIS.nIterations);
+            clear t_stat;
+
+            for iteration = 1:ANALYSIS.nIterations;
+                % Draw a random bootstrap sample for each test
+                for step = 1:n_total_steps  
+                    % Draw a bootstrap sample (i.e. sampling with replacement)
+                    temp(1:ANALYSIS.nsbj, step) = randsample(ANALYSIS.RES.all_subj_perm_acc(1:ANALYSIS.nsbj,na, step),  ANALYSIS.nsbj, true);
+
+                    [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp(1:ANALYSIS.nsbj, step), 0, 'Alpha', ANALYSIS.cluster_test_alpha);
+                    t_stat(step, iteration) = temp_stats.tstat; % Get t statistic
+                    % Marking the sign of each t statistic to avoid clustering pos
+                    % and neg significant results
+                    if t_stat(step, iteration) < 0;
+                        t_sign(step, iteration) = -1; 
+                    else
+                        t_sign(step, iteration) = 1; 
+                    end
+                end    
+
+                % Identify clusters and generate a maximum cluster statistic
+                cluster_mass_vector = [0]; % Resets vector of cluster masses
+                cluster_counter = 0;
+
+                for step = 1:n_total_steps     
+                    if cluster_perm_test_h(step, iteration) == 1
+                        if step == 1 % If the first test in the set
+                            cluster_counter = cluster_counter + 1;
+                            cluster_mass_vector(cluster_counter) = abs(t_stat(step, iteration));
+                        else
+                            % Add to the cluster if there are consecutive
+                            % statistically significant tests with the same sign.
+                            % Otherwise, make a new cluster.
+                            if cluster_perm_test_h(step - 1, iteration) == 1 && t_sign(step - 1, iteration) == t_sign(step, iteration)
+                                cluster_mass_vector(cluster_counter) = cluster_mass_vector(cluster_counter) + abs(t_stat(step, iteration));
+                            else
+                                cluster_counter = cluster_counter + 1;
+                                cluster_mass_vector(cluster_counter) = abs(t_stat(test, iteration));
+                            end 
+                        end % of if test == 1
+                    end % of if clusterPermTest
+                end % of for steps = 1:n_total_steps
+
+                % Find the maximum cluster mass
+                max_cluster_mass(iteration) = max(cluster_mass_vector);
+            end % of iterations loop
+
+            % Calculating the 95th percentile of maximum cluster mass values (used as decision
+            % critieria for statistical significance)
+            cluster_mass_null_cutoff = prctile(max_cluster_mass(iteration), ((1 - ANALYSIS.pstats) * 100));
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+            % Calculate cluster masses in the actual (non-permutation) tests
+            cluster_mass_vector = [0]; % Resets vector of cluster masses
+            cluster_counter = 0;
+            cluster_locations = zeros(1, n_total_steps);
+            cluster_corrected_sig_steps = zeros(1, n_total_steps);
+            clear t_sign;
+
+            for step = 1:n_total_steps   
+                if ANALYSIS.RES.h_ttest_uncorrected(na,step) == 1
+                    if step == 1 % If the first test in the set
+                        cluster_counter = cluster_counter + 1;
+                        cluster_mass_vector(cluster_counter) = abs(ANALYSIS.RES.t_ttest(na,step));
+                        cluster_locations(step) = cluster_counter;
+                        % Tagging as positive or negative sign effect
+                        if ANALYSIS.RES.t_ttest(na,step) < 0
+                            t_sign(step) = -1;
+                        else
+                            t_sign(step) = 1;
+                        end
+                elseif step > 1
+                    % Tagging as positive or negative sign effect
+                    if ANALYSIS.RES.t_ttest(na,step) < 0
+                        t_sign(step) = -1;
+                    else
+                        t_sign(step) = 1;
+                    end
+
+                    % Add to the same cluster only if the previous test was sig.
+                    % and of the same sign (direction).
+                    if ANALYSIS.RES.h_ttest_uncorrected(na,step - 1) == 1 && t_sign(step - 1) == t_sign(step)
+                        cluster_mass_vector(cluster_counter) = cluster_mass_vector(cluster_counter) + abs(ANALYSIS.RES.t_ttest(na,step));
+                        cluster_locations(step) = cluster_counter;
+                    else
+                        cluster_counter = cluster_counter + 1;
+                        cluster_mass_vector(cluster_counter) = abs(ANALYSIS.RES.t_ttest(na,step));
+                        cluster_locations(step) = cluster_counter;
+                    end 
+                end % of if step == 1
+            end % of if ANALYSIS.RES.h_ttest_uncorrected(na,step) == 1  
+        end % of for step = 1:n_total_steps
+
+        for cluster_no = 1:length(cluster_mass_vector);
+            if cluster_mass_vector(cluster_no) > cluster_mass_null_cutoff
+                cluster_corrected_sig_steps(cluster_locations == cluster_no) = 1;
+            end
+        end
+
+        % Update analysis structure with cluster-corrected significant time
+        % windows
+        ANALYSIS.RES.h_ttest(na, :) = cluster_corrected_sig_steps;
+      
+        
+    end % of na loop  
 
 %__________________________________________________________________________    
 
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
     
-    % Get mean permutation test decoding accuracies
-    M(:,:) = mean(ANALYSIS.RES.all_subj_perm_acc,1);
-    ANALYSIS.RES.mean_subj_perm_acc(:,:) = M'; clear M;
    
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         
