@@ -62,7 +62,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
+    ANALYSIS.multcompstats = 2; % Correction for multiple comparisons: 
     % 0 = no correction
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
@@ -77,7 +77,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
-    ANALYSIS.fw.do = 1; % analyse feature weights? 0=no / 1=yes
+    ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
     
         % if feature weights are analysed, specify what is displayed
         %__________________________________________________________________
@@ -124,7 +124,11 @@ elseif input_mode == 1 % Prompted manual input
     end
     
     ANALYSIS.pstats = input('Specify critical p-value for statistical testing (e.g. 0.05): ');
-    ANALYSIS.multcompstats = input('Specify if you wish to control for multiple comparisons. "0" for no; "1" for yes:  ');
+    ANALYSIS.multcompstats = input(['\nSpecify if you wish to control for multiple comparisons: \n"0" for no correction \n'...
+        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
+        '"4" for Cluster-Based Permutation Testing \n"5" for KTMS Generalised FWER Control \n' ...
+        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
+        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
     
     % specify display options
     ANALYSIS.disp.on = input('Do you wish to display the results in figure(s)? "0" for no; "1" for yes: ');
@@ -402,7 +406,6 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
 end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
 
-fprintf('All group statistics performed.\n');
 
 %% CORRECTION FOR MULTIPLE COMPARISONS
 %__________________________________________________________________________
@@ -420,7 +423,7 @@ switch ANALYSIS.multcompstats
 
     case 1 % Bonferroni Correction
     
-    ANALYSIS.pstats_bonferroni_corrected = ANALYSIS.pstats / ANALYSIS.allsteps; % Bonferroni correction
+    ANALYSIS.pstats_bonferroni_corrected = ANALYSIS.pstats / n_total_steps; % Bonferroni correction
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         for step = 1:n_total_steps % step
@@ -444,18 +447,18 @@ switch ANALYSIS.multcompstats
         % Find critical alpha level (sig. for all smaller p-values than this)
         for holmStep = 1:n_total_steps
            if sorted_p(holmStep) > ANALYSIS.pstats / (n_total_steps + 1 - holmStep) & foundCritAlpha == 0
-               ANALYSIS.holm_corrected_alpha = sorted_p(holmStep);
+               ANALYSIS.holm_corrected_alpha(na) = sorted_p(holmStep);
                foundCritAlpha = 1;
            end
         end
 
         if ~exist('ANALYSIS.holm_corrected_alpha', 'var') % If all null hypotheses are rejected
-            ANALYSIS.holm_corrected_alpha(na) = ANALYSIS.pstats;
+            ANALYSIS.holm_corrected_alpha(na) = 0;
         end
         
         % Declare tests significant if they are smaller than the adjusted critical alpha
         for step = 1:n_total_steps
-            if ANAYSIS.RES.p_ttest(na, step) < ANALYSIS.holm_corrected_alpha(na)   
+            if ANALYSIS.RES.p_ttest(na, step) < ANALYSIS.holm_corrected_alpha(na)   
                 ANALYSIS.RES.h_ttest(na,step) = 1;
             else
                 ANALYSIS.RES.h_ttest(na,step) = 0;
@@ -502,7 +505,7 @@ switch ANALYSIS.multcompstats
     
         % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
         for step = 1:n_total_steps
-            if ANAYSIS.RES.p_ttest(na, step) <= ANALYSIS.benhoch_critical_alpha(na)   
+            if ANALYSIS.RES.p_ttest(na, step) <= ANALYSIS.benhoch_critical_alpha(na)   
                 ANALYSIS.RES.h_ttest(na,step) = 1;
             else
                 ANALYSIS.RES.h_ttest(na,step) = 0;
@@ -537,7 +540,7 @@ switch ANALYSIS.multcompstats
             % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
             BKY_stage1_h = zeros(1, n_total_steps); % Preallocate for speed
             for step = 1:n_total_steps
-                if ANAYSIS.RES.p_ttest(na, step) <= BKY_stage1_critical_alpha   
+                if ANALYSIS.RES.p_ttest(na, step) <= BKY_stage1_critical_alpha   
                     BKY_stage1_h(step) = 1;
                 else
                     BKY_stage1_h(step) = 0;
@@ -567,7 +570,7 @@ switch ANALYSIS.multcompstats
 
                 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
                 for step = 1:n_total_steps
-                    if ANAYSIS.RES.p_ttest(na, step) <= BKY_stage2_critical_alpha   
+                    if ANALYSIS.RES.p_ttest(na, step) <= BKY_stage2_critical_alpha   
                         ANALYSIS.RES.h_ttest(na,1:step) = 1;
                     else
                         ANALYSIS.RES.h_ttest(na,1:step) = 0;
@@ -597,7 +600,7 @@ switch ANALYSIS.multcompstats
         % Find critical k value (see tutorial notes)
         for benyek_step = 1:n_total_steps
             
-            if sorted_p(benyek_Step) <= (benyek_step / n_total_steps * sum(j_values)) * ANALYSIS.pstats
+            if sorted_p(benyek_step) <= (benyek_step / n_total_steps * sum(j_values)) * ANALYSIS.pstats
                 benyek_critical_alpha = sorted_p(benyek_step);
             end
         end
@@ -608,7 +611,7 @@ switch ANALYSIS.multcompstats
         
         % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
         for step = 1:n_total_steps
-            if ANAYSIS.RES.p_ttest(na, step) <= benyek_critical_alpha             
+            if ANALYSIS.RES.p_ttest(na, step) <= benyek_critical_alpha             
                 ANALYSIS.RES.h_ttest(na,step) = 1;
             else
                 ANALYSIS.RES.h_ttest(na,step) = 0;
@@ -623,6 +626,8 @@ switch ANALYSIS.multcompstats
         ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 end % of ANALYSIS.multcompstats switch
 
+
+fprintf('All group statistics performed.\n');
 
 %% FEATURE WEIGHT ANALYSIS
 %__________________________________________________________________________
