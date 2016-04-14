@@ -599,7 +599,7 @@ case 4 % Cluster-Based Permutation Test
 
             % Calculating the 95th percentile of maximum cluster mass values (used as decision
             % critieria for statistical significance)
-            cluster_mass_null_cutoff = prctile(max_cluster_mass(iteration), ((1 - ANALYSIS.pstats) * 100));
+            cluster_mass_null_cutoff = prctile(max_cluster_mass, ((1 - ANALYSIS.pstats) * 100));
 
 
             % Calculate cluster masses in the actual (non-permutation) tests
