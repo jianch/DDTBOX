@@ -11,7 +11,10 @@ Unless otherwise specified, code is distributed under the GNU Public License (GP
 
 We hope that you find the software and documentation useful.
 If you publish an analysis using the toolbox, we ask that you cite us. 
-For now, please cite us via GitHub, but we are currently preparing on a publication to submit to peer review.
+For now, please cite us via GitHub, but we are currently preparing on a publication to submit to peer review. 
+A sample citation would be:
+
+Bode, S., Bennett, D., Feuerriegel, D., & Alday, P. (2016). The Decision Decoding Toolbox -- a multivariate pattern analysis toolbox for event-related potentials. DOI: 10.5281/zenodo.48143
 
 # External Dependencies
 
