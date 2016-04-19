@@ -55,14 +55,14 @@ if input_mode == 0 % Hard-coded input
         
     ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    ANALYSIS.window_width_ms = 10; % width of sliding window in ms
+    ANALYSIS.window_width_ms = 40; % width of sliding window in ms
     ANALYSIS.step_width_ms = 10; % step size with which sliding window is moved through the trial
     
     ANALYSIS.permstats = 1; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 4; % Correction for multiple comparisons: 
+    ANALYSIS.multcompstats = 3; % Correction for multiple comparisons: 
     % 0 = no correction
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
@@ -73,7 +73,7 @@ if input_mode == 0 % Hard-coded input
     % 7 = Benjamini-Krieger-Yekutieli FDR Control
     % 8 = Benjamini-Yekutieli FDR Control
     ANALYSIS.nIterations = 1000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
-    ANALYSIS.KTMS_u = 4; % u parameter of the KTMS GFWER control procedure
+    ANALYSIS.KTMS_u = 2; % u parameter of the KTMS GFWER control procedure
     ANALYSIS.cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
     
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
@@ -423,18 +423,9 @@ end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
 %% CORRECTION FOR MULTIPLE COMPARISONS
 %__________________________________________________________________________
 
-% Checking if an inappropriate multiple comparisons correction procedure
-% has been selected for tests against chance
-if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5
-    if ANALYSIS.permstats == 1; % If user chooses to compare against permutation distribution instead of against chance level.
-        fprintf('This multiple comparisons correction procedure cannot be used for comparison against chance results. Switching to Bonferroni correction...\n');
-        ANALYSIS.multcompstats = 1;
-    end     
-end
-
 
 ANALYSIS.RES.h_ttest = zeros(size(ANALYSIS.RES.mean_subj_acc,1), size(ANALYSIS.RES.mean_subj_acc,2));
-n_total_steps = size(ANALYSIS.RES.mean_subj_acc,2); % Moving to this variable for easier interpretation of the code
+n_total_steps = size(ANALYSIS.RES.mean_subj_acc,2); % Using n_total_steps variable for easier interpretation of the code
 
 switch ANALYSIS.multcompstats
 
@@ -513,9 +504,14 @@ case 3 % Strong FWER Control Permutation Test
     % Seed the random number generator based on the clock time
     rng('shuffle');
     
-    % Get a vector of difference scores between the actual and permutation
-    % decoding results. (Actual = with original correct labels)
-    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    % If testing against theoretical chance level
+    if ANALYSIS.permstats == 1
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.chancelevel;
+    elseif ANALYSIS.permstats == 2
+        % Get a vector of difference scores between the actual and permutation
+        % decoding results. (Actual = with original correct labels)
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    end
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
@@ -532,7 +528,7 @@ case 3 % Strong FWER Control Permutation Test
                 % Randomly switch the sign of difference scores (equivalent to
                 % switching labels of conditions)
                 temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
-                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, na, step);
                 [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.pstats);
                 t_stat(step, iteration) = abs(temp_stats.tstat);   
             end    
@@ -570,9 +566,14 @@ case 4 % Cluster-Based Permutation Test
     % Seed the random number generator based on the clock time
     rng('shuffle');
     
-    % Get a vector of difference scores between the actual and permutation
-    % decoding results. (Actual = with original correct labels)
-    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    % If testing against theoretical chance level
+    if ANALYSIS.permstats == 1
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.chancelevel;
+    elseif ANALYSIS.permstats == 2
+        % Get a vector of difference scores between the actual and permutation
+        % decoding results. (Actual = with original correct labels)
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    end
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
@@ -589,7 +590,7 @@ case 4 % Cluster-Based Permutation Test
                     % Randomly switch the sign of difference scores (equivalent to
                     % switching labels of conditions)
                     temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
-                    temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                    temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, na, step);
                     [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.cluster_test_alpha);
                     t_stat(step, iteration) = temp_stats.tstat; % Get t statistic
                     % Marking the sign of each t statistic to avoid clustering pos
@@ -696,9 +697,14 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
     % Seed the random number generator based on the clock time
     rng('shuffle');
     
-    % Get a vector of difference scores between the actual and permutation
-    % decoding results. (Actual = with original correct labels)
-    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    % If testing against theoretical chance level
+    if ANALYSIS.permstats == 1
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.chancelevel;
+    elseif ANALYSIS.permstats == 2
+        % Get a vector of difference scores between the actual and permutation
+        % decoding results. (Actual = with original correct labels)
+        real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    end
    
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         
@@ -727,7 +733,7 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
                 % Randomly switch the sign of difference scores (equivalent to
                 % switching labels of conditions)
                 temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
-                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, na, step);
                 [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.pstats);
                 t_stat(step, iteration) = abs(temp_stats.tstat);
             end    
