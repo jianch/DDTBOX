@@ -72,8 +72,8 @@ if input_mode == 0 % Hard-coded input
     % 6 = Benjamini-Hochberg FDR Control
     % 7 = Benjamini-Krieger-Yekutieli FDR Control
     % 8 = Benjamini-Yekutieli FDR Control
-    ANALYSIS.nIterations = 100; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
-    ANALYSIS.KTMS_u = 3; % u parameter of the KTMS GFWER control procedure
+    ANALYSIS.nIterations = 1000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
+    ANALYSIS.KTMS_u = 4; % u parameter of the KTMS GFWER control procedure
     ANALYSIS.cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
     
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
@@ -133,14 +133,14 @@ elseif input_mode == 1 % Prompted manual input
         '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
         '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
     
-    if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5
-        ANALYSIS.nIterations = input('Number of bootstrap iterations for multiple comparisons procedure (at least 5000 is recommended): ');    
+    if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
+        ANALYSIS.nIterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
     end
-    if ANALYSIS.multcompstats == 5
+    if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
        ANALYSIS.KTMS_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
     end
-    if ANALYSIS.multcompstats == 4
-       ANALYSIS.cluster_test_alpha = input('Enter the significance threshold for detecting effects at individual time points (e.g. 0.05): '); 
+    if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
+       ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
     end
     
     % specify display options
@@ -424,16 +424,14 @@ end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
 %__________________________________________________________________________
 
 % Checking if an inappropriate multiple comparisons correction procedure
-% has been selected for paired-samples comparisons against permutation
-% distribution.
+% has been selected for tests against chance
 if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5
-    if ANALYSIS.permstats == 2; % If user chooses to compare against permutation distribution instead of against chance level.
-        fprintf('This multiple comparisons correction procedure cannot be used for comparison against permutation results. Switching to Bonferroni correction...\n');
+    if ANALYSIS.permstats == 1; % If user chooses to compare against permutation distribution instead of against chance level.
+        fprintf('This multiple comparisons correction procedure cannot be used for comparison against chance results. Switching to Bonferroni correction...\n');
         ANALYSIS.multcompstats = 1;
     end     
 end
 
-fprintf('Performing corrections for multiple comparisons...\n');
 
 ANALYSIS.RES.h_ttest = zeros(size(ANALYSIS.RES.mean_subj_acc,1), size(ANALYSIS.RES.mean_subj_acc,2));
 n_total_steps = size(ANALYSIS.RES.mean_subj_acc,2); % Moving to this variable for easier interpretation of the code
@@ -442,13 +440,17 @@ switch ANALYSIS.multcompstats
 
 case 0 % No correction for multiple comparisons
 
+    fprintf('Correction for multiple comparisons has not been applied\n');
+
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 
 %__________________________________________________________________________
 
 case 1 % Bonferroni Correction
 
-ANALYSIS.pstats_bonferroni_corrected = ANALYSIS.pstats / n_total_steps; % Bonferroni correction
+    fprintf('Performing corrections for multiple comparisons (Bonferroni)\n');
+
+    ANALYSIS.pstats_bonferroni_corrected = ANALYSIS.pstats / n_total_steps; % Bonferroni correction
 
 for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     for step = 1:n_total_steps % step
@@ -462,34 +464,36 @@ end
 %__________________________________________________________________________    
 
 case 2 % Holm-Bonferroni Correction
+    
+    fprintf('Performing corrections for multiple comparisons (Holm-Bonferroni)\n');
 
-% Here a family of tests is defined as all steps within a given analysis
-for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-    % Sort p-values from smallest to largest
-    sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
-    foundCritAlpha = 0; % Reset to signify we have not found Holm-corrected critical alpha level
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+        foundCritAlpha = 0; % Reset to signify we have not found Holm-corrected critical alpha level
 
-    % Find critical alpha level (sig. for all smaller p-values than this)
-    for holmStep = 1:n_total_steps
-       if sorted_p(holmStep) > ANALYSIS.pstats / (n_total_steps + 1 - holmStep) & foundCritAlpha == 0
-           ANALYSIS.holm_corrected_alpha(na) = sorted_p(holmStep);
-           foundCritAlpha = 1;
-       end
-    end
-
-    if ~exist('ANALYSIS.holm_corrected_alpha', 'var') % If all null hypotheses are rejected
-        ANALYSIS.holm_corrected_alpha(na) = 0;
-    end
-
-    % Declare tests significant if they are smaller than the adjusted critical alpha
-    for step = 1:n_total_steps
-        if ANALYSIS.RES.p_ttest(na, step) < ANALYSIS.holm_corrected_alpha(na)   
-            ANALYSIS.RES.h_ttest(na,step) = 1;
-        else
-            ANALYSIS.RES.h_ttest(na,step) = 0;
+        % Find critical alpha level (sig. for all smaller p-values than this)
+        for holmStep = 1:n_total_steps
+           if sorted_p(holmStep) > ANALYSIS.pstats / (n_total_steps + 1 - holmStep) & foundCritAlpha == 0
+               ANALYSIS.holm_corrected_alpha(na) = sorted_p(holmStep);
+               foundCritAlpha = 1;
+           end
         end
-    end      
-end % of for na loop
+
+        if ~exist('ANALYSIS.holm_corrected_alpha', 'var') % If all null hypotheses are rejected
+            ANALYSIS.holm_corrected_alpha(na) = 0;
+        end
+
+        % Declare tests significant if they are smaller than the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANALYSIS.RES.p_ttest(na, step) < ANALYSIS.holm_corrected_alpha(na)   
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end      
+    end % of for na loop
 
 %__________________________________________________________________________    
 
@@ -504,32 +508,44 @@ case 3 % Strong FWER Control Permutation Test
     % TODO: write this part. Process an ID without doing permutation
     % testing and see what the results would look like.
     
+    fprintf('Performing corrections for multiple comparisons (permutation test)\n');
+    
+    % Seed the random number generator based on the clock time
+    rng('shuffle');
+    
+    % Get a vector of difference scores between the actual and permutation
+    % decoding results. (Actual = with original correct labels)
+    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
-    % Generate t(max) distribution from the null data (use permutation results
-    % when implementing in DDTBOX)
+    % Generate t(max) distribution from the randomly-permuted data
     ANALYSIS.t_max(na, 1:ANALYSIS.nIterations) = zeros(1, ANALYSIS.nIterations);
     t_stat(1:n_total_steps, 1:ANALYSIS.nIterations) = zeros(n_total_steps, ANALYSIS.nIterations);
+        
+    
         for iteration = 1:ANALYSIS.nIterations
             clear temp; % Clearing out temp variable
+            temp_signs = zeros(ANALYSIS.nsbj, n_total_steps);
             % Draw a random sample for each test
-            for step = 1:n_total_steps
-                % Draw a bootstrap sample (i.e. sampling with replacement)
-                temp(1:ANALYSIS.nsbj, step) = randsample(ANALYSIS.RES.all_subj_perm_acc(1:ANALYSIS.nsbj,na, step),  ANALYSIS.nsbj, true);  
-                [~, ~, ~, temp_stats] = ttest(temp(1:ANALYSIS.nsbj, step), 0, 'Alpha', ANALYSIS.pstats);
-                t_stat(step, iteration) = abs(temp_stats.tstat);
+            for step = 1:n_total_steps   
+                % Randomly switch the sign of difference scores (equivalent to
+                % switching labels of conditions)
+                temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
+                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.pstats);
+                t_stat(step, iteration) = abs(temp_stats.tstat);   
             end    
 
             % Get the maximum t-value within the family of tests and store in a
             % vector. This is to create a null hypothesis distribution.
             ANALYSIS.t_max(na, iteration) = max(t_stat(:, iteration));  
         end % of for iteration loop
-    
-        % Calculating the 95th percentile of t_max values (used as decision
+       
+        % Calculating the 95th percentile of t_max values (two-tailed, used as decision
         % critieria for statistical significance)
         ANALYSIS.permtest_null_cutoff(na) = prctile(ANALYSIS.t_max(na, 1:ANALYSIS.nIterations), ((1 - ANALYSIS.pstats) * 100));
-
+        
         % Checking whether each test statistic is above the specified threshold:
         for step = 1:n_total_steps
             if abs(ANALYSIS.RES.t_ttest(na,step)) > ANALYSIS.permtest_null_cutoff(na)
@@ -537,6 +553,10 @@ case 3 % Strong FWER Control Permutation Test
             else
                 ANALYSIS.RES.h_ttest(na,step) = 0;
             end
+            
+            % Calculating a p-value for each step (two-tailed)
+            ANALYSIS.RES.p_ttest(na,step) = mean(ANALYSIS.t_max(na, :) >= abs(ANALYSIS.RES.t_ttest(na,step)));
+            
         end % of for step loop
         
     end % of for na loop
@@ -545,6 +565,15 @@ case 3 % Strong FWER Control Permutation Test
 
 case 4 % Cluster-Based Permutation Test
  
+    fprintf('Performing corrections for multiple comparisons (cluster-based permutation test)\n');
+    
+    % Seed the random number generator based on the clock time
+    rng('shuffle');
+    
+    % Get a vector of difference scores between the actual and permutation
+    % decoding results. (Actual = with original correct labels)
+    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
+    
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
             % Generate a maximum cluster mass distribution from the permutation
@@ -552,14 +581,16 @@ case 4 % Cluster-Based Permutation Test
             max_cluster_mass = zeros(1, ANALYSIS.nIterations);
             cluster_perm_test_h = zeros(n_total_steps, ANALYSIS.nIterations);
             clear t_stat;
+            temp_signs = zeros(ANALYSIS.nsbj, n_total_steps);
 
             for iteration = 1:ANALYSIS.nIterations;
                 % Draw a random bootstrap sample for each test
                 for step = 1:n_total_steps  
-                    % Draw a bootstrap sample (i.e. sampling with replacement)
-                    temp(1:ANALYSIS.nsbj, step) = randsample(ANALYSIS.RES.all_subj_perm_acc(1:ANALYSIS.nsbj,na, step),  ANALYSIS.nsbj, true);
-
-                    [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp(1:ANALYSIS.nsbj, step), 0, 'Alpha', ANALYSIS.cluster_test_alpha);
+                    % Randomly switch the sign of difference scores (equivalent to
+                    % switching labels of conditions)
+                    temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
+                    temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                    [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.cluster_test_alpha);
                     t_stat(step, iteration) = temp_stats.tstat; % Get t statistic
                     % Marking the sign of each t statistic to avoid clustering pos
                     % and neg significant results
@@ -587,7 +618,7 @@ case 4 % Cluster-Based Permutation Test
                                 cluster_mass_vector(cluster_counter) = cluster_mass_vector(cluster_counter) + abs(t_stat(step, iteration));
                             else
                                 cluster_counter = cluster_counter + 1;
-                                cluster_mass_vector(cluster_counter) = abs(t_stat(test, iteration));
+                                cluster_mass_vector(cluster_counter) = abs(t_stat(step, iteration));
                             end 
                         end % of if test == 1
                     end % of if clusterPermTest
@@ -660,6 +691,14 @@ case 4 % Cluster-Based Permutation Test
 
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
     
+    fprintf('Performing corrections for multiple comparisons (KTMS generalised FWER control)\n');
+
+    % Seed the random number generator based on the clock time
+    rng('shuffle');
+    
+    % Get a vector of difference scores between the actual and permutation
+    % decoding results. (Actual = with original correct labels)
+    real_perm_diff_scores = ANALYSIS.RES.all_subj_acc - ANALYSIS.RES.all_subj_perm_acc;
    
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         
@@ -678,14 +717,18 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
         KTMS_t_max = zeros(1, ANALYSIS.nIterations);
         t_stat = zeros(n_total_steps, ANALYSIS.nIterations);
         clear temp; % Clear temp variable
+        temp_signs = zeros(ANALYSIS.nsbj, n_total_steps);
         
         for iteration = 1:ANALYSIS.nIterations
 
             % Draw a random sample for each test
             for step = 1:n_total_steps
-                % Draw a bootstrap sample (i.e. sampling with replacement)
-                temp(1:ANALYSIS.nsbj, step) = randsample(ANALYSIS.RES.all_subj_perm_acc(1:ANALYSIS.nsbj,na, step),  ANALYSIS.nsbj, true);  
-                [~, ~, ~, temp_stats] = ttest(temp(1:ANALYSIS.nsbj, step), 0, 'Alpha', ANALYSIS.pstats);
+                
+                % Randomly switch the sign of difference scores (equivalent to
+                % switching labels of conditions)
+                temp_signs(1:ANALYSIS.nsbj, step) = (rand(1,ANALYSIS.nsbj) > .5) * 2 - 1; % Switches signs of labels
+                temp = temp_signs(1:ANALYSIS.nsbj, step) .* real_perm_diff_scores(1:ANALYSIS.nsbj, step);
+                [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', ANALYSIS.pstats);
                 t_stat(step, iteration) = abs(temp_stats.tstat);
             end    
 
@@ -714,35 +757,39 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
 
 case 6 % Benjamini-Hochberg FDR Control
 
-% Here a family of tests is defined as all steps within a given analysis
-for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-    % Sort p-values from smallest to largest
-    sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Hochberg)\n');
+    
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
 
-    % Find critical k value
-    for benhoch_step = 1:n_total_steps
-        if sorted_p(benhoch_step) <= (benhoch_step / n_total_steps) * ANALYSIS.pstats
-            ANALYSIS.benhoch_critical_alpha(na) = sorted_p(benhoch_step);
+        % Find critical k value
+        for benhoch_step = 1:n_total_steps
+            if sorted_p(benhoch_step) <= (benhoch_step / n_total_steps) * ANALYSIS.pstats
+                ANALYSIS.benhoch_critical_alpha(na) = sorted_p(benhoch_step);
+            end
         end
-    end
-    % If no steps are significant set critical alpha to zero
-    if ~exist('benhoch_critical_alpha', 'var')
-        ANALYSIS.benhoch_critical_alpha(na) = 0;
-    end
+        % If no steps are significant set critical alpha to zero
+        if ~exist('benhoch_critical_alpha', 'var')
+            ANALYSIS.benhoch_critical_alpha(na) = 0;
+        end
 
-    % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
-    for step = 1:n_total_steps
-        if ANALYSIS.RES.p_ttest(na, step) <= ANALYSIS.benhoch_critical_alpha(na)   
-            ANALYSIS.RES.h_ttest(na,step) = 1;
-        else
-            ANALYSIS.RES.h_ttest(na,step) = 0;
-        end
-    end     
-end % of for na loop
+        % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANALYSIS.RES.p_ttest(na, step) <= ANALYSIS.benhoch_critical_alpha(na)   
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end     
+    end % of for na loop
 
 %__________________________________________________________________________    
 
 case 7 % Benjamini-Krieger-Yekutieli FDR Control
+    
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n');
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
@@ -811,40 +858,42 @@ case 7 % Benjamini-Krieger-Yekutieli FDR Control
 %__________________________________________________________________________    
 
 case 8 % Benjamini-Yekutieli FDR Control
+    
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Yekutieli)\n');
 
-% Here a family of tests is defined as all steps within a given analysis
-for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 
-    % Sort p-values from smallest to largest
-    sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
+        % Sort p-values from smallest to largest
+        sorted_p = sort(ANALYSIS.RES.p_ttest(na,:));
 
-    % j values precalculated to help calculate the Benjamini-Yekutieli critical alpha
-    j_values = zeros(1,n_total_steps);
-    for j_iteration = 1:n_total_steps
-        j_values(j_iteration) = 1 / j_iteration;
-    end
-
-    % Find critical k value (see tutorial notes)
-    for benyek_step = 1:n_total_steps
-
-        if sorted_p(benyek_step) <= (benyek_step / n_total_steps * sum(j_values)) * ANALYSIS.pstats
-            benyek_critical_alpha = sorted_p(benyek_step);
+        % j values precalculated to help calculate the Benjamini-Yekutieli critical alpha
+        j_values = zeros(1,n_total_steps);
+        for j_iteration = 1:n_total_steps
+            j_values(j_iteration) = 1 / j_iteration;
         end
-    end
-    % If no tests are significant set critical alpha to zero
-    if ~exist('benyek_critical_alpha', 'var')
-        benyek_critical_alpha = 0;
-    end
 
-    % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
-    for step = 1:n_total_steps
-        if ANALYSIS.RES.p_ttest(na, step) <= benyek_critical_alpha             
-            ANALYSIS.RES.h_ttest(na,step) = 1;
-        else
-            ANALYSIS.RES.h_ttest(na,step) = 0;
+        % Find critical k value (see tutorial notes)
+        for benyek_step = 1:n_total_steps
+
+            if sorted_p(benyek_step) <= (benyek_step / n_total_steps * sum(j_values)) * ANALYSIS.pstats
+                benyek_critical_alpha = sorted_p(benyek_step);
+            end
         end
-    end
-end % of for na loop
+        % If no tests are significant set critical alpha to zero
+        if ~exist('benyek_critical_alpha', 'var')
+            benyek_critical_alpha = 0;
+        end
+
+        % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
+        for step = 1:n_total_steps
+            if ANALYSIS.RES.p_ttest(na, step) <= benyek_critical_alpha             
+                ANALYSIS.RES.h_ttest(na,step) = 1;
+            else
+                ANALYSIS.RES.h_ttest(na,step) = 0;
+            end
+        end
+    end % of for na loop
 
 %__________________________________________________________________________    
 % If some other option is chosen then do not correct, but notify user
