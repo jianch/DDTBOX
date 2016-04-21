@@ -1,0 +1,113 @@
+function [corrected_h] = MCC_KTMS_GFWER(cond1_data, cond2_data, alpha_level, n_iterations, KTMS_u)
+
+%__________________________________________________________________________
+% Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
+% to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
+%
+% The toolbox was written with contributions from:
+% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+%
+% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
+% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Carsten Bogler, John-Dylan Haynes
+%__________________________________________________________________________
+%
+% This script receives the original data and outputs corrected p-values and
+% hypothesis test results based on control of the generalised family-wise error rate
+% (Korn, 2004, method A in appendices). The permutation test in this script is based
+% on the t-statistic, but could be adapted to use with other statistics
+% such as the trimmed mean.
+%
+%
+% requires:
+% - cond1_data (data from condition 1, a subjects x time windows matrix)
+% - cond2_data (data from condition 2, a subjects x time windows matrix)
+% - alpha_level (uncorrected alpha level for statistical significance)
+% - n_iterations (number of permutation samples to draw. At least 1000 is
+% recommended for the p = 0.05 alpha level, and at least 5000 is
+% recommended for the p = 0.01 alpha level. This is due to extreme events
+% at the tails being very rare, needing many random permutations to find
+% enough of them).
+% - KTMS_u (the u parameter of the procedure, or the number of hypotheses
+% to automatically reject. Allowing for more false discoveries improves the
+% sensitivity of the method).
+%
+%
+% outputs:
+% corrected_h (vector of hypothesis tests in which statistical significance
+% is defined by values above a threshold of the (alpha_level * 100)th percentile
+% of the maximum statistic distribution.
+% 1 = statistically significant, 0 = not statistically significant)
+%__________________________________________________________________________
+%
+% Variable naming convention: STRUCTURE_NAME.example_variable
+
+% Checking whether the number of steps of the first and second datasets are equal
+if size(cond1_data, 2) ~= size(cond2_data, 2)
+   error('Condition 1 and 2 datasets do not contain the same number of comparisons!');
+end
+if size(cond1_data, 1) ~= size(cond2_data, 1)
+   error('Condition 1 and 2 datasets do not contain the same number of subjects!');
+end
+
+% Generate difference scores between conditions
+diff_scores = cond1_data - cond2_data;
+
+n_subjects = size(diff_scores, 1); % Calculate number of subjects
+n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
+
+% Perform t-tests at each step
+for step = 1:n_total_comparisons
+
+    [~, p_values(step), ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', alpha_level);
+    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
+    
+end
+
+% Make a vector to denote statistically significant steps
+KTMS_sig_effect_locations = zeros(1, n_total_comparisons);
+
+sorted_p = sort(p_values); % Sort p-values from smallest to largest
+
+% Automatically reject the u smallest hypotheses (u is set by user as KTMS_u variable).
+KTMS_auto_reject_threshold = sorted_p(KTMS_u);
+KTMS_sig_effect_locations(p_values <= KTMS_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
+
+% Run strong FWER control permutation test but use u + 1th most extreme
+% test statistic.
+KTMS_t_max = zeros(1, n_iterations);
+t_stat = zeros(n_total_comparisons, n_iterations);
+temp_signs = zeros(n_subjects, n_total_comparisons);
+
+for iteration = 1:n_iterations
+
+    % Draw a random sample for each test
+    for step = 1:n_total_comparisons
+
+        % Randomly switch the sign of difference scores (equivalent to
+        % switching labels of conditions)
+        temp_signs(1:n_subjects, step) = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
+        temp = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+        [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
+        t_stat(step, iteration) = abs(temp_stats.tstat);
+    end    
+
+    % Get the maximum t-value within the family of tests and store in a
+    % vector. This is to create a null hypothesis distribution.
+    t_sorted = sort(t_stat(:, iteration), 'descend');
+    KTMS_t_max(iteration) = t_sorted(KTMS_u + 1);
+end
+
+% Calculating the 95th percentile of t_max values (used as decision
+% critieria for statistical significance)
+KTMS_Null_Cutoff = prctile(KTMS_t_max, ((1 - alpha_level) * 100));
+
+% Checking whether each test statistic is above the specified threshold:
+for step = 1:n_total_comparisons
+    if abs(uncorrected_t(step)) > KTMS_Null_Cutoff;
+        KTMS_sig_effect_locations(step) = 1;
+    end
+end
+
+% Marking statistically significant tests
+corrected_h = KTMS_sig_effect_locations;    
