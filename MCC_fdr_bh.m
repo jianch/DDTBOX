@@ -1,4 +1,4 @@
-function [fdr_corrected_h] = MCC_fdr_bh(p_values, alpha_level)
+function [fdr_corrected_h] = MCC_fdr_bh(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -19,7 +19,9 @@ function [fdr_corrected_h] = MCC_fdr_bh(p_values, alpha_level)
 %
 % requires:
 % - p_values (vector of p-values from the hypothesis tests of interest)
-% - alpha_level (uncorrected alpha level for statistical significance)
+%
+% optional:
+% - alpha (uncorrected alpha level for statistical significance, default 0.05)
 %
 %
 % outputs:
@@ -30,6 +32,40 @@ function [fdr_corrected_h] = MCC_fdr_bh(p_values, alpha_level)
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
 
+%% Handling variadic inputs
+% Define defaults at the beginning
+options = struct(...
+    'alpha', 0.05);
+
+% Read the acceptable names
+optionNames = fieldnames(options);
+
+% Count arguments
+nArgs = length(varargin);
+if round(nArgs/2) ~= nArgs/2
+   error([mfilename ' needs property name/property value pairs'])
+end
+
+for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+   inpName = lower(pair{1}); % make case insensitive
+
+   % Overwrite default options
+   if any(strcmp(inpName,optionNames))
+      options.(inpName) = pair{2};
+   else
+      error('%s is not a recognized parameter name', inpName)
+   end
+end
+clear pair
+clear inpName
+
+% Renaming variables for use below:
+alpha_level = options.alpha;
+clear options;
+
+
+
+%% Benjamini-Hochberg False Discovery Rate Correction
 n_total_comparisons = length(p_values); % Get the number of comparisons
 fdr_corrected_h = zeros(1, length(p_values)); % preallocate
 

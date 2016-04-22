@@ -1,4 +1,4 @@
-function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, cond2_data, alpha_level, n_iterations)
+function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -22,9 +22,11 @@ function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, c
 % requires:
 % - cond1_data (data from condition 1, a subjects x time windows matrix)
 % - cond2_data (data from condition 2, a subjects x time windows matrix)
-% - alpha_level (uncorrected alpha level for statistical significance)
-% - n_iterations (number of permutation samples to draw. At least 1000 is
-% recommended for the p = 0.05 alpha level, and at least 5000 is
+% 
+% optional inputs:
+% - alpha (uncorrected alpha level for statistical significance, default is 0.05)
+% - iterations (number of permutation samples to draw. Default is 5000.
+% At least 1000 is recommended for the p = 0.05 alpha level, and at least 5000 is
 % recommended for the p = 0.01 alpha level. This is due to extreme events
 % at the tails being very rare, needing many random permutations to find
 % enough of them).
@@ -38,6 +40,42 @@ function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, c
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
+
+%% Handling variadic inputs
+% Define defaults at the beginning
+options = struct(...
+    'alpha', 0.05,...
+    'iterations', 5000);
+
+% Read the acceptable names
+optionNames = fieldnames(options);
+
+% Count arguments
+nArgs = length(varargin);
+if round(nArgs/2) ~= nArgs/2
+   error([mfilename ' needs property name/property value pairs'])
+end
+
+for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+   inpName = lower(pair{1}); % make case insensitive
+
+   % Overwrite default options
+   if any(strcmp(inpName,optionNames))
+      options.(inpName) = pair{2};
+   else
+      error('%s is not a recognized parameter name', inpName)
+   end
+end
+clear pair
+clear inpName
+
+% Renaming variables for use below:
+alpha_level = options.alpha;
+n_iterations = options.iterations;
+clear options;
+
+
+%% Permutation test
 
 % Checking whether the number of steps of the first and second datasets are equal
 if size(cond1_data, 2) ~= size(cond2_data, 2)
