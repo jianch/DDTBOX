@@ -81,8 +81,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
     ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
-    ANALYSIS.fw.multcompstats = 0; % Feature weights correction for multiple comparisons:
-    % 0 = no correction
+    ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
     % 3 = Strong FWER Control Permutation Test
@@ -161,7 +160,7 @@ elseif input_mode == 1 % Prompted manual input
     ANALYSIS.fw.do = input('Do you wish to analyse the feature weights (only for spatial or spatio-temporal decoding)? "0" for no; "1" for yes: ');
     
     if ANALYSIS.fw.do == 1
-        ANALYSIS.multcompstats = input(['\nSpecify if you wish to control for feature weights analyses multiple comparisons: \n"0" for no correction \n'...
+        ANALYSIS.multcompstats = input(['\nSpecify which multiple comparisons correction method to use: \n' ...
         '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
         '"4" for Cluster-Based Permutation Testing (Currently not available) \n"5" for KTMS Generalised FWER Control \n' ...
         '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...

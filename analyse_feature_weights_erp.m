@@ -245,15 +245,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
         elseif p_corr == 2 % Corrected for multiple comparisons
             
-            switch ANALYSIS.fw.multcompstats % Selects a multiple comparisons correction
-            
-                case 0 % No correction for multiple comparisons. Copy from uncorrected results
-                    FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label;
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
-                        FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; 
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = FW_ANALYSIS.h_matrix_z_uncorr{steps};
-                    end % steps
-                    
+            switch ANALYSIS.fw.multcompstats % Selects a multiple comparisons correction             
                 case 1 % Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
@@ -361,18 +353,11 @@ for p_corr = 1:2 % run for corrected/uncorrected
         
         
         
-        switch ANALYSIS.fw.multcompstats % Selects a multiple comparisons correction
-            
-                case 0 % No correction for multiple comparisons. Copy from uncorrected results
-                    FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
-                    FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label; % Copy from uncorrected ver.
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = FW_ANALYSIS.h_matrix_z_averagestep_uncorr;
-                    
+        switch ANALYSIS.fw.multcompstats % Selects a multiple comparisons correction           
                 case 1 % Bonferroni correction          
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label; % Copy from uncorrected ver.
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_bonferroni(FW_ANALYSIS.h_matrix_z_averagestep_uncorr, ANALYSIS.pstats); 
-                    
  
                 case 2 % Holm-Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
@@ -387,6 +372,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     [FW_ANALYSIS.h_matrix_z_averagestep_corr, FW_ANALYSIS.p_matrix_z_averagestep_corr_label] = MCC_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, ANALYSIS.pstats, ANALYSIS.nIterations);
                     clear real_decoding_fw;
                     clear fw_chance_level;
+                    
                 case 4 % cluster-based permutation test
                     fprintf('Cluster-based correction not currently available... No correction was performed');
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
@@ -407,7 +393,6 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_fdr_bh(FW_ANALYSIS.h_matrix_z_averagestep_uncorr, ANALYSIS.pstats);
 
-                    
                 case 7 % Benjamini-Krieger-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; 
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
