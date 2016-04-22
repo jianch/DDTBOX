@@ -86,7 +86,7 @@ if input_mode == 0 % Hard-coded input
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
     % 3 = Strong FWER Control Permutation Test
-    % 4 = Cluster-Based Permutation Test
+    % 4 = Cluster-Based Permutation Test (Currently not available)
     % 5 = KTMS Generalised FWER Control
     % 6 = Benjamini-Hochberg FDR Control
     % 7 = Benjamini-Krieger-Yekutieli FDR Control
@@ -161,19 +161,35 @@ elseif input_mode == 1 % Prompted manual input
     ANALYSIS.fw.do = input('Do you wish to analyse the feature weights (only for spatial or spatio-temporal decoding)? "0" for no; "1" for yes: ');
     
     if ANALYSIS.fw.do == 1
+        ANALYSIS.multcompstats = input(['\nSpecify if you wish to control for feature weights analyses multiple comparisons: \n"0" for no correction \n'...
+        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
+        '"4" for Cluster-Based Permutation Testing (Currently not available) \n"5" for KTMS Generalised FWER Control \n' ...
+        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
+        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
+    
+        if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
+            ANALYSIS.nIterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
+        end
+        if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
+           ANALYSIS.KTMS_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
+        end
+        if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
+           fprintf('Cluster-based corrections are currently not available.\n')
+           % ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
+        end
         
         ANALYSIS.fw.display_average_zmap = input('Do you wish to display the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % z-standardised average FWs
         ANALYSIS.fw.display_average_uncorr_threshmap = input(...
             'Do you wish to display the statistical threshold map (uncorrected) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map uncorrected t-test results
         ANALYSIS.fw.display_average_corr_threshmap = input(...
-            'Do you wish to display the statistical threshold map (Bonferroni-corrected) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map corrected t-test results (Bonferroni)
+            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map corrected t-test results (Bonferroni)
         
         % individual maps and stats
         ANALYSIS.fw.display_all_zmaps = input('');
         ANALYSIS.fw.display_all_uncorr_thresh_maps = input(...
             'Do you wish to display the statistical threshold map (uncorrected) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
         ANALYSIS.fw.display_all_corr_thresh_maps = input(...
-            'Do you wish to display the statistical threshold map (Bonferroni-corrected) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
+            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
         
     end
     
@@ -484,7 +500,8 @@ case 3 % Strong FWER Control Permutation Test
     
         [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:)] = MCC_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores,  ANALYSIS.pstats, ANALYSIS.nIterations);
     end % of for na loop
-    
+    clear real_decoding_scores
+    clear perm_decoding_scores
 %__________________________________________________________________________    
 
 case 4 % Cluster-Based Permutation Test
@@ -504,6 +521,8 @@ case 4 % Cluster-Based Permutation Test
     
         [ANALYSIS.RES.h_ttest(na, :)] = MCC_cluster_permtest(real_decoding_scores, perm_decoding_scores,  ANALYSIS.pstats, ANALYSIS.nIterations, ANALYSIS.cluster_test_alpha);
     end % of for na loop
+    clear real_decoding_scores
+    clear perm_decoding_scores
 %__________________________________________________________________________    
 
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
@@ -524,6 +543,8 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
 
         [ANALYSIS.RES.h_ttest(na, :)] = MCC_KTMS_GFWER(real_decoding_scores, perm_decoding_scores,  ANALYSIS.pstats, ANALYSIS.nIterations, ANALYSIS.KTMS_u);
     end % of for na loop
+    clear real_decoding_scores
+    clear perm_decoding_scores
 
 %__________________________________________________________________________    
 
