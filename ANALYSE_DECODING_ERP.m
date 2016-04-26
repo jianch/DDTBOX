@@ -1,4 +1,4 @@
-function ANALYSE_DECODING_ERP(study_name, vconf, sbjs_todo, dcg_todo, varargin)
+function ANALYSE_DECODING_ERP(SLIST, sbjs_todo, dcg_todo, varargin)
 %__________________________________________________________________________
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
@@ -15,12 +15,58 @@ function ANALYSE_DECODING_ERP(study_name, vconf, sbjs_todo, dcg_todo, varargin)
 % depending on the specific decoding analyses.
 %
 % requires:
-% - study_name (e.g. 'DEMO')
-% - vconf (version of study configuration script, e.g., "1" for DEMO_config_v1)
-% - input_mode (1 = use coded variables from first section / 2 = enter manually)
+% - SLIST (structure containing study configuration variables)
 % - sbjs_todo (e.g., [1 2 3 4 6 7 9 10 13])
 % - dcg_todo (discrimination group to analyse, as specified in SLIST.dcg_labels{dcg})
-
+%
+% optional:
+% - allchan (analyse all possible channels? 1=yes / 2=no)
+% - relchan (specify channels to be analysed (for temporal decoding only)
+% - stmode (SPACETIME mode - 1=spatial / 2=temporal / 3=spatio-temporal)
+% - avmode (AVERAGE mode - 1=no averaging; single-trial / 2=run average)
+% - window_width_ms (width of sliding window in ms)
+% - step_width_ms (step size with which sliding window is moved through the trial)
+% - permstats (Testing against: 1=theoretical chance level / 2=permutation test results)
+% - drawmode (Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter))
+% - pstats (critical p-value)
+% - multcompstats (Correction for multiple comparisons:
+% 0 = no correction
+% 1 = Bonferroni correction
+% 2 = Holm-Bonferroni correction
+% 3 = Strong FWER Control Permutation Test
+% 4 = Cluster-Based Permutation Test
+% 5 = KTMS Generalised FWER Control
+% 6 = Benjamini-Hochberg FDR Control
+% 7 = Benjamini-Krieger-Yekutieli FDR Control
+% 8 = Benjamini-Yekutieli FDR Control
+% - nIterations (Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures)
+% - KTMS_u (u parameter of the KTMS GFWER control procedure)
+% - cluster_test_alpha (For cluster-based permutation test: Significance threshold for detecting effects at individual time windows)
+% - disp_on (display a results figure? 0=no / 1=yes)
+% - permdisp (display the results from permutation test in figure as separate line? 0=no / 1=yes)
+% - disp_sign (display statistically significant steps in results figure? 0=no / 1=yes)
+% - fw_do (analyse feature weights? 0=no / 1=yes)
+% - fw_multcompstats (Feature weights correction for multiple comparisons:
+% 1 = Bonferroni correction
+% 2 = Holm-Bonferroni correction
+% 3 = Strong FWER Control Permutation Test
+% 4 = Cluster-Based Permutation Test (Currently not available)
+% 5 = KTMS Generalised FWER Control
+% 6 = Benjamini-Hochberg FDR Control
+% 7 = Benjamini-Krieger-Yekutieli FDR Control
+% 8 = Benjamini-Yekutieli FDR Control
+%
+% Options to display/not display feature weights results if they are analysed
+% Averaged maps and stats:
+% - fw_display_matrix (feature weights matrix. 0=no / 1=yes)
+% - fw_display_average_zmap (z-standardised average feature weights. 0=no / 1=yes)
+% - display_average_uncorr_threshmap (thresholded map uncorrected t-test results)
+% - display_average_corr_threshmap (thresholded map of t-test results corrected for multiple comparisons)
+% - fw_display_all_zmaps
+% Individual maps and stats:
+% - fw_display_all_zmaps (z-standardised average feature weights)
+% - fw_display_all_uncorr_thresh_maps (thresholded map uncorrected t-test results)
+% - fw_display_all_corr_thresh_maps (thresholded map of t-test results corrected for multiple comparisons)
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
@@ -104,7 +150,7 @@ ANALYSIS.multcompstats = options.multcompstats; % Correction for multiple compar
 % 8 = Benjamini-Yekutieli FDR Control
 ANALYSIS.nIterations = options.nIterations; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
 ANALYSIS.KTMS_u = options.KTMS_u; % u parameter of the KTMS GFWER control procedure
-ANALYSIS.cluster_test_alpha = options.cluster_test_alpha; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
+ANALYSIS.cluster_test_alpha = options.cluster_test_alpha; % For cluster-based permutation test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
 
 ANALYSIS.disp.on = options.disp_on; % display a results figure? 0=no / 1=yes
 ANALYSIS.permdisp = options.permdisp; % display the results from permutation test in figure as separate line? 0=no / 1=yes
@@ -130,7 +176,7 @@ ANALYSIS.fw.display_matrix = options.fw_display_matrix; % feature weights matrix
 % averaged maps and stats
 ANALYSIS.fw.display_average_zmap = options.fw_display_average_zmap; % z-standardised average FWs
 ANALYSIS.fw.display_average_uncorr_threshmap = options.fw_display_average_uncorr_threshmap; % thresholded map uncorrected t-test results
-ANALYSIS.fw.display_average_corr_threshmap = options.fw_display_average_corr_threshmap; % thresholded map corrected t-test results (Bonferroni)
+ANALYSIS.fw.display_average_corr_threshmap = options.fw_display_average_corr_threshmap; % thresholded map of t-test results corrected for multiple comparisons
 
 % individual maps and stats
 ANALYSIS.fw.display_all_zmaps = options.fw_display_all_zmaps; % z-standardised average FWs
@@ -150,7 +196,7 @@ CALL_MODE = 3;
 global DCGTODO;
 DCGTODO = dcg_todo;
 
-sbj_list = [study_name '_config_v' num2str(vconf)]; % use latest slist-function!
+
 
 % define which subjects enter the second-level analysis
 ANALYSIS.nsbj = size(sbjs_todo,2);
@@ -170,9 +216,6 @@ for s = 1:ANALYSIS.nsbj
     global SBJTODO;
     SBJTODO = s;
     sbj = ANALYSIS.sbjs(SBJTODO);
-    
-    global SLIST;
-    eval(sbj_list);
     
     % open subject's decoding results       
     if size(dcg_todo,2) == 1

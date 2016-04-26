@@ -1,4 +1,4 @@
-function DECODING_ERP(study_name, vconf, sbj, dcg_todo, cross, varargin)
+function DECODING_ERP(SLIST, sbj, dcg_todo, varargin)
 %__________________________________________________________________________
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
@@ -22,15 +22,29 @@ function DECODING_ERP(study_name, vconf, sbj, dcg_todo, cross, varargin)
 % Chang CC, Lin CJ (2011). LIBSVM : a library for support vector machines. ACM TIST, 2(3):27,
 %
 % requires:
-% - study_name (e.g. 'DEMO')
-% - vconf (version of study configuration script, e.g., "1" for DEMO_config_v1)
-% - input_mode (1 = use coded varialbles from first section / 2 = enter manually)
+% - SLIST (structure containing study configuration variables)
 % - sbj (number of subject to analyse, e.g., 1)
 % - dcg_todo (discrimination group to analyse, as specified in SLIST.dcg_labels{dcg})
+%
+% Optional:
+% - stmode (SPACETIME mode - 1=spatial / 2=temporal / 3=spatio-temporal)
+% - avmode (AVERAGE mode - 1=no averaging; single-trial / 2=run average)
+% - analysis_mode (1=SVM classification, 2=LDA classification, 3=SVR increments, 4=SVR continous)
+% - window_width_ms (width of sliding window in ms)
+% - step_width_ms (step size with which sliding window is moved through the trial)
 % - cross (cross-condition classification (0 = no / 1 = yes): Allows training on
 % data from one DCG and predicting the left-out data from the respective
 % condition in the other DCG (if "1" is chosen, two DCDs have to be entered
 % for dcg_todo, e.g. [1 2])
+% - perm_test (run the permutation-decoding? 0=no / 1=yes)
+% - perm_disp (display the permutation results in figure? 0=no / 1=yes)
+% - display_on (1=figure displayed / 0=no figure)
+% - rt_match (Use RT-matching algorithm to select trials? 0=no / 1=yes)
+% - feat_weights_mode (Extract feature weights? 0=no / 1=yes)
+% - cross_val_steps (How many cross-validation steps if no runs available?)
+% - n_rep_cross_val (How many repetitions of full cross-validation with randomly re-ordered data?)
+% - permut_rep; (How many repetitions of full cross-validation with permutation results?)
+
 
 %__________________________________________________________________________
 %
@@ -46,6 +60,7 @@ options = struct(...
     'analysis_mode', 1,...
     'window_width_ms', 10,...
     'step_width_ms', 10,...
+    'cross', 0,...
     'perm_test', 1,...
     'perm_disp', 1,...
     'display_on', 1,...
@@ -95,6 +110,7 @@ STUDY.feat_weights_mode = options.feat_weights_mode; % Extract feature weights? 
 STUDY.cross_val_steps = options.cross_val_steps; % How many cross-validation steps (if no runs available)?
 STUDY.n_rep_cross_val = options.n_rep_cross_val; % How many repetitions of full cross-validation with randomly re-ordered data?
 STUDY.permut_rep = options.permut_rep; % How many repetitions of full cross-validation with permutation results?
+STUDY.cross = options.cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
 
 clear options
 
@@ -105,7 +121,7 @@ STUDY.sbj = sbj;
 global DCGTODO;
 DCGTODO = dcg_todo;
 STUDY.dcg_todo = dcg_todo;
-STUDY.cross = cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
+
 
 % decoding script = 2 - needed for interaction with other scripts to regulate
 % functions such as saving data, calling specific sub-sets of parameters
@@ -118,8 +134,6 @@ STUDY.study_name = study_name;
 STUDY.vconf = vconf;
 STUDY.sbj_list = [study_name '_config_v' num2str(vconf)]; % use latest slist-function!
 
-global SLIST;
-eval(STUDY.sbj_list); % Gets subject parameters from the configuration script
 
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
