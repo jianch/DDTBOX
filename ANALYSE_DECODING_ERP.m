@@ -365,7 +365,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         if ANALYSIS.permstats == 1
             
             % chance level = 100 / number conditions
-            [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.chancelevel); % simply against chance
+            [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstatsuse); % simply against chance
             
         % test against permutation test results    
         elseif ANALYSIS.permstats == 2
@@ -430,7 +430,7 @@ elseif size(dcg_todo,2) == 2 % Cross-condition decoding analyses
 
 end
 
-save(savename,'ANALYSIS','FW_ANALYSIS');
+save(savename,'ANALYSIS','FW_ANALYSIS','-v7.3');
 
 fprintf('All results saved in %s. \n',savename);
 
