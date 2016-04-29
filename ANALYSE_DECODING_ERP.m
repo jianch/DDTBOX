@@ -466,7 +466,7 @@ case 1 % Bonferroni Correction
     fprintf('Performing corrections for multiple comparisons (Bonferroni)\n');
 
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
     end
 
 %__________________________________________________________________________    
@@ -477,7 +477,7 @@ case 2 % Holm-Bonferroni Correction
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
     end % of for na loop
 
 %__________________________________________________________________________    
@@ -497,7 +497,7 @@ case 3 % Strong FWER Control Permutation Test
             perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
         end
     
-        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:)] = mcc_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:)] = multcomp_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
     end % of for na loop
     clear real_decoding_scores
     clear perm_decoding_scores
@@ -518,7 +518,7 @@ case 4 % Cluster-Based Permutation Test
             perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
         end
     
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
     end % of for na loop
     clear real_decoding_scores
     clear perm_decoding_scores
@@ -540,7 +540,7 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
             perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
         end
 
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
     end % of for na loop
     clear real_decoding_scores
     clear perm_decoding_scores
@@ -553,7 +553,7 @@ case 6 % Benjamini-Hochberg FDR Control
     
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
     end % of for na loop
 
 %__________________________________________________________________________    
@@ -564,7 +564,7 @@ case 7 % Benjamini-Krieger-Yekutieli FDR Control
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
     end % of for na loop
 
 %__________________________________________________________________________    
@@ -575,7 +575,7 @@ case 8 % Benjamini-Yekutieli FDR Control
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = mcc_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
     end % of for na loop
 
 %__________________________________________________________________________    
