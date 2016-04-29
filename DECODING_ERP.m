@@ -71,7 +71,7 @@ if input_mode == 0 % Hard-coded input
     % get study parameters (hardcoded)
     STUDY.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     STUDY.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    STUDY.analysis_mode = 1;% ANALYSIS mode (1=SVM classification, 2=LDA classification, 3=SVR increments, 4=SVR continous)
+    STUDY.analysis_mode = 5;% ANALYSIS mode (1=SVM classification, 2=LDA classification, 3=SVR increments, 4=SVR continous,5=SVM with liblinear)
     
     STUDY.window_width_ms = 10; % width of sliding window in ms
     STUDY.step_width_ms = 10; % step size with which sliding window is moved through the trial
@@ -136,6 +136,87 @@ fprintf('Balanced number of examples will be used for all analyses by default.\n
 if STUDY.perm_test == 1
     fprintf('Random-label analysis will be based on %d analyses.\n',STUDY.n_all_permutation);
 end
+
+%__________________________________________________________________________
+% LIBSVM and LIBLINEAR flags
+% LIBSVM and LIBLINEAR require input flags (strings) to specify the type of model that will be used for decoding.
+% WARNING: Do not change these flags unless you really know what you are doing!!!
+
+% For the full list of flags and their options see
+% LIBSVM:    https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+% LIBLINEAR: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
+% The following flags are currently used as defaults in DDTBox
+
+% -c cost : cost parameter
+% The following backends are
+
+% LIBSVM
+% -s svm_type : set the type of support vector machine
+% 	0 -- C-Support Vector Classification
+% 	1 -- nu-Support Vector Classification
+% 	2 -- one-class Support Vector Machine
+% 	3 -- epsilon-Support Vector Regression
+% 	4 -- nu-Support Vector Regression
+% -t kernel_type : set type of kernel function
+% 	0 -- linear: u'*v
+% 	1 -- polynomial: (gamma*u'*v + coef0)^degree
+% 	2 -- radial basis function: exp(-gamma*|u-v|^2)
+% 	3 -- sigmoid: tanh(gamma*u'*v + coef0)
+
+% LIBLINEAR
+% -s svm_type:
+%	 0 -- L2-regularized logistic regression (primal)
+%	 1 -- L2-regularized L2-loss support vector classification (dual)
+%	 2 -- L2-regularized L2-loss support vector classification (primal)
+%	 3 -- L2-regularized L1-loss support vector classification (dual)
+%	 4 -- support vector classification by Crammer and Singer
+%	 5 -- L1-regularized L2-loss support vector classification
+%	 6 -- L1-regularized logistic regression
+%	 7 -- L2-regularized logistic regression (dual)
+%	11 -- L2-regularized L2-loss support vector regression (primal)
+%	12 -- L2-regularized L2-loss support vector regression (dual)
+%	13 -- L2-regularized L1-loss support vector regression (dual)
+
+
+% Defaults:
+% Support Vector Classification with libsvm - '-s 0 -t 0 -c 1'
+% Support Vector Regression with libsvm - '-s 3 -t 0 -c 0.1'
+% Support Vector Regression (continuous) with libsvm - '-s 3 -t 0 -c 0.1'
+% Support Vector Classification with liblinear - '-s 2 -c 1'
+
+if STUDY.analysis_mode == 1 % SVM classification with libsvm
+    STUDY.backend_flags.svm_type = 0;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 1;
+    STUDY.backend_flags.extra_flags = []; % To input extra flag types
+elseif STUDY.analysis_mode == 2 % LDA classifcation
+    % to be implemented in future version
+elseif STUDY.analysis_mode == 3 % SVR (regression)  with libsvm
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = []; 
+elseif STUDY.analysis_mode == 4 % SVR (regression continuous)  with libsvm
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = [];
+elseif STUDY.analysis_mode == 5 % SVM with liblinear
+    STUDY.backend_flags.svm_type = 2;
+    STUDY.backend_flags.kernel_type = -1; % not valid for liblinear
+    STUDY.backend_flags.cost = 1;
+    STUDY.backend_flags.extra_flags = [];
+end
+
+% Merging all flags into a single string
+STUDY.backend_flags.all_flags = ['-s ' int2str(STUDY.backend_flags.svm_type) ' -c ' num2str(STUDY.backend_flags.cost)]
+
+% LIBSVM specific options
+if STUDY.backend_flags.kernel_type ~= -1
+	STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' -t ' int2str(STUDY.backend_flags.kernel_type)];
+end
+
+STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' ' STUDY.backend_flags.extra_flags];
 
 
 %% SECTION 2: READ IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

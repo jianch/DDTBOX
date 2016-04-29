@@ -26,16 +26,12 @@ Labels = labels_train;
 
 %% training 
 %__________________________________________________________________________
-if STUDY.analysis_mode == 1 % SVM classification with libsvm
-    model = svmtrain(Labels,Samples,'-s 0 -t 0 -c 1');
-elseif STUDY.analysis_mode == 2 % LDA classifcation
+if sum(STUDY.analysis_mode == [1 3 4]) %  libsvm
+    model = svmtrain(Labels,Samples,STUDY.backend_flags.all_flags);
+elseif sum(STUDY.analysis_mode == [2]) % LDA classifcation
     % to be implemented in future version
-elseif STUDY.analysis_mode == 3 % SVR (regression) with libsvm
-    model = svmtrain(Labels,Samples,'-s 3 -t 0 -c 0.1');
-elseif STUDY.analysis_mode == 4 % SVR (regression continuous) with libsvm
-    model = svmtrain(Labels,Samples,'-s 3 -t 0 -c 0.1');
-elseif STUDY.analysis_mode == 5 % SVM classification with liblinear
-   model = train(Labels,sparse(Samples),'-s 2 -c 1');
+elseif sum(STUDY.analysis_mode == [5]) %  liblinear
+   model = train(Labels,sparse(Samples),STUDY.backend_flags.all_flags);
 end
 %__________________________________________________________________________    
 
