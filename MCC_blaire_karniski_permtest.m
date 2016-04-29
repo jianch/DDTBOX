@@ -1,4 +1,4 @@
-function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
+function [corrected_h, corrected_p] = mcc_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -18,6 +18,9 @@ function [corrected_h, corrected_p] = MCC_blaire_karniski_permtest(cond1_data, c
 % on the t-statistic, but could be adapted to use with other statistics
 % such as the trimmed mean.
 %
+% Blair, R. C., & Karniski, W. (1993). An alternative method for 
+% significance testing of waveform difference potentials. 
+% Psychophysiology, 30, 518-524. DOI: 10.1111/j.1469-8986.1993.tb02075.x
 %
 % requires:
 % - cond1_data (data from condition 1, a subjects x time windows matrix)

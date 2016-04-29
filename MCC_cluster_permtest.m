@@ -1,4 +1,4 @@
-function [corrected_h] = MCC_cluster_permtest(cond1_data, cond2_data, varargin)
+function [corrected_h] = mcc_cluster_permtest(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -17,6 +17,12 @@ function [corrected_h] = MCC_cluster_permtest(cond1_data, cond2_data, varargin)
 % The permutation test in this script is based on the t-statistic, 
 % but could be adapted to use with other statistics such as the trimmed mean.
 %
+% 
+% Bullmore, E. T., Suckling, J., Overmeyer, S., Rabe-Hesketh, S., 
+% Taylor, E., & Brammer, M. J. (1999). Global, voxel, and cluster tests, 
+% by theory and permutation, for a difference between two groups of 
+% structural MR images of the brain. IEEE Transactions on Medical Imaging,
+% 18, 32-42. doi 10.1109/42.750253
 %
 % requires:
 % - cond1_data (data from condition 1, a subjects x time windows matrix)

@@ -1,4 +1,4 @@
-function [corrected_h] = MCC_KTMS_GFWER(cond1_data, cond2_data, varargin)
+function [corrected_h] = mcc_ktms(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -18,6 +18,11 @@ function [corrected_h] = MCC_KTMS_GFWER(cond1_data, cond2_data, varargin)
 % on the t-statistic, but could be adapted to use with other statistics
 % such as the trimmed mean.
 %
+% Korn, E. L., Troendle, J. F., McShane, L. M., & Simon, R. (2004). Controlling
+% the number of false discoveries: Application to high-dimensional genomic data.
+% Journal of Statistical Planning and Inference, 124, 379-398. 
+% doi 10.1016/S0378-3758(03)00211-8
+%
 %
 % requires:
 % - cond1_data (data from condition 1, a subjects x time windows matrix)
@@ -30,7 +35,7 @@ function [corrected_h] = MCC_KTMS_GFWER(cond1_data, cond2_data, varargin)
 % recommended for the p = 0.01 alpha level. This is due to extreme events
 % at the tails being very rare, needing many random permutations to find
 % enough of them).
-% - KTMS_u (the u parameter of the procedure, or the number of hypotheses
+% - ktms_u (the u parameter of the procedure, or the number of hypotheses
 % to automatically reject. Allowing for more false discoveries improves the
 % sensitivity of the method. Default is 1).
 %
@@ -49,7 +54,7 @@ function [corrected_h] = MCC_KTMS_GFWER(cond1_data, cond2_data, varargin)
 options = struct(...
     'alpha', 0.05,...
     'iterations', 5000,...
-    'KTMS_u', 1);
+    'ktms_u', 1);
 
 % Read the acceptable names
 optionNames = fieldnames(options);
@@ -76,7 +81,7 @@ clear inpName
 % Renaming variables for use below:
 alpha_level = options.alpha;
 n_iterations = options.iterations;
-KTMS_u = options.KTMS_u;
+ktms_u = options.ktms_u;
 clear options;
 
 
@@ -104,17 +109,17 @@ for step = 1:n_total_comparisons
 end
 
 % Make a vector to denote statistically significant steps
-KTMS_sig_effect_locations = zeros(1, n_total_comparisons);
+ktms_sig_effect_locations = zeros(1, n_total_comparisons);
 
 sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
-% Automatically reject the u smallest hypotheses (u is set by user as KTMS_u variable).
-KTMS_auto_reject_threshold = sorted_p(KTMS_u);
-KTMS_sig_effect_locations(p_values <= KTMS_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
+% Automatically reject the u smallest hypotheses (u is set by user as ktms_u variable).
+ktms_auto_reject_threshold = sorted_p(ktms_u);
+ktms_sig_effect_locations(p_values <= ktms_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
 
 % Run strong FWER control permutation test but use u + 1th most extreme
 % test statistic.
-KTMS_t_max = zeros(1, n_iterations);
+ktms_t_max = zeros(1, n_iterations);
 t_stat = zeros(n_total_comparisons, n_iterations);
 temp_signs = zeros(n_subjects, n_total_comparisons);
 
@@ -134,19 +139,19 @@ for iteration = 1:n_iterations
     % Get the maximum t-value within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
     t_sorted = sort(t_stat(:, iteration), 'descend');
-    KTMS_t_max(iteration) = t_sorted(KTMS_u + 1);
+    ktms_t_max(iteration) = t_sorted(ktms_u + 1);
 end
 
 % Calculating the 95th percentile of t_max values (used as decision
 % critieria for statistical significance)
-KTMS_Null_Cutoff = prctile(KTMS_t_max, ((1 - alpha_level) * 100));
+ktms_Null_Cutoff = prctile(ktms_t_max, ((1 - alpha_level) * 100));
 
 % Checking whether each test statistic is above the specified threshold:
 for step = 1:n_total_comparisons
-    if abs(uncorrected_t(step)) > KTMS_Null_Cutoff;
-        KTMS_sig_effect_locations(step) = 1;
+    if abs(uncorrected_t(step)) > ktms_Null_Cutoff;
+        ktms_sig_effect_locations(step) = 1;
     end
 end
 
 % Marking statistically significant tests
-corrected_h = KTMS_sig_effect_locations;    
+corrected_h = ktms_sig_effect_locations;    

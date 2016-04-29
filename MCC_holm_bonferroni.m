@@ -1,4 +1,4 @@
-function [holm_corrected_h] = MCC_holm_bonferroni(p_values, varargin)
+function [holm_corrected_h] = mcc_holm_bonferroni(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -16,6 +16,8 @@ function [holm_corrected_h] = MCC_holm_bonferroni(p_values, varargin)
 % Holm-Bonferroni corrected null hypothesis test results. The number of tests is
 % determined by the length of the vector of p-values.
 %
+% Holm, S. (1979). A simple sequentially rejective multiple test procedure. 
+% Scandinavian Journal of Statistics 6 (2): 65?70.
 %
 % requires:
 % - p_values (vector of p-values from the hypothesis tests of interest)

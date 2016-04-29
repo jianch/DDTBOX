@@ -1,4 +1,4 @@
-function [fdr_corrected_h] = MCC_fdr_bh(p_values, varargin)
+function [fdr_corrected_h] = mcc_fdr_bh(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -15,6 +15,11 @@ function [fdr_corrected_h] = MCC_fdr_bh(p_values, varargin)
 % This script receives a vector of p-values and outputs
 % false discovery rate corrected null hypothesis test results (Benjamin-Hochberg procedure).
 % The number of tests is determined by the length of the vector of p-values.
+%
+% Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: 
+% A practical and powerful approach to multiple testing. Journal of the 
+% Royal Statistical Society. Series B (Methodological), 57, 289-300. 
+% Stable link:http://www.jstor.org/stable/2346101 
 %
 %
 % requires:

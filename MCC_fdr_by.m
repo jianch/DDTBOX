@@ -1,4 +1,4 @@
-function [fdr_corrected_h] = MCC_fdr_by(p_values, varargin)
+function [fdr_corrected_h] = mcc_fdr_by(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -15,6 +15,10 @@ function [fdr_corrected_h] = MCC_fdr_by(p_values, varargin)
 % This script receives a vector of p-values and outputs
 % false discovery rate corrected null hypothesis test results (Benjamin-Yekutieli procedure).
 % The number of tests is determined by the length of the vector of p-values.
+%
+% Benjamini, Y., & Yekutieli, D. (2001). The control of the false discovery 
+% rate in multiple testing under dependency. The Annals of Statistics, 29, 1165-1188.
+% doi 10.1093/biomet/93.3.491
 %
 %
 % requires:

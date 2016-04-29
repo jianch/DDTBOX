@@ -250,14 +250,14 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = MCC_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
+                        FW_ANALYSIS.h_matrix_z_corr{steps} = mcc_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
                     end % steps loop
             
                 case 2 % Holm-Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = MCC_holm_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
+                        FW_ANALYSIS.h_matrix_z_corr{steps} = mcc_holm_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
                     end % steps loop
                     
                 case 3 % strong FWER control permutation test
@@ -265,7 +265,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                        [FW_ANALYSIS.h_matrix_z_corr{steps}, FW_ANALYSIS.p_matrix_z_corr{steps}] = MCC_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.nIterations);
+                        [FW_ANALYSIS.h_matrix_z_corr{steps}, FW_ANALYSIS.p_matrix_z_corr{steps}] = mcc_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
                     end % steps loop
                     clear real_decoding_fw;
                     clear fw_chance_level;
@@ -291,7 +291,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                        [FW_ANALYSIS.h_matrix_z_corr{steps}, FW_ANALYSIS.p_matrix_z_corr{steps}] = MCC_KTMS_GFWER(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.nIterations, 'KTMS_u', ANALYSIS.KTMS_u);
+                        [FW_ANALYSIS.h_matrix_z_corr{steps}, FW_ANALYSIS.p_matrix_z_corr{steps}] = mcc_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
                     end % steps loop
                     clear real_decoding_fw;
                     clear fw_chance_level;
@@ -300,21 +300,21 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = MCC_fdr_bh(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats); 
+                        FW_ANALYSIS.h_matrix_z_corr{steps} = mcc_fdr_bh(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats); 
                     end % steps loop
                     
                 case 7 % Benjamini-Krieger-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = MCC_fdr_bky(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
+                        FW_ANALYSIS.h_matrix_z_corr{steps} = mcc_fdr_bky(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
                     end % steps loop
                       
                 case 8 % Benjamini-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
-                        FW_ANALYSIS.h_matrix_z_corr{steps} = MCC_fdr_by(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
+                        FW_ANALYSIS.h_matrix_z_corr{steps} = mcc_fdr_by(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.pstats);
                     end % steps loop
 
             end % ANALYSIS.fw.multcompstats switch
@@ -354,19 +354,19 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 case 1 % Bonferroni correction          
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label; % Copy from uncorrected ver.
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_bonferroni(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats); 
+                    FW_ANALYSIS.h_matrix_z_averagestep_corr = mcc_bonferroni(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats); 
  
                 case 2 % Holm-Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label; % Copy from uncorrected ver.
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_holm_bonferroni(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats); 
+                    FW_ANALYSIS.h_matrix_z_averagestep_corr = mcc_holm_bonferroni(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats); 
                     
                 case 3 % strong FWER control permutation test
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
                     real_decoding_fw = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,:); % Results matrix (subjects x channels)
                     fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                    [FW_ANALYSIS.h_matrix_z_averagestep_corr, FW_ANALYSIS.p_matrix_z_averagestep_corr_label] = MCC_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.nIterations);
+                    [FW_ANALYSIS.h_matrix_z_averagestep_corr, FW_ANALYSIS.p_matrix_z_averagestep_corr_label] = mcc_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
                     clear real_decoding_fw;
                     clear fw_chance_level;
                     
@@ -381,24 +381,24 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
                     real_decoding_fw = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,:); % Results matrix (subjects x channels)
                     fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                    [FW_ANALYSIS.h_matrix_z_averagestep_corr] = MCC_KTMS_GFWER(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.nIterations, 'KTMS_u', ANALYSIS.KTMS_u);
+                    [FW_ANALYSIS.h_matrix_z_averagestep_corr] = mcc_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
                     clear real_decoding_fw;
                     clear fw_chance_level;
 
                 case 6 % Benjamini-Hochberg false discovery rate control
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; 
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_fdr_bh(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
+                    FW_ANALYSIS.h_matrix_z_averagestep_corr = mcc_fdr_bh(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
 
                 case 7 % Benjamini-Krieger-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; 
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_fdr_bky(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
+                    FW_ANALYSIS.h_matrix_z_averagestep_corr = mcc_fdr_bky(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
                       
                 case 8 % Benjamini-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; 
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
-                    FW_ANALYSIS.h_matrix_z_averagestep_corr = MCC_fdr_by(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
+                    FW_ANALYSIS.h_matrix_z_averagestep_corr = mcc_fdr_by(FW_ANALYSIS.p_matrix_z_averagestep_uncorr, 'alpha', ANALYSIS.pstats);
 
         end % of switch ANALYSIS.fw.multcompstats
     end % if p_corr ==1 statement
