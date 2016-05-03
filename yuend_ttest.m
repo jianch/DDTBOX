@@ -130,9 +130,9 @@ diff = mean_cond_1 - mean_cond_2; % Calculate difference in trimmed means
 df = n_trimmed - 1; % Calculate degrees of freedom
 se = sqrt( (d_cond_1 + d_cond_2 - 2 .* winsorized_cov_cond_1_2) ./ (n_trimmed .* (n_trimmed - 1)) ); % Calculate standard error
 
-t_yuen = diff./se; % Calculate yuen's t
+t_yuen.tstat = diff./se; % Calculate yuen's t
 
-p = 2 * (1 - tcdf(abs(t_yuen), df)); % 2-tailed probability
+p = 2 * (1 - tcdf(abs(t_yuen.tstat), df)); % 2-tailed probability
 
 if p < alpha;
     h_yuen = 1;
