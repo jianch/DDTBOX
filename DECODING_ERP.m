@@ -450,78 +450,116 @@ clear balanced_data;
 % single-trial data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % all runs are pooled. Data is randomly drawn from all data
 if STUDY.avmode == 1
-   
-    for d = 1:size(pooled_balanced_data,1)
+    
+    % take X% of data as test data with X-fold cross-validation
+    % repeat X-times with different test data sets
+    for con = 1:size(pooled_balanced_data,3)
         
-        % take X% of data as test data with X-fold cross-validation
-        % repeat X-times with different test data sets 
-        for con = 1:size(pooled_balanced_data,3)
-
-            ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / STUDY.cross_val_steps);
-
-            for ncv = 1:STUDY.n_rep_cross_val
-
-                % draw x times without replacement
-                random_set = randperm(ntrs_set * STUDY.cross_val_steps);
-                x = 1;
-
-                for cv = 1:STUDY.cross_val_steps
-
-                    % find the test-trials for current cross-validation step
-                    test_trials = random_set(x:(x + (ntrs_set - 1)));
-
+        ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / STUDY.cross_val_steps);
+        
+        for ncv = 1:STUDY.n_rep_cross_val
+            
+            % draw x times without replacement
+            random_set = randperm(ntrs_set * STUDY.cross_val_steps);
+            x = 1;
+            
+            for cv = 1:STUDY.cross_val_steps
+                
+                % find the test-trials for current cross-validation step
+                test_trials = random_set(x:(x + (ntrs_set - 1)));
+                
+                for d = 1:size(pooled_balanced_data,1)
+                    
                     temp_training_set = pooled_balanced_data{d,1,con}(:,:,:);
-
+                    
                     if STUDY.analysis_mode == 4 % if continuous SVR
                         temp_training_labels = STUDY.training_label_import.labels{1,con};
                     end % if
-
-                    delete_test_trials = fliplr(sort(test_trials));
-
+                    
                     % extract test-trials and delete them from training-trials
                     for trl = 1:size(test_trials,2)
-
+                        
                         test_set{d,con,cv,ncv}(:,:,trl) = pooled_balanced_data{d,1,con}(:,:,test_trials(trl));
-
+                        
                         if STUDY.analysis_mode == 4 % if continuous SVR
                             STUDY.test_labels{con,cv,ncv}(trl) = STUDY.test_label_import.labels{1,con}(test_trials(trl));
                         end % if
-
+                        
                         % option 1: delete used trials each for trial
                         % temp_training_set(:,:,delete_test_trials(trl))=[];
-
+                        
                     end %trl
-
+                    
+                    
+                    % extract training set
+                    if STUDY.cross == 0
+                        
+                        delete_test_trials=fliplr(sort(test_trials));
+                        
+                    elseif STUDY.cross == 1
+                        
+                        % if doing cross-classification, ensure that trials
+                        % from one training set don't end up in the
+                        % opposite test set
+                        delete_test_trials = [];
+                        
+                        for trl=1:size(test_trials,2)
+                            
+                            % find trials in training set which are the
+                            % same as in opposite test set
+                            for testTrl = 1:size(temp_training_set,3)
+                                
+                                if isequal(pooled_balanced_data{(abs(d-2)+1),1,con}(:,:,test_trials(trl)),temp_training_set(:,:,testTrl))
+                                    
+                                    delete_test_trials = [delete_test_trials testTrl];
+                                    
+                                end % if
+                                
+                            end % testTrl
+                            
+                        end %trl
+                        
+                        if numel(delete_test_trials) < numel(test_trials)
+                            
+                            delete_test_trials = [delete_test_trials, test_trials(1:(numel(test_trials) - numel(delete_test_trials)))];
+                            
+                        end % if
+                        
+                    end % STUDY.cross if
+                    
                     % option 2: delete all used trials at once
                     temp_training_set(:,:,delete_test_trials) = [];
-
+                    
                     training_set{d,con,cv,ncv} = temp_training_set;
-
+                    
                     if STUDY.analysis_mode == 4 % if continuous SVR
                         temp_training_labels(delete_test_trials) = [];
                         STUDY.training_labels{con,cv,ncv} = temp_training_labels;
                     end
-
+                    
                     clear delete_test_trials;
                     clear temp_training_set;
                     clear temp_training_labels;
-                    clear test_trials;
-
-                    % go to next step and repeat
-                    x = x + ntrs_set;
-                    fprintf('Data sorted for single-trial decoding: specified DCG %d condition %d cross-validation step %d of cycle %d. \n',d,con,cv,ncv);    
-
-                end % cv (cross-validation steps)
-
-                clear random_set
-
-            end % ncv (repetition of cross-validation)
-
-            clear ntrs_set;
-
-        end % con (all conditions in serial order)
+                    
+                    fprintf('Data sorted for single-trial decoding: specified DCG %d condition %d cross-validation step %d of cycle %d. \n',d,con,cv,ncv);
+                    
+                end % d
+                
+                % go to next step and repeat
+                x=x+ntrs_set;
+                
+                clear test_trials
+                
+            end % cv (cross-validation steps)
+            
+            clear random_set
+            
+        end % ncv (repetition of cross-validation)
+        
+        clear ntrs_set;
+        
+    end % con (all conditions in serial order)
     
-    end % d
     clear pooled_balanced_data
     
 % run-average data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
