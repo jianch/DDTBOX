@@ -496,7 +496,7 @@ if STUDY.avmode == 1
                         
                         delete_test_trials=fliplr(sort(test_trials));
                         
-                    elseif STUDY.cross == 1
+                    elseif STUDY.cross == 1 || STUDY.cross == 2
                         
                         % if doing cross-classification, ensure that trials
                         % from one training set don't end up in the
