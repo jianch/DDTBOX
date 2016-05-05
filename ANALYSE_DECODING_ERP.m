@@ -489,14 +489,19 @@ case 3 % Strong FWER Control Permutation Test
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
         if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = zeros(1, size(real_decoding_scores, 2));
-            perm_decoding_scores(1,:) = ANALYSIS.chancelevel;
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
         elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na,:);        
         end
-    
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
+
         [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:)] = multcomp_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
     end % of for na loop
     clear real_decoding_scores
@@ -510,14 +515,19 @@ case 4 % Cluster-Based Permutation Test
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
         if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = zeros(1, size(real_decoding_scores, 2));
-            perm_decoding_scores(1,:) = ANALYSIS.chancelevel;
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
         elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na,:);        
         end
-    
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
+        
         [ANALYSIS.RES.h_ttest(na, :)] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
     end % of for na loop
     clear real_decoding_scores
@@ -532,13 +542,18 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 
         if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = zeros(1, size(real_decoding_scores, 2));
-            perm_decoding_scores(1,:) = ANALYSIS.chancelevel;
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
         elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(na, :);
-            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(na,:);        
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na,:);        
         end
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
 
         [ANALYSIS.RES.h_ttest(na, :)] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
     end % of for na loop
