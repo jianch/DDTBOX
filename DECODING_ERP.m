@@ -81,6 +81,7 @@ if input_mode == 0 % Hard-coded input
     STUDY.display_on = 1; % 1=figure displayed, 0=no figure
     
     STUDY.rt_match = 0; % Use RT-matching algorithm to select trials? 0=no / 1=yes
+    STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
     STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
     STUDY.cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
     STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with randomly re-ordered data?
@@ -94,12 +95,13 @@ elseif input_mode == 1 % Prompt user for input
     if STUDY.avmode == 1 % Options for single-trial decoding
         STUDY.cross_val_steps = input('How many cross-validation steps do you wish to perform?');
         STUDY.n_rep_cross_val = input('How many independent repetitions of the analysis do you wish to perform?');
-        STUDY.rt_match = input('Do you wish to RT-match the trials from the conditions to be decoded? (1=yes, 0=no) ');
+        STUDY.rt_match = input('Do you wish to RT-match the trials from the conditions to be decoded? (1=yes, 0=no)');
     end
     STUDY.analysis_mode = input('Specifiy analysis method: "1" for Class SVM, "2" for Class LDA, "3" increments SVR, "4" continuous SVR: '); 
     STUDY.window_width_ms = input('Enter decoding window width in ms: ');
     STUDY.step_width_ms = input('Enter step width for moving the decoding window in ms: ');
-    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes:');
+    STUDY.zscore_convert = input('Convert data to z-scores before decoding? "0" for no, "1" for yes: ');
+    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes: ');
     if STUDY.cross > 0
         dcgs = input('Enter two discriminations groups for cross-decoding (e.g.[1 2]):');
         STUDY.dcg_todo = dcgs;
@@ -434,14 +436,15 @@ end % of if STUDY.avmode == 1 statement
 
 clear balanced_data;
 
+
 %% SECTION 7: SORT DATA FOR CLASSIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % output of this section:
 %
-% train_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
+% training_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
 % test_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
 %
 % for run-averaged data the cross-validation steps = number of runs and
-% one cicle of cross-validation only
+% one cycle of cross-validation only
 % every cell contains one data-points x channels (x exemplars for one classification 
 % step = trials / not necessary for run-average decoding) matrix
 % (In v29 a dimension was added to accomodate cross-condition decoding)
