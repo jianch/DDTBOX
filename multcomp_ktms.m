@@ -1,4 +1,4 @@
-function [corrected_h] = mcc_ktms(cond1_data, cond2_data, varargin)
+function [corrected_h] = multcomp_ktms(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -57,26 +57,26 @@ options = struct(...
     'ktms_u', 1);
 
 % Read the acceptable names
-optionNames = fieldnames(options);
+option_names = fieldnames(options);
 
 % Count arguments
-nArgs = length(varargin);
-if round(nArgs/2) ~= nArgs/2
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
    error([mfilename ' needs property name/property value pairs'])
 end
 
 for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
-   inpName = lower(pair{1}); % make case insensitive
+   inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
-   if any(strcmp(inpName,optionNames))
-      options.(inpName) = pair{2};
+   if any(strcmp(inp_name, option_names))
+      options.(inp_name) = pair{2};
    else
-      error('%s is not a recognized parameter name', inpName)
+      error('%s is not a recognized parameter name', inp_name)
    end
 end
 clear pair
-clear inpName
+clear inp_name
 
 % Renaming variables for use below:
 alpha_level = options.alpha;
@@ -99,6 +99,9 @@ diff_scores = cond1_data - cond2_data;
 
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
+
+p_values = zeros(1, n_total_comparisons); % Preallocate
+uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
 
 % Perform t-tests at each step
 for step = 1:n_total_comparisons

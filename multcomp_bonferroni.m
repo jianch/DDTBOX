@@ -1,4 +1,4 @@
-function [bonferroni_corrected_h] = mcc_bonferroni(p_values, varargin)
+function [bonferroni_corrected_h] = multcomp_bonferroni(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -45,26 +45,26 @@ options = struct(...
     'alpha', 0.05);
 
 % Read the acceptable names
-optionNames = fieldnames(options);
+option_names = fieldnames(options);
 
 % Count arguments
-nArgs = length(varargin);
-if round(nArgs/2) ~= nArgs/2
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
    error([mfilename ' needs property name/property value pairs'])
 end
 
 for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
-   inpName = lower(pair{1}); % make case insensitive
+   inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
-   if any(strcmp(inpName,optionNames))
-      options.(inpName) = pair{2};
+   if any(strcmp(inp_name, option_names))
+      options.(inp_name) = pair{2};
    else
-      error('%s is not a recognized parameter name', inpName)
+      error('%s is not a recognized parameter name', inp_name)
    end
 end
 clear pair
-clear inpName
+clear inp_name
 
 % Renaming variables for use below:
 alpha_level = options.alpha;

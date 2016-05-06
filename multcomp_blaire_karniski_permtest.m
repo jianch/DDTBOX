@@ -1,4 +1,4 @@
-function [corrected_h, corrected_p] = mcc_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
+function [corrected_h, corrected_p] = multcomp_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -36,10 +36,15 @@ function [corrected_h, corrected_p] = mcc_blaire_karniski_permtest(cond1_data, c
 %
 %
 % outputs:
-% corrected_h (vector of hypothesis tests in which statistical significance
+% - corrected_h (vector of hypothesis tests in which statistical significance
 % is defined by values above a threshold of the (alpha_level * 100)th percentile
 % of the maximum statistic distribution.
 % 1 = statistically significant, 0 = not statistically significant)
+%
+% - corrected_p (vector of p-values derived from assessing the t-value of
+% each test relative to the distribution of maximum t-values across
+% iterations in the permutation test. For example, if above the 99th
+% percentile then p < .01.
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
@@ -51,26 +56,26 @@ options = struct(...
     'iterations', 5000);
 
 % Read the acceptable names
-optionNames = fieldnames(options);
+option_names = fieldnames(options);
 
 % Count arguments
-nArgs = length(varargin);
-if round(nArgs/2) ~= nArgs/2
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
    error([mfilename ' needs property name/property value pairs'])
 end
 
 for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
-   inpName = lower(pair{1}); % make case insensitive
+   inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
-   if any(strcmp(inpName,optionNames))
-      options.(inpName) = pair{2};
+   if any(strcmp(inp_name, option_names))
+      options.(inp_name) = pair{2};
    else
-      error('%s is not a recognized parameter name', inpName)
+      error('%s is not a recognized parameter name', inp_name)
    end
 end
 clear pair
-clear inpName
+clear inp_name
 
 % Renaming variables for use below:
 alpha_level = options.alpha;
@@ -95,6 +100,7 @@ n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
 % Perform t-tests at each step
+uncorrected_t = zeros(1,n_total_comparisons); % Preallocate
 for step = 1:n_total_comparisons
 
     [~, ~, ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', alpha_level);
@@ -106,8 +112,8 @@ end
 rng('shuffle');
 
 % Generate t(max) distribution from the randomly-permuted data
-t_max = zeros(1, n_iterations);
-t_stat = zeros(n_total_comparisons, n_iterations);
+t_max = zeros(1, n_iterations); % Preallocate
+t_stat = zeros(n_total_comparisons, n_iterations); % Preallocate
         
     
 for iteration = 1:n_iterations
@@ -133,8 +139,8 @@ end % of for iteration loop
 % critieria for statistical significance)
 permtest_threshold = prctile(t_max(1:n_iterations), ((1 - alpha_level) * 100));
 
-corrected_h = zeros(1,n_total_comparisons);
-corrected_p = zeros(1,n_total_comparisons);
+corrected_h = zeros(1,n_total_comparisons); % Preallocate
+corrected_p = zeros(1,n_total_comparisons); % Preallocate
 
 % Compare each result with the t-value threshold
 corrected_h(abs(uncorrected_t) > permtest_threshold) = 1;
