@@ -71,7 +71,7 @@ if input_mode == 0 % Hard-coded input
     % get study parameters (hardcoded)
     STUDY.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     STUDY.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    STUDY.analysis_mode = 1;% ANALYSIS mode (1=SVM classification, 2=LDA classification, 3=SVR increments, 4=SVR continous)
+    STUDY.analysis_mode = 5;% ANALYSIS mode (1=SVM classification, 2=LDA classification, 3=SVR increments, 4=SVR continous,5=SVM with liblinear)
     
     STUDY.window_width_ms = 10; % width of sliding window in ms
     STUDY.step_width_ms = 10; % step size with which sliding window is moved through the trial
@@ -81,6 +81,7 @@ if input_mode == 0 % Hard-coded input
     STUDY.display_on = 1; % 1=figure displayed, 0=no figure
     
     STUDY.rt_match = 0; % Use RT-matching algorithm to select trials? 0=no / 1=yes
+    STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
     STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
     STUDY.cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
     STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with randomly re-ordered data?
@@ -94,12 +95,13 @@ elseif input_mode == 1 % Prompt user for input
     if STUDY.avmode == 1 % Options for single-trial decoding
         STUDY.cross_val_steps = input('How many cross-validation steps do you wish to perform?');
         STUDY.n_rep_cross_val = input('How many independent repetitions of the analysis do you wish to perform?');
-        STUDY.rt_match = input('Do you wish to RT-match the trials from the conditions to be decoded? (1=yes, 0=no) ');
+        STUDY.rt_match = input('Do you wish to RT-match the trials from the conditions to be decoded? (1=yes, 0=no)');
     end
     STUDY.analysis_mode = input('Specifiy analysis method: "1" for Class SVM, "2" for Class LDA, "3" increments SVR, "4" continuous SVR: '); 
     STUDY.window_width_ms = input('Enter decoding window width in ms: ');
     STUDY.step_width_ms = input('Enter step width for moving the decoding window in ms: ');
-    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes:');
+    STUDY.zscore_convert = input('Convert data to z-scores before decoding? "0" for no, "1" for yes: ');
+    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes: ');
     if STUDY.cross > 0
         dcgs = input('Enter two discriminations groups for cross-decoding (e.g.[1 2]):');
         STUDY.dcg_todo = dcgs;
@@ -136,6 +138,87 @@ fprintf('Balanced number of examples will be used for all analyses by default.\n
 if STUDY.perm_test == 1
     fprintf('Random-label analysis will be based on %d analyses.\n',STUDY.n_all_permutation);
 end
+
+%__________________________________________________________________________
+% LIBSVM and LIBLINEAR flags
+% LIBSVM and LIBLINEAR require input flags (strings) to specify the type of model that will be used for decoding.
+% WARNING: Do not change these flags unless you really know what you are doing!!!
+
+% For the full list of flags and their options see
+% LIBSVM:    https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+% LIBLINEAR: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
+% The following flags are currently used as defaults in DDTBox
+
+% -c cost : cost parameter
+% The following backends are
+
+% LIBSVM
+% -s svm_type : set the type of support vector machine
+% 	0 -- C-Support Vector Classification
+% 	1 -- nu-Support Vector Classification
+% 	2 -- one-class Support Vector Machine
+% 	3 -- epsilon-Support Vector Regression
+% 	4 -- nu-Support Vector Regression
+% -t kernel_type : set type of kernel function
+% 	0 -- linear: u'*v
+% 	1 -- polynomial: (gamma*u'*v + coef0)^degree
+% 	2 -- radial basis function: exp(-gamma*|u-v|^2)
+% 	3 -- sigmoid: tanh(gamma*u'*v + coef0)
+
+% LIBLINEAR
+% -s svm_type:
+%	 0 -- L2-regularized logistic regression (primal)
+%	 1 -- L2-regularized L2-loss support vector classification (dual)
+%	 2 -- L2-regularized L2-loss support vector classification (primal)
+%	 3 -- L2-regularized L1-loss support vector classification (dual)
+%	 4 -- support vector classification by Crammer and Singer
+%	 5 -- L1-regularized L2-loss support vector classification
+%	 6 -- L1-regularized logistic regression
+%	 7 -- L2-regularized logistic regression (dual)
+%	11 -- L2-regularized L2-loss support vector regression (primal)
+%	12 -- L2-regularized L2-loss support vector regression (dual)
+%	13 -- L2-regularized L1-loss support vector regression (dual)
+
+
+% Defaults:
+% Support Vector Classification with libsvm - '-s 0 -t 0 -c 1'
+% Support Vector Regression with libsvm - '-s 3 -t 0 -c 0.1'
+% Support Vector Regression (continuous) with libsvm - '-s 3 -t 0 -c 0.1'
+% Support Vector Classification with liblinear - '-s 2 -c 1'
+
+if STUDY.analysis_mode == 1 % SVM classification with libsvm
+    STUDY.backend_flags.svm_type = 0;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 1;
+    STUDY.backend_flags.extra_flags = []; % To input extra flag types
+elseif STUDY.analysis_mode == 2 % LDA classifcation
+    % to be implemented in future version
+elseif STUDY.analysis_mode == 3 % SVR (regression)  with libsvm
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = []; 
+elseif STUDY.analysis_mode == 4 % SVR (regression continuous)  with libsvm
+    STUDY.backend_flags.svm_type = 3;
+    STUDY.backend_flags.kernel_type = 0;
+    STUDY.backend_flags.cost = 0.1;
+    STUDY.backend_flags.extra_flags = [];
+elseif STUDY.analysis_mode == 5 % SVM with liblinear
+    STUDY.backend_flags.svm_type = 2;
+    STUDY.backend_flags.kernel_type = -1; % not valid for liblinear
+    STUDY.backend_flags.cost = 1;
+    STUDY.backend_flags.extra_flags = [];
+end
+
+% Merging all flags into a single string
+STUDY.backend_flags.all_flags = ['-s ' int2str(STUDY.backend_flags.svm_type) ' -c ' num2str(STUDY.backend_flags.cost)]
+
+% LIBSVM specific options
+if STUDY.backend_flags.kernel_type ~= -1
+	STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' -t ' int2str(STUDY.backend_flags.kernel_type)];
+end
+
+STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' ' STUDY.backend_flags.extra_flags];
 
 
 %% SECTION 2: READ IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -353,14 +436,15 @@ end % of if STUDY.avmode == 1 statement
 
 clear balanced_data;
 
+
 %% SECTION 7: SORT DATA FOR CLASSIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % output of this section:
 %
-% train_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
+% training_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
 % test_set{dcg, condition, cross-validation step, cycles of cross-validation}(datapoints, channels, trials/exemplar)
 %
 % for run-averaged data the cross-validation steps = number of runs and
-% one cicle of cross-validation only
+% one cycle of cross-validation only
 % every cell contains one data-points x channels (x exemplars for one classification 
 % step = trials / not necessary for run-average decoding) matrix
 % (In v29 a dimension was added to accomodate cross-condition decoding)
@@ -369,78 +453,116 @@ clear balanced_data;
 % single-trial data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % all runs are pooled. Data is randomly drawn from all data
 if STUDY.avmode == 1
-   
-    for d = 1:size(pooled_balanced_data,1)
+    
+    % take X% of data as test data with X-fold cross-validation
+    % repeat X-times with different test data sets
+    for con = 1:size(pooled_balanced_data,3)
         
-        % take X% of data as test data with X-fold cross-validation
-        % repeat X-times with different test data sets 
-        for con = 1:size(pooled_balanced_data,3)
-
-            ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / STUDY.cross_val_steps);
-
-            for ncv = 1:STUDY.n_rep_cross_val
-
-                % draw x times without replacement
-                random_set = randperm(ntrs_set * STUDY.cross_val_steps);
-                x = 1;
-
-                for cv = 1:STUDY.cross_val_steps
-
-                    % find the test-trials for current cross-validation step
-                    test_trials = random_set(x:(x + (ntrs_set - 1)));
-
+        ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / STUDY.cross_val_steps);
+        
+        for ncv = 1:STUDY.n_rep_cross_val
+            
+            % draw x times without replacement
+            random_set = randperm(ntrs_set * STUDY.cross_val_steps);
+            x = 1;
+            
+            for cv = 1:STUDY.cross_val_steps
+                
+                % find the test-trials for current cross-validation step
+                test_trials = random_set(x:(x + (ntrs_set - 1)));
+                
+                for d = 1:size(pooled_balanced_data,1)
+                    
                     temp_training_set = pooled_balanced_data{d,1,con}(:,:,:);
-
+                    
                     if STUDY.analysis_mode == 4 % if continuous SVR
                         temp_training_labels = STUDY.training_label_import.labels{1,con};
                     end % if
-
-                    delete_test_trials = fliplr(sort(test_trials));
-
+                    
                     % extract test-trials and delete them from training-trials
                     for trl = 1:size(test_trials,2)
-
+                        
                         test_set{d,con,cv,ncv}(:,:,trl) = pooled_balanced_data{d,1,con}(:,:,test_trials(trl));
-
+                        
                         if STUDY.analysis_mode == 4 % if continuous SVR
                             STUDY.test_labels{con,cv,ncv}(trl) = STUDY.test_label_import.labels{1,con}(test_trials(trl));
                         end % if
-
+                        
                         % option 1: delete used trials each for trial
                         % temp_training_set(:,:,delete_test_trials(trl))=[];
-
+                        
                     end %trl
-
+                    
+                    
+                    % extract training set
+                    if STUDY.cross == 0
+                        
+                        delete_test_trials=fliplr(sort(test_trials));
+                        
+                    elseif STUDY.cross == 1 || STUDY.cross == 2
+                        
+                        % if doing cross-classification, ensure that trials
+                        % from one training set don't end up in the
+                        % opposite test set
+                        delete_test_trials = [];
+                        
+                        for trl=1:size(test_trials,2)
+                            
+                            % find trials in training set which are the
+                            % same as in opposite test set
+                            for testTrl = 1:size(temp_training_set,3)
+                                
+                                if isequal(pooled_balanced_data{(abs(d-2)+1),1,con}(:,:,test_trials(trl)),temp_training_set(:,:,testTrl))
+                                    
+                                    delete_test_trials = [delete_test_trials testTrl];
+                                    
+                                end % if
+                                
+                            end % testTrl
+                            
+                        end %trl
+                        
+                        if numel(delete_test_trials) < numel(test_trials)
+                            
+                            delete_test_trials = [delete_test_trials, test_trials(1:(numel(test_trials) - numel(delete_test_trials)))];
+                            
+                        end % if
+                        
+                    end % STUDY.cross if
+                    
                     % option 2: delete all used trials at once
                     temp_training_set(:,:,delete_test_trials) = [];
-
+                    
                     training_set{d,con,cv,ncv} = temp_training_set;
-
+                    
                     if STUDY.analysis_mode == 4 % if continuous SVR
                         temp_training_labels(delete_test_trials) = [];
                         STUDY.training_labels{con,cv,ncv} = temp_training_labels;
                     end
-
+                    
                     clear delete_test_trials;
                     clear temp_training_set;
                     clear temp_training_labels;
-                    clear test_trials;
-
-                    % go to next step and repeat
-                    x = x + ntrs_set;
-                    fprintf('Data sorted for single-trial decoding: specified DCG %d condition %d cross-validation step %d of cycle %d. \n',d,con,cv,ncv);    
-
-                end % cv (cross-validation steps)
-
-                clear random_set
-
-            end % ncv (repetition of cross-validation)
-
-            clear ntrs_set;
-
-        end % con (all conditions in serial order)
+                    
+                    fprintf('Data sorted for single-trial decoding: specified DCG %d condition %d cross-validation step %d of cycle %d. \n',d,con,cv,ncv);
+                    
+                end % d
+                
+                % go to next step and repeat
+                x=x+ntrs_set;
+                
+                clear test_trials
+                
+            end % cv (cross-validation steps)
+            
+            clear random_set
+            
+        end % ncv (repetition of cross-validation)
+        
+        clear ntrs_set;
+        
+    end % con (all conditions in serial order)
     
-    end % d
     clear pooled_balanced_data
     
 % run-average data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 

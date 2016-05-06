@@ -311,6 +311,48 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
   
                     end % condition
                 
+                    
+                    
+                    %_________________________________________________________________________________
+                    % Z-score the training and test sets (optional)
+                                        
+                    if STUDY.zscore_convert == 1
+                        switch STUDY.stmode
+                            case 1 % spatial decoding
+                                % Organisation of vectors:
+                                % vectors_train(channel, epoch)
+                                % vectors_test(channel, epoch)
+                                
+                                vectors_train = zscore(vectors_train);
+                                vectors_test = zscore(vectors_test);
+                               
+                            case 2 % temporal decoding
+                                % Organisation of vectors:
+                                % vectors_train(timepoint, epoch)
+                                % vectors_test(timepoint, epoch)
+                                
+                                vectors_train = zscore(vectors_train);
+                                vectors_test = zscore(vectors_test);
+                            
+                            case 3 % spatio-temporal decoding
+                                % Organisation of vectors:
+                                % vectors_train(channel/timept combination, epoch)
+                                % vectors_test(channel/timept combination, epoch)
+                                
+                                % Training Vectors
+                                tmp = zscore( reshape(vectors_train, ...
+                                    size(data_training, 1), size(data_training, 2), size(vectors_train, 2)) );
+                                vectors_train = reshape(tmp, size(data_training, 1) * size(data_training,2), size(vectors_train, 2));
+
+                                % Test Vectors
+                                tmp = zscore( reshape(vectors_test, ...
+                                    size(data_test, 1), size(data_test, 2), size(vectors_test, 2)) );
+                                vectors_test = reshape(tmp, size(data_test, 1) * size(data_test,2), size(vectors_test, 2));
+
+                        end % of if STUDY.stmode
+                    end % of if STUDY.zscore_convert
+
+                    
                     % PASS ON TO CLASSIFIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %
                     % Data is sorted into vectors_test, vectors_train, labels_test, labels_train. Based on analysis_mode,
