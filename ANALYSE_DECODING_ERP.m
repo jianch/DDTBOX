@@ -652,7 +652,7 @@ elseif size(dcg_todo,2) == 2 % Cross-condition decoding analyses
 
 end
 
-save(savename,'ANALYSIS','FW_ANALYSIS');
+save(savename,'ANALYSIS','FW_ANALYSIS','-v7.3');
 
 fprintf('All results saved in %s. \n',savename);
 
