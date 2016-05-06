@@ -55,14 +55,14 @@ if input_mode == 0 % Hard-coded input
         
     ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    ANALYSIS.window_width_ms = 40; % width of sliding window in ms
+    ANALYSIS.window_width_ms = 10; % width of sliding window in ms
     ANALYSIS.step_width_ms = 10; % step size with which sliding window is moved through the trial
     
-    ANALYSIS.permstats = 1; % Testing against: 1=theoretical chance level / 2=permutation test results
+    ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 3; % Correction for multiple comparisons: 
+    ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
     % 0 = no correction
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
@@ -80,7 +80,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
-    ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
+    ANALYSIS.fw.do = 1; % analyse feature weights? 0=no / 1=yes
     ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
