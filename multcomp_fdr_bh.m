@@ -1,4 +1,4 @@
-function [fdr_corrected_h] = multcomp_fdr_bh(p_values, varargin)
+function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -30,9 +30,14 @@ function [fdr_corrected_h] = multcomp_fdr_bh(p_values, varargin)
 %
 %
 % outputs:
-% fdr_corrected_h (vector of false discovery rate corrected hypothesis tests 
+% - fdr_corrected_h (vector of false discovery rate corrected hypothesis tests 
 % derived from comparing p-values to false discovery rate adjusted critical alpha level. 
 % 1 = statistically significant, 0 = not statistically significant)
+%
+% - benhoch_critical_alpha (the adjusted critical alpha for the false
+% discovery rate procedure. p-values smaller or equal to this value are
+% declared statistically significant. This value is 0 if no tests reached 
+% statistical significance).
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable

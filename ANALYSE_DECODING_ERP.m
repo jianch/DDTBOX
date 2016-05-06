@@ -465,7 +465,8 @@ case 1 % Bonferroni Correction
     fprintf('Performing corrections for multiple comparisons (Bonferroni)\n');
 
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bonferroni_adjusted_alpha(na)] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
     end
 
 %__________________________________________________________________________    
@@ -476,12 +477,13 @@ case 2 % Holm-Bonferroni Correction
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.holm_adjusted_alpha(na)] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
     end % of for na loop
 
 %__________________________________________________________________________    
 
-case 3 % Strong FWER Control Permutation Test
+case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
     fprintf('Performing corrections for multiple comparisons (permutation test)\n');
     
@@ -506,7 +508,8 @@ case 3 % Strong FWER Control Permutation Test
         tmp = squeeze(perm_decoding_scores);
         perm_decoding_scores = tmp;
 
-        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:)] = multcomp_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:), ANALYSIS.RES.critical_t(na)] = multcomp_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+        fprintf('The adjusted critical t value for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_t(na));
     end % of for na loop
     
     clear real_decoding_scores
@@ -581,7 +584,8 @@ case 6 % Benjamini-Hochberg FDR Control
     
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bh_crit_alpha(na)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bh_crit_alpha(na));
     end % of for na loop
 
 %__________________________________________________________________________    
@@ -592,7 +596,8 @@ case 7 % Benjamini-Krieger-Yekutieli FDR Control
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bky_crit_alpha(na)] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bky_crit_alpha(na));
     end % of for na loop
 
 %__________________________________________________________________________    
@@ -603,7 +608,8 @@ case 8 % Benjamini-Yekutieli FDR Control
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.by_crit_alpha(na)] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.by_crit_alpha(na));
     end % of for na loop
 
 %__________________________________________________________________________    

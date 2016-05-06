@@ -1,4 +1,4 @@
-function [corrected_h, corrected_p] = multcomp_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
+function [corrected_h, corrected_p, critical_t] = multcomp_blaire_karniski_permtest(cond1_data, cond2_data, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -45,6 +45,9 @@ function [corrected_h, corrected_p] = multcomp_blaire_karniski_permtest(cond1_da
 % each test relative to the distribution of maximum t-values across
 % iterations in the permutation test. For example, if above the 99th
 % percentile then p < .01.
+%
+% - critical_t (absolute critical t-value. t-values higher than this are
+% counted as statistically significant).
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
@@ -137,13 +140,13 @@ end % of for iteration loop
 
 % Calculating the 95th percentile of t_max values (two-tailed, used as decision
 % critieria for statistical significance)
-permtest_threshold = prctile(t_max(1:n_iterations), ((1 - alpha_level) * 100));
+critical_t = prctile(t_max(1:n_iterations), ((1 - alpha_level) * 100));
 
 corrected_h = zeros(1,n_total_comparisons); % Preallocate
 corrected_p = zeros(1,n_total_comparisons); % Preallocate
 
 % Compare each result with the t-value threshold
-corrected_h(abs(uncorrected_t) > permtest_threshold) = 1;
+corrected_h(abs(uncorrected_t) > critical_t) = 1;
 
 % Calculating a p-value for each step
 for step = 1:n_total_comparisons

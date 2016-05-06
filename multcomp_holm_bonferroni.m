@@ -1,4 +1,4 @@
-function [holm_corrected_h] = multcomp_holm_bonferroni(p_values, varargin)
+function [holm_corrected_h, holm_corrected_alpha] = multcomp_holm_bonferroni(p_values, varargin)
 
 %__________________________________________________________________________
 % Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
@@ -27,9 +27,11 @@ function [holm_corrected_h] = multcomp_holm_bonferroni(p_values, varargin)
 %
 %
 % outputs:
-% holm_corrected_h (vector of Holm-Bonferroni corrected hypothesis tests 
+% - holm_corrected_h (vector of Holm-Bonferroni corrected hypothesis tests 
 % derived from comparing p-values to Holm-Bonferroni adjusted critical alpha level. 
 % 1 = statistically significant, 0 = not statistically significant)
+%
+% - holm_corrected_alpha (the adjusted alpha threshold)
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
