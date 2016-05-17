@@ -62,13 +62,34 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.multcompstats = 0; % Bonferroni-correction for multiple comparisons: 0=no / 1=yes  
+    ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
+    % 0 = no correction
+    % 1 = Bonferroni correction
+    % 2 = Holm-Bonferroni correction
+    % 3 = Strong FWER Control Permutation Test
+    % 4 = Cluster-Based Permutation Test
+    % 5 = KTMS Generalised FWER Control
+    % 6 = Benjamini-Hochberg FDR Control
+    % 7 = Benjamini-Krieger-Yekutieli FDR Control
+    % 8 = Benjamini-Yekutieli FDR Control
+    ANALYSIS.n_iterations = 1000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
+    ANALYSIS.ktms_u = 2; % u parameter of the KTMS GFWER control procedure
+    ANALYSIS.cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
     
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
     ANALYSIS.fw.do = 1; % analyse feature weights? 0=no / 1=yes
+    ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
+    % 1 = Bonferroni correction
+    % 2 = Holm-Bonferroni correction
+    % 3 = Strong FWER Control Permutation Test
+    % 4 = Cluster-Based Permutation Test (Currently not available)
+    % 5 = KTMS Generalised FWER Control
+    % 6 = Benjamini-Hochberg FDR Control
+    % 7 = Benjamini-Krieger-Yekutieli FDR Control
+    % 8 = Benjamini-Yekutieli FDR Control
     
         % if feature weights are analysed, specify what is displayed
         %__________________________________________________________________
@@ -115,7 +136,21 @@ elseif input_mode == 1 % Prompted manual input
     end
     
     ANALYSIS.pstats = input('Specify critical p-value for statistical testing (e.g. 0.05): ');
-    ANALYSIS.multcompstats = input('Specify if you wish to control for multiple comparisons. "0" for no; "1" for yes:  ');
+    ANALYSIS.multcompstats = input(['\nSpecify if you wish to control for multiple comparisons: \n"0" for no correction \n'...
+        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
+        '"4" for Cluster-Based Permutation Testing \n"5" for KTMS Generalised FWER Control \n' ...
+        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
+        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
+    
+    if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
+        ANALYSIS.n_iterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
+    end
+    if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
+       ANALYSIS.ktms_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
+    end
+    if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
+       ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
+    end
     
     % specify display options
     ANALYSIS.disp.on = input('Do you wish to display the results in figure(s)? "0" for no; "1" for yes: ');
@@ -125,19 +160,35 @@ elseif input_mode == 1 % Prompted manual input
     ANALYSIS.fw.do = input('Do you wish to analyse the feature weights (only for spatial or spatio-temporal decoding)? "0" for no; "1" for yes: ');
     
     if ANALYSIS.fw.do == 1
+        ANALYSIS.multcompstats = input(['\nSpecify which multiple comparisons correction method to use: \n' ...
+        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
+        '"4" for Cluster-Based Permutation Testing (Currently not available) \n"5" for KTMS Generalised FWER Control \n' ...
+        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
+        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
+    
+        if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
+            ANALYSIS.n_iterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
+        end
+        if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
+           ANALYSIS.ktms_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
+        end
+        if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
+           fprintf('Cluster-based corrections are currently not available.\n')
+           % ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
+        end
         
         ANALYSIS.fw.display_average_zmap = input('Do you wish to display the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % z-standardised average FWs
         ANALYSIS.fw.display_average_uncorr_threshmap = input(...
             'Do you wish to display the statistical threshold map (uncorrected) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map uncorrected t-test results
         ANALYSIS.fw.display_average_corr_threshmap = input(...
-            'Do you wish to display the statistical threshold map (Bonferroni-corrected) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map corrected t-test results (Bonferroni)
+            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map corrected t-test results (Bonferroni)
         
         % individual maps and stats
         ANALYSIS.fw.display_all_zmaps = input('');
         ANALYSIS.fw.display_all_uncorr_thresh_maps = input(...
             'Do you wish to display the statistical threshold map (uncorrected) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
         ANALYSIS.fw.display_all_corr_thresh_maps = input(...
-            'Do you wish to display the statistical threshold map (Bonferroni-corrected) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
+            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
         
     end
     
@@ -262,13 +313,7 @@ for s = 1:ANALYSIS.nsbj
 
         end
         
-        % adjust for multiple comparisons 
         
-        ANALYSIS.allsteps = size(ANALYSIS.data,2); % Calculate the number of tests (number of windows to analyse)
-        
-        % DF NOTE: The next 10 lines of code do not look like they are
-        % related to multiple comparisons correction. Move to a different
-        % section?
         if STUDY.analysis_mode == 1 || STUDY.analysis_mode == 2
             if size(ANALYSIS.dcg_todo,2) == 1
                 ANALYSIS.DCG = SLIST.dcg_labels{ANALYSIS.dcg_todo};
@@ -280,11 +325,6 @@ for s = 1:ANALYSIS.nsbj
             ANALYSIS.DCG = 'SVR_regression';
         end
         
-        if ANALYSIS.multcompstats == 1
-            ANALYSIS.pstatsuse = ANALYSIS.pstats / ANALYSIS.allsteps; % Bonferroni correction
-        elseif ANALYSIS.multcompstats ~= 1
-            ANALYSIS.pstatsuse = ANALYSIS.pstats;
-        end
                 
     end % of if s == 1 statement
     
@@ -365,7 +405,9 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         if ANALYSIS.permstats == 1
             
             % chance level = 100 / number conditions
-            [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstatsuse); % simply against chance
+            [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstats); % simply against chance
+            T = otherstats.tstat;
+            clear otherstats;
             
         % test against permutation test results    
         elseif ANALYSIS.permstats == 2
@@ -373,8 +415,10 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
             % against average permuted distribution
             if ANALYSIS.drawmode == 1
                 
-                [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.all_subj_perm_acc(:,na,step),ANALYSIS.pstatsuse);
-            
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.all_subj_perm_acc(:,na,step),ANALYSIS.pstats);
+                T = otherstats.tstat;
+                clear otherstats;
+                
             % against one randomly drawn value (from all cross-val repetitions for each participant) for stricter test    
             elseif ANALYSIS.drawmode == 2
                 
@@ -385,18 +429,196 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                     clear drawone;
                 end % sbj
                 
-                [H,P] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.draw_subj_perm_acc(:,na,step),ANALYSIS.pstatsuse);
-                
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.draw_subj_perm_acc(:,na,step),ANALYSIS.pstats);
+                T = otherstats.tstat;
+                clear otherstats;
             end % if ANALYSIS.drawmode
             
         end % if ANALYSIS.permstats
        
         ANALYSIS.RES.p_ttest(na,step) = P; clear P;
-        ANALYSIS.RES.h_ttest(na,step) = H; clear H;
+        ANALYSIS.RES.h_ttest_uncorrected(na,step) = H; clear H;
+        ANALYSIS.RES.t_ttest(na,step) = T; clear T;
             
     end % of for step = 1:size(ANALYSIS.RES.mean_subj_acc,2) loop
     
 end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
+
+
+%% CORRECTION FOR MULTIPLE COMPARISONS
+%__________________________________________________________________________
+
+ANALYSIS.RES.h_ttest = zeros(size(ANALYSIS.RES.mean_subj_acc,1), size(ANALYSIS.RES.mean_subj_acc,2));
+
+switch ANALYSIS.multcompstats
+
+case 0 % No correction for multiple comparisons
+
+    fprintf('Correction for multiple comparisons has not been applied\n');
+
+    ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
+
+%__________________________________________________________________________
+
+case 1 % Bonferroni Correction
+
+    fprintf('Performing corrections for multiple comparisons (Bonferroni)\n');
+
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bonferroni_adjusted_alpha(na)] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
+    end
+
+%__________________________________________________________________________    
+
+case 2 % Holm-Bonferroni Correction
+    
+    fprintf('Performing corrections for multiple comparisons (Holm-Bonferroni)\n');
+
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.holm_adjusted_alpha(na)] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
+    end % of for na loop
+
+%__________________________________________________________________________    
+
+case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
+    
+    fprintf('Performing corrections for multiple comparisons (permutation test)\n');
+    
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    
+        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1, :) = ANALYSIS.chancelevel;
+        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+            end
+        end
+        
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
+
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.p_ttest(na,:), ANALYSIS.RES.critical_t(na)] = multcomp_blaire_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+        fprintf('The adjusted critical t value for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_t(na));
+    end % of for na loop
+    
+    clear real_decoding_scores
+    clear perm_decoding_scores
+%__________________________________________________________________________    
+
+case 4 % Cluster-Based Permutation Test
+ 
+    fprintf('Performing corrections for multiple comparisons (cluster-based permutation test)\n');
+    
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    
+        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
+        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+            end    
+        end
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
+        
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
+    end % of for na loop
+    clear real_decoding_scores
+    clear perm_decoding_scores
+%__________________________________________________________________________    
+
+case 5 % KTMS Generalised FWER Control Using Permutation Testing
+    
+    fprintf('Performing corrections for multiple comparisons (KTMS generalised FWER control)\n');
+
+    % Adapted from permutation test script
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+
+        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
+        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+            end
+        end
+        % Convert to two-dimensional matrix for multcomp correction algorithm
+        tmp = squeeze(real_decoding_scores);
+        real_decoding_scores = tmp;
+        tmp = squeeze(perm_decoding_scores);
+        perm_decoding_scores = tmp;
+
+        [ANALYSIS.RES.h_ttest(na, :)] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
+    end % of for na loop
+    clear real_decoding_scores
+    clear perm_decoding_scores
+
+%__________________________________________________________________________    
+
+case 6 % Benjamini-Hochberg FDR Control
+
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Hochberg)\n');
+    
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bh_crit_alpha(na)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bh_crit_alpha(na));
+    end % of for na loop
+
+%__________________________________________________________________________    
+
+case 7 % Benjamini-Krieger-Yekutieli FDR Control
+    
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n');
+
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bky_crit_alpha(na)] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bky_crit_alpha(na));
+    end % of for na loop
+
+%__________________________________________________________________________    
+
+case 8 % Benjamini-Yekutieli FDR Control
+    
+    fprintf('Performing corrections for multiple comparisons (Benjamini-Yekutieli)\n');
+
+    % Here a family of tests is defined as all steps within a given analysis
+    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.by_crit_alpha(na)] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.by_crit_alpha(na));
+    end % of for na loop
+
+%__________________________________________________________________________    
+% If some other option is chosen then do not correct, but notify user
+otherwise
+    fprintf('Unavailable multiple comparisons option chosen. Will use uncorrected p-values \n');
+    ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
+end % of ANALYSIS.multcompstats switch
+
 
 fprintf('All group statistics performed.\n');
 
