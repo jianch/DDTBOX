@@ -1,14 +1,21 @@
-function ANALYSE_DECODING_ERP(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
+function analyse_decoding_erp(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
+% Copyright (c) 2013-2016, Stefan Bode and contributors 
+% 
+% This file is part of DDTBOX.
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
-%
-% The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 %
 % This script is the master-script for the group-level analysis of EEG-decoding
 % results. It will call several subscripts that run all possible analyses,
