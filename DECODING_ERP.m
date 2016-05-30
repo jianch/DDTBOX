@@ -3,7 +3,7 @@ function DECODING_ERP(study_name,vconf,input_mode,sbj,dcg_todo,cross)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Jutta Stahl, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
 % Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
