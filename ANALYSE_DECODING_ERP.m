@@ -3,10 +3,10 @@ function ANALYSE_DECODING_ERP(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
@@ -52,12 +52,13 @@ if input_mode == 0 % Hard-coded input
     %______________________________________________________________________
     ANALYSIS.allchan = 1; % Are all possible channels analysed? 1=yes (default if spatial/spatio-temporal) / 2=no
     ANALYSIS.relchan = []; % specify channels to be analysed (for temporal only)
-        
+    
+    ANALYSIS.analysis_mode = 3; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
     ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
     ANALYSIS.window_width_ms = 10; % width of sliding window in ms
     ANALYSIS.step_width_ms = 10; % step size with which sliding window is moved through the trial
-    
+        
     ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
    
@@ -120,6 +121,7 @@ elseif input_mode == 1 % Prompted manual input
     end
     
     % specify properties of the decoding analysis
+    ANALYSIS.analysis_mode = input('Specifiy analysis method: "1" SVM with LIBSVM , "2" SVM with liblinear, "3" with LIBSVM: '); 
     ANALYSIS.stmode = input('Specify the s/t-analysis mode of the original analysis. "1" spatial, "2" temporal. "3" spatio-temporal: ');
     ANALYSIS.avmode = input('Specify the average mode of the original analysis. "1" single-trial, "2" run-average: ');
     ANALYSIS.window_width_ms = input('Specify the window width [ms] of the original analysis: ');
@@ -193,6 +195,15 @@ elseif input_mode == 1 % Prompted manual input
     end
     
 end % input
+
+if ANALYSIS.analysis_mode == 1 
+    ANALYSIS.analysis_mode_label='SVM_LIBSVM';
+elseif ANALYSIS.analysis_mode == 2 
+    ANALYSIS.analysis_mode_label='SVM_LIBLIN';
+elseif ANALYSIS.analysis_mode == 3
+    ANALYSIS.analysis_mode_label='SVR_LIBSVM';
+end
+    
 %__________________________________________________________________________
 
 fprintf('Group-level statistics will now be computed and displayed. \n'); 
@@ -217,23 +228,21 @@ for s = 1:ANALYSIS.nsbj
         fprintf('Loading results for subject %d in DCG %s.\n',sbj,SLIST.dcg_labels{dcg_todo});
         
         open_name = [(SLIST.output_dir) study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
+            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
 
     elseif size(dcg_todo,2) == 2
         
         fprintf('Loading results for subject %d for cross decoding DCG %s => DCG %s.\n',sbj,SLIST.dcg_labels{dcg_todo(1)},SLIST.dcg_labels{dcg_todo(2)});
         
         open_name=[(SLIST.output_dir) study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
+            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
             'toDCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
     end   
    
     load(open_name);
     fprintf('Done.\n');
     
-    ANALYSIS.analysis_mode=STUDY.analysis_mode;
     ANALYSIS.pointzero=SLIST.pointzero;
-    
         
     %% fill in parameters and extract results 
     %______________________________________________________________________
