@@ -3,10 +3,10 @@ function display_indiv_results_erp(STUDY,RESULTS)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
