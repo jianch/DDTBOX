@@ -135,6 +135,9 @@ end
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
 STUDY.sampling_rate = SLIST.sampling_rate;
+STUDY.pointzero = SLIST.pointzero;
+STUDY.dcg_label=SLIST.dcg_labels{dcg_todo};
+
 STUDY.window_width = floor(STUDY.window_width_ms / ((1/STUDY.sampling_rate) * 1000));
 STUDY.step_width = floor(STUDY.step_width_ms / ((1/STUDY.sampling_rate) * 1000));
 

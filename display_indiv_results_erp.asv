@@ -24,6 +24,8 @@ function display_indiv_results_erp(STUDY,RESULTS)
 %__________________________________________________________________________
 
 global SBJTODO;
+global SLIST;
+global DCGTODO;
 
 %% DISPLAY MAIN RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -51,6 +53,7 @@ for na = 1:size(RESULTS.subj_acc,1)
     XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * STUDY.step_width_ms ) - STUDY.step_width_ms) - STUDY.pointzero; 
     point_zero = find(XTickLabels(1,:) == 0);
     
+
     if STUDY.analysis_mode ~= 3
         line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
         set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
@@ -96,10 +99,10 @@ if STUDY.perm_disp == 1
         elseif STUDY.analysis_mode == 3
             line([point_zero point_zero], [1 -1],'Color','r','LineWidth',3);
             set(gca,'Ytick',[-1:0.2:1],'Xtick',[1:1:nsteps]);
-        end
-        set(gca,'XTickLabel',XTickLabels);
+    end
+    set(gca,'XTickLabel',XTickLabels);
 
-        title(['SBJ' num2str(SBJTODO) ' ' STUDY.dcg_label ' - permutation '...
+        title(['SBJ' num2str(SBJTODO) ' ' SLIST.dcg_labels{STUDY.dcg_todo} ' - permutation '...
             num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
 
         clear temp_data;
