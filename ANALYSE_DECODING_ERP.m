@@ -25,13 +25,8 @@ function ANALYSE_DECODING_ERP(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
 
-%% GENERAL PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% GENERAL PARAMETERS AND GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
-
-% post-processing script = 2 - needed for interaction with other scripts to regulate
-% functions such as saving data, calling specific sub-sets of parameters
-global CALL_MODE
-CALL_MODE = 3;
 
 global DCGTODO;
 DCGTODO = dcg_todo;
@@ -53,7 +48,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.allchan = 1; % Are all possible channels analysed? 1=yes (default if spatial/spatio-temporal) / 2=no
     ANALYSIS.relchan = []; % specify channels to be analysed (for temporal only)
     
-    ANALYSIS.analysis_mode = 3; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
+    ANALYSIS.analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
     ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
     ANALYSIS.window_width_ms = 10; % width of sliding window in ms
@@ -96,14 +91,14 @@ if input_mode == 0 % Hard-coded input
         %__________________________________________________________________
         
         % 0=no / 1=yes
-        ANALYSIS.fw.display_matrix = 1; % feature weights matrix
+        ANALYSIS.fw.display_matrix = 0; % feature weights matrix
         
-        % averaged maps and stats
+        % maps and stats for averaged analysis time windows
         ANALYSIS.fw.display_average_zmap = 0; % z-standardised average FWs
         ANALYSIS.fw.display_average_uncorr_threshmap = 0; % thresholded map uncorrected t-test results
         ANALYSIS.fw.display_average_corr_threshmap = 0; % thresholded map corrected t-test results (Bonferroni)
         
-        % individual maps and stats
+        % maps and stats for each analysis time window
         ANALYSIS.fw.display_all_zmaps = 0; % z-standardised average FWs
         ANALYSIS.fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
         ANALYSIS.fw.display_all_corr_thresh_maps = 0; % thresholded map corrected t-test results (Bonferroni)
@@ -322,18 +317,13 @@ for s = 1:ANALYSIS.nsbj
 
         end
         
-        
-        if STUDY.analysis_mode == 1 || STUDY.analysis_mode == 2
-            if size(ANALYSIS.dcg_todo,2) == 1
-                ANALYSIS.DCG = SLIST.dcg_labels{ANALYSIS.dcg_todo};
-            elseif size(ANALYSIS.dcg_todo,2) == 2
-                ANALYSIS.DCG{1} = SLIST.dcg_labels{ANALYSIS.dcg_todo(1)};
-                ANALYSIS.DCG{2} = SLIST.dcg_labels{ANALYSIS.dcg_todo(2)};
-            end
-        elseif STUDY.analysis_mode == 3 || STUDY.analysis_mode == 4    
-            ANALYSIS.DCG = 'SVR_regression';
+        % get label for DCG
+        if size(ANALYSIS.dcg_todo,2) == 1
+            ANALYSIS.DCG = SLIST.dcg_labels{ANALYSIS.dcg_todo};
+        elseif size(ANALYSIS.dcg_todo,2) == 2
+            ANALYSIS.DCG{1} = SLIST.dcg_labels{ANALYSIS.dcg_todo(1)};
+            ANALYSIS.DCG{2} = SLIST.dcg_labels{ANALYSIS.dcg_todo(2)};
         end
-        
                 
     end % of if s == 1 statement
     
@@ -650,13 +640,17 @@ end
 
 if size(dcg_todo,2) == 1 % Standard decoding analyses
 
-    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-        '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
+    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
+        num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
+        '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label...
+        '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
     
 elseif size(dcg_todo,2) == 2 % Cross-condition decoding analyses
     
-    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-        '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
+    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
+        num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
+        '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label...
+        '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
         'toDCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
 
 end
