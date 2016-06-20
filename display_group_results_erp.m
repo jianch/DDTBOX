@@ -3,10 +3,10 @@ function display_group_results_erp(ANALYSIS)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
@@ -16,16 +16,13 @@ function display_group_results_erp(ANALYSIS)
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
 
-%% GENERAL PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
 
-% post-processing script = 2 - needed for interaction with other scripts to regulate
-% functions such as saving data, calling specific sub-sets of parameters
-global CALL_MODE
-CALL_MODE = 3;
+%% SET GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%__________________________________________________________________________
 
 global DCGTODO;
 global SLIST;
+
 
 %% PLOTTING PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -34,9 +31,17 @@ global SLIST;
 PLOT.FigPos = [100 100 800 400];
 
 % define x/y-axis__________________________________________________________
-PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
-PLOT.Y_max = 70; % Y axis upper bound (in % accuracy)
-PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
+
+% Y-axis depends on analysis mode
+if ANALYSIS.analysis_mode ~= 3
+    PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
+    PLOT.Y_max = 70; % Y axis upper bound (in % accuracy)
+    PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
+elseif ANALYSIS.analysis_mode == 3
+    PLOT.Y_min = -0.5; % Y axis lower bound (Fisher-Z corr coeff)
+    PLOT.Y_max = 0.5; % Y axis upper bound (Fisher-Z corr coeff)
+    PLOT.Ysteps = 0.1; % Interval between Y axis labels/tick marks
+end
 
 PLOT.X_min = 1; % X axis lower bound (first time point)
 PLOT.X_max = ANALYSIS.xaxis_scale(2,end);
@@ -49,7 +54,11 @@ PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero;
 
 % define properties of significance markers________________________________
 PLOT.Sign.LineColor = 'y';
-PLOT.Sign.LinePos = [PLOT.Y_min+0.5 PLOT.Y_max-0.5];
+if ANALYSIS.analysis_mode ~= 3
+    PLOT.Sign.LinePos = [PLOT.Y_min+0.5 PLOT.Y_max-0.5];
+elseif ANALYSIS.analysis_mode == 3
+    PLOT.Sign.LinePos = [PLOT.Y_min PLOT.Y_max];
+end
 PLOT.Sign.LineWidth = 10;
 
 % define properties of main plot___________________________________________
@@ -82,23 +91,34 @@ PLOT.xlabel.FontWeight = 'b';
 PLOT.ylabel.FontWeight = 'b';
 
 PLOT.xlabel.Text = 'Time-steps [ms]';
-PLOT.ylabel.Text = 'Classification Accuracy [%]';
+if ANALYSIS.analysis_mode ~= 3
+    PLOT.ylabel.Text = 'Classification Accuracy [%]';
+elseif ANALYSIS.analysis_mode == 3
+    PLOT.ylabel.Text = 'Fisher-Z correlation coeff';
+end
 
 PLOT.PointZero.Color = 'r';
 PLOT.PointZero.LineWidth = 3;
 PLOT.PointZero.Point = find(ANALYSIS.data(3,:) == 1);
 
-if ANALYSIS.stmode == 1
-    PLOT.TileString = 'Spatial Class ';
-elseif ANALYSIS.stmode == 2
-    PLOT.TileString = 'Temporal Class ';
-elseif ANALYSIS.stmode == 3
-    PLOT.TileString = 'Spatiotemporal Class ';
+if ANALYSIS.stmode == 1 && ANALYSIS.analysis_mode ~=3
+    PLOT.TileString = 'Spatial SVM ';
+elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ~=3
+    PLOT.TileString = 'Temporal SVM ';
+elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ~=3
+    PLOT.TileString = 'Spatiotemporal SVM ';
+elseif ANALYSIS.stmode == 1 && ANALYSIS.analysis_mode ==3
+    PLOT.TileString = 'Spatial SVR';  
+elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ==3
+    PLOT.TileString = 'Temporal SVR '; 
+elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ==3
+    PLOT.TileString = 'Spatiotemporal SVR ';  
 end
 
 PLOT.TitleFontSize = 14;
 PLOT.TitleFontWeight = 'b';
 %__________________________________________________________________________
+
 
 %% PLOT THE RESULTS
 %__________________________________________________________________________
@@ -164,6 +184,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
             'linewidth',PLOT.Res.ErrorLineWidth);
         hold on;
         
+        
         %% plot permutation / chance results
         %__________________________________________________________________
         if ANALYSIS.permdisp == 1
@@ -178,6 +199,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
             
         end
         
+        
         %% define labels, point zero, title
         %__________________________________________________________________
         
@@ -186,30 +208,26 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         xlabel(PLOT.xlabel.Text,'FontSize',PLOT.xlabel.FontSize,'FontWeight',PLOT.xlabel.FontWeight);
         ylabel(PLOT.ylabel.Text,'FontSize',PLOT.ylabel.FontSize,'FontWeight',PLOT.ylabel.FontWeight);
         
+        
         %% define title
-        if ANALYSIS.analysis_mode == 1 || ANALYSIS.analysis_mode == 2
            
-            if size(ANALYSIS.DCG,1)==1
+        if size(ANALYSIS.DCG,1)==1
                 
-                title([PLOT.TileString ANALYSIS.DCG ' N='  num2str(ANALYSIS.nsbj)],...
-                    'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
-           
-            elseif size(ANALYSIS.DCG,1)==2
-                
-                title([PLOT.TileString ANALYSIS.DCG{1} 'to' ANALYSIS.DCG{2} ' N='  num2str(ANALYSIS.nsbj)],...
-                    'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
-           
-            end
-            
-        elseif ANALYSIS.analysis_mode == 3 || ANALYSIS.analysis_mode == 4
-           
-            title(['Regression N=' num2str(ANALYSIS.nsbj)],...
+            title([PLOT.TileString ANALYSIS.DCG ' N='  num2str(ANALYSIS.nsbj)],...
                 'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
+           
+        elseif size(ANALYSIS.DCG,1)==2
+                
+            title([PLOT.TileString ANALYSIS.DCG{1} 'to' ANALYSIS.DCG{2} ' N='  num2str(ANALYSIS.nsbj)],...
+                'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
+           
         end
+
         
         %% mark point zero (data was time-locked to this event)
         line([PLOT.PointZero.Point PLOT.PointZero.Point], [PLOT.Y_max PLOT.Y_min],'Color',PLOT.PointZero.Color,...
             'LineWidth',PLOT.PointZero.LineWidth);
+        
         
         %% define ticks and axis labels
         %__________________________________________________________________
@@ -221,6 +239,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         clear temp_data;   
         clear temp_se; 
     
+        
     end % channel
     
 end % analysis mode

@@ -58,11 +58,6 @@ STUDY.dcg_todo = dcg_todo;
 STUDY.regr_todo = [];
 STUDY.cross = cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
 
-% decoding script = 2 - needed for interaction with other scripts to regulate
-% functions such as saving data, calling specific sub-sets of parameters
-global CALL_MODE
-CALL_MODE = 2;
-
 % get subject parameters
 % sbj_list = input('Enter subject list: ','s');
 STUDY.study_name = study_name;
@@ -93,7 +88,7 @@ if input_mode == 0 % Hard-coded input
     STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
     STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
     STUDY.cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
-    STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with randomly re-ordered data?
+    STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with re-ordered data?
     STUDY.permut_rep = 10; % How many repetitions of full cross-validation with permutation results?
 
 elseif input_mode == 1 % Prompt user for input
@@ -140,6 +135,9 @@ end
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
 STUDY.sampling_rate = SLIST.sampling_rate;
+STUDY.pointzero = SLIST.pointzero;
+STUDY.dcg_label=SLIST.dcg_labels{dcg_todo};
+
 STUDY.window_width = floor(STUDY.window_width_ms / ((1/STUDY.sampling_rate) * 1000));
 STUDY.step_width = floor(STUDY.step_width_ms / ((1/STUDY.sampling_rate) * 1000));
 
@@ -264,6 +262,7 @@ if STUDY.analysis_mode == 3
 end
 
 work_data = eval(SLIST.data_struct_name); % Copies eeg_sorted_cond data into work_data
+STUDY.nchannels=SLIST.nchannels;
 
 %__________________________________________________________________________
 % if data is stored in a structure and not a cell:
@@ -283,6 +282,38 @@ end
 
 clear wd;
 clear eeg_sorted_cond;
+
+%__________________________________________________________________________
+% if data dimensions are flipped (e.g, when taken directly from EEGlab):
+
+if size(work_data{1,1},1)==STUDY.nchannels && size(work_data{1,1},2)~=STUDY.nchannels  
+    
+    for r = 1:size(work_data,1)
+        for c = 1:size(work_data,2)
+            
+            temp(:,:,:) = work_data{r,c}(:,:,:);
+            temp = permute(temp,[2 1 3]);
+            work_data{r,c} = temp;
+            clear temp;  
+            
+        end % c        
+    end % r
+    fprintf('Data was converted into the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');   
+
+elseif size(work_data{1,1},1)~=STUDY.nchannels && size(work_data{1,1},2)==STUDY.nchannels  
+    
+    fprintf('Data seems to be in the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');
+    
+elseif size(work_data{1,1},1)==STUDY.nchannels && size(work_data{1,1},2)==STUDY.nchannels
+    
+    fprintf('Number of channels = number of time points? Check whether data is in the correct format.\n');
+    
+elseif size(work_data{1,1},1)~=STUDY.nchannels && size(work_data{1,1},2)~=STUDY.nchannels 
+    
+    fprintf('Data might not be in the required format: eeg_sorted_cond{run,cond}(timepoints,channels,trials). \n');
+    
+end;
+%__________________________________________________________________________
 
 
 %% SECTION 3: REDUCE TO SPECIFIED DCG / conditions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
