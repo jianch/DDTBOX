@@ -5,10 +5,10 @@ function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_value
 % to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %

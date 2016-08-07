@@ -3,16 +3,15 @@ function [FW_ANALYSIS]=analyse_feature_weights_erp(ANALYSIS)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
 % This script will analyse and plot the feature weights from the group
 % analysis
-
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable

@@ -3,10 +3,10 @@ function display_indiv_results_erp(STUDY,RESULTS)
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
@@ -24,8 +24,6 @@ function display_indiv_results_erp(STUDY,RESULTS)
 %__________________________________________________________________________
 
 global SBJTODO;
-global SLIST;
-global DCGTODO;
 
 %% DISPLAY MAIN RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -43,17 +41,26 @@ for na = 1:size(RESULTS.subj_acc,1)
     hold on;
 
     xlabel('time-steps [ms]','FontSize',12,'FontWeight','b');
-    ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
-   
-
-    XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * STUDY.step_width_ms ) - STUDY.step_width_ms) - SLIST.pointzero; 
-    point_zero = find(XTickLabels(1,:) == 0);
-    line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
     
-    set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
+    if STUDY.analysis_mode ~= 3
+        ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
+    elseif STUDY.analysis_mode == 3
+        ylabel('Fisher-Z correlation coeff','FontSize',12,'FontWeight','b');
+    end; 
+
+    XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * STUDY.step_width_ms ) - STUDY.step_width_ms) - STUDY.pointzero; 
+    point_zero = find(XTickLabels(1,:) == 0);
+    
+    if STUDY.analysis_mode ~= 3
+        line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
+        set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
+    elseif STUDY.analysis_mode == 3
+        line([point_zero point_zero], [1 -1],'Color','r','LineWidth',3);
+        set(gca,'Ytick',[-1:0.2:1],'Xtick',[1:1:nsteps]);
+    end
     set(gca,'XTickLabel',XTickLabels);
     
-    title(['SBJ' num2str(SBJTODO) ' ' SLIST.dcg_labels{STUDY.dcg_todo} ' - analysis '...
+    title(['SBJ' num2str(SBJTODO) ' ' STUDY.dcg_label ' - analysis '...
         num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
         
     clear temp_data;
@@ -77,17 +84,22 @@ if STUDY.perm_disp == 1
         plot(temp_data,'-ks','LineWidth',2,'MarkerEdgeColor','k','MarkerFaceColor','w','MarkerSize',5);
         hold on;
 
-        xlabel('time-steps [ms]','FontSize',12,'FontWeight','b');
-        ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
+        if STUDY.analysis_mode ~= 3
+            ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
+        elseif STUDY.analysis_mode == 3
+            ylabel('Fisher-Z correlation coeff','FontSize',12,'FontWeight','b');
+        end; 
 
-        XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * STUDY.step_width_ms ) - STUDY.step_width_ms) - SLIST.pointzero;
-        point_zero=find(XTickLabels(1,:) == 0);
-        line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
-        
-        set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
+        if STUDY.analysis_mode ~= 3
+            line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
+            set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
+        elseif STUDY.analysis_mode == 3
+            line([point_zero point_zero], [1 -1],'Color','r','LineWidth',3);
+            set(gca,'Ytick',[-1:0.2:1],'Xtick',[1:1:nsteps]);
+        end
         set(gca,'XTickLabel',XTickLabels);
 
-        title(['SBJ' num2str(SBJTODO) ' ' SLIST.dcg_labels{STUDY.dcg_todo} ' - permutation '...
+        title(['SBJ' num2str(SBJTODO) ' ' STUDY.dcg_label ' - permutation '...
             num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
 
         clear temp_data;

@@ -3,10 +3,10 @@ function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUD
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
 % Carsten Bogler, John-Dylan Haynes
 %__________________________________________________________________________
 %
@@ -15,10 +15,10 @@ function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUD
 % over to do_my_classification.m as data vectors and labels. 
 % The output is handed back to DECODING_ERP.
 %
-%
 %__________________________________________________________________________
 %
 % Variable naming convention: STRUCTURE_NAME.example_variable
+
 
 %% DEFINE NUMBER OF STEPS (default = all possible steps)
 % only needs to be changed for de-bugging!
@@ -42,8 +42,8 @@ end
 nconds = STUDY.nconds;
 
 
-%% LOAD IN REGRESSION LABELS (IF PERFORMING REGRESSION) % put in by Dan 14/3/2014
-if STUDY.analysis_mode == 4
+%% LOAD IN REGRESSION LABELS (for SVR)
+if STUDY.analysis_mode == 3
     training_labels = STUDY.training_labels;
     test_labels = STUDY.test_labels;
 end
@@ -127,21 +127,16 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                             temp(:,:) = mean_data_training(1,:,:);
                             vectors_train = [vectors_train temp];     
                             
-                            if STUDY.analysis_mode == 4 % if continuous regression, get labels from external file
+                            %________________________________________________________________________________
+                            if STUDY.analysis_mode == 3 % if SVR
                                     
                                 for trl = 1:size(temp,2)
-                                    labels_train = [labels_train  training_labels{con,cv,ncv}(trl)];
+                                    labels_train = [labels_train  training_labels{1,con,cv,ncv}(trl)];
                                 end
                                 clear temp;
-                                    
-                            else % if not continuous regression, label = condition
-                                
-                                for ntrls = 1:(size(temp,2))
-                                    labels_train = [labels_train con];
-                                end
-                                clear temp;
-                            
-                            end % if analysis_mode==4
+                                                               
+                            end % if SVR
+                            %________________________________________________________________________________
                             
                             % permutation test data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %_________________________________________________________________________________
@@ -163,21 +158,16 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                             temp(:,:) = mean_data_test(1,:,:);
                             vectors_test = [vectors_test temp];      
                             
-                            if STUDY.analysis_mode == 4 % if continuous regression, get labels from external file
+                            %________________________________________________________________________________
+                            if STUDY.analysis_mode == 3 % if SVR
                                     
                                 for trl = 1:size(temp,2)
-                                    labels_test = [labels_test  test_labels{con,cv,ncv}(trl)];
+                                    labels_test = [labels_test  test_labels{1,con,cv,ncv}(trl)];
                                 end
-                                clear temp;
-                                    
-                            else % if not continuous regression, label = condition   
-                                    
-                                for ntrls = 1:(size(temp,2))
-                                    labels_test = [labels_test con];
-                                end  
-                                clear temp;      
-                                
-                            end % if analysis_mode==4
+                                clear temp;                                  
+                                                          
+                            end % if SVR
+                            %________________________________________________________________________________
                         
                         % temporal decoding: vectors consist of single data-points within time
                         % window, one analysis per channel
@@ -188,18 +178,15 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 temp = data_training(:,ch,exmpl);
                                 vectors_train = [vectors_train temp];
                                 
-                                if STUDY.analysis_mode == 4 % if continuous regression, get labels from external file
+                                %________________________________________________________________________________
+                                if STUDY.analysis_mode == 3 % if SVR
                                         
-                                    labels_train = [labels_train training_labels{con,cv,ncv}(exmpl)];
+                                    labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
                                     clear temp;
-                                        
-                                else % if not continuous regression, label = condition
+                                                                           
+                                end % if SVR
+                                %________________________________________________________________________________
                                 
-                                    labels_train = [labels_train con];
-                                    clear temp;
-                                    
-                                end % if analysis_mode==4
-                            
                             end % exmpl
                             
                             % permutation test data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,19 +210,16 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 temp = data_test(:,ch,exmpl);
                                 vectors_test = [vectors_test temp];
                                 
-                                if STUDY.analysis_mode == 4 % if continuous regression, get labels from external file
+                                %________________________________________________________________________________
+                                if STUDY.analysis_mode == 3 % if SVR
                                         
                                     for ntrls = 1:size(temp,2)
-                                        labels_test = [labels_test  test_labels{con,cv,ncv}(exmpl)];
+                                        labels_test = [labels_test  test_labels{1,con,cv,ncv}(exmpl)];
                                     end
                                     clear temp;
-
-                                else % if not continuous regression, label = condition
-                                        
-                                    labels_test = [labels_test con];
-                                    clear temp;
-                                
-                                end % analysis_mode == 4
+                                                               
+                                end % if SVR
+                                %________________________________________________________________________________
                                 
                             end % exmpl 
     
@@ -256,15 +240,13 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 vectors_train = [vectors_train temp];
                                 clear temp;
                                 
-                                if STUDY.analysis_mode == 4 % if continuous regression, get labels from external trial
+                                %________________________________________________________________________________
+                                if STUDY.analysis_mode == 3 % if SVR
                                         
-                                    labels_train = [labels_train training_labels{con,cv,ncv}(exmpl)];
+                                    labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
                                         
-                                else % if not continuous regression, label = condition
-                                        
-                                    labels_train = [labels_train con];
-                                
-                                end % if analysis_mode==4
+                                end % if SVR
+                                %________________________________________________________________________________
                                 
                             end % for exmpl
                             
@@ -295,23 +277,19 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 vectors_test = [vectors_test temp];
                                 clear temp;
                                 
-                                if STUDY.analysis_mode == 4 % if continuous regression, get labels from external trial
+                                %________________________________________________________________________________
+                                if STUDY.analysis_mode == 3 % if SVR
                                         
-                                    labels_test = [labels_test test_labels{con,cv,ncv}(exmpl)];
-                                        
-                                else % if not continuous regression, label = condition
-                                        
-                                    labels_test = [labels_test con];
-                                
-                                end % if analysis_mode == 4
+                                    labels_test = [labels_test test_labels{1,con,cv,ncv}(exmpl)];
+                                                                                                     
+                                end % if SVR
+                                %________________________________________________________________________________
                                 
                             end % exmpl 
                                                             
                         end % if stmode
   
-                    end % condition
-                
-                    
+                    end % condition 
                     
                     %_________________________________________________________________________________
                     % Z-score the training and test sets (optional)

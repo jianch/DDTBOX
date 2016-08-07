@@ -1,12 +1,12 @@
-function DEMO_config_v3
+function DEMO_config_v1
 %__________________________________________________________________________
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
 % The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% Daniel Bennett,  Daniel Feuerriegel, Phillip Alday
 %
 % The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Carsten Murawski, Carsten Bogler,
+% Jutta Stahl, Simon Lilburn, Philip L. Smith, Carsten Murawski, Carsten Bogler,
 % John-Dylan Haynes
 %__________________________________________________________________________
 %
@@ -20,29 +20,64 @@ function DEMO_config_v3
 
 global SLIST;
 global SBJTODO;
-global CALL_MODE;
 
 %% GENERAL STUDY PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
 % Decide whether to save the SLIST structure and EEG data in a .mat file
-savemode = 0; % 1 = Save the SLIST as a mat file; 0 = Don't save the SLIST
+savemode = 0;
+ismymac = 2; % 1=mac; 2=PC
+demo_mode = 2; % 1=results; 2=preanalysed; 3=SVR - for workshop demonstrations!
 
-bdir = 'F:\MVPA_WORKSHOP\'; % Base directory
-output_dir = 'F:\MVPA_WORKSHOP\DECODING_RESULTS\preanalysed\'; % Directory in which the decoding results will be saved
+if ismymac==1
 
-% Filepaths and filenames of the EEG data files
-sbj_code = {...
+    bdir='/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/';
     
-    ['DATA\sbj1\SBJ1_full'];... %1
-    ['DATA\sbj2\SBJ2_full'];... %2 
-    ['DATA\sbj3\SBJ3_full'];... %3
-    ['DATA\sbj4\SBJ4_full'];... %4
-    ['DATA\sbj5\SBJ5_full'];... %5
+    if demo_mode == 1 
+        output_dir='/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/DECODING_RESULTS/results/';
+    elseif demo_mode == 2
+        output_dir='/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/DECODING_RESULTS/preanalysed/';
+    elseif demo_mode == 3
+        output_dir='/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/DECODING_RESULTS/SVR/';
+    end
+    
+    % subject codes/names
+    sbj_code = {...
 
-    };
+        ['DATA/sbj1/SBJ1_full'];... %1
+        ['DATA/sbj2/SBJ2_full'];... %2 
+        ['DATA/sbj3/SBJ3_full'];... %3
+        ['DATA/sbj4/SBJ4_full'];... %4
+        ['DATA/sbj5/SBJ5_full'];... %5
 
-nsbj = size(sbj_code,1); % DF NOTE: This variable (nsbj) appears to be unused
+        };
+    
+elseif ismymac==2
+
+    bdir='F:\MVPA_WORKSHOP\';
+    
+    if demo_mode == 1 
+        output_dir='F:\MVPA_WORKSHOP\DECODING_RESULTS\results\';
+    elseif demo_mode == 2    
+        output_dir='F:\MVPA_WORKSHOP\DECODING_RESULTS\preanalysed\';
+    elseif demo_mode == 3    
+        output_dir='F:\MVPA_WORKSHOP\DECODING_RESULTS\SVR\';
+    end
+
+    % subject codes/names
+    sbj_code = {...
+
+        ['DATA\sbj1\SBJ1_full'];... %1
+        ['DATA\sbj2\SBJ2_full'];... %2 
+        ['DATA\sbj3\SBJ3_full'];... %3
+        ['DATA\sbj4\SBJ4_full'];... %4
+        ['DATA\sbj5\SBJ5_full'];... %5
+
+        };   
+    
+end
+
+nsbj=size(sbj_code,1);
 
 
 %% CREATE SLIST %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,18 +92,19 @@ sn = SBJTODO;
     SLIST.output_dir = output_dir;
     SLIST.data_struct_name = 'eeg_sorted_cond';
     
+    % if SVR
+    SLIST.regress_label_name = [bdir sbj_code{sn} 'regress_sorted_data.mat'];
+    SLIST.regress_struct_name='SVR_matrix'; % DO NOT CHANGE NAME
+    
     % channels    
-    SLIST.nchannels = 64; % Number of channels in the dataset
-    SLIST.channels = 'channel_labels'; 
-    SLIST.channel_names_file = 'channel_inf.mat'; % Name of the .mat file containing channel information
-    SLIST.channellocs = [bdir 'locations\']; % Directory of the .mat file containing channel information
-    SLIST.eyes = []; % Channel indices of ocular electrodes
-    SLIST.extra = [0]; % Channel indices of electrodes to exclude from the classification analyses
+    SLIST.nchannels=64;
+    SLIST.channels='channel_labels';
+    SLIST.channel_names_file='channel_inf.mat';
+    SLIST.channellocs=[bdir 'locations/'];
     
     % sampling rate and baseline
-    SLIST.sampling_rate = 1000; % Sampling rate (Hz)
-    SLIST.pointzero = 100; % Corresponds to time zero, for example stimulus onset (in ms, from the beginning of the epoch)
-     
+    SLIST.sampling_rate=1000;
+    SLIST.pointzero=100; % corresponds to zero (time-locked to this event, in ms)
         
 %% CREATE DCGs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
