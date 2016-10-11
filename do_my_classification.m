@@ -14,8 +14,7 @@ function [acc,feat_weights] = do_my_classification(vectors_train,labels_train,ve
 %   labels_train    condition labels for the training dataset
 %   vectors_test    data vectors that make up the test dataset
 %   labels_test     condition labels for the test dataset
-%   STUDY           structure containing participant dataset information and 
-%                   multivariate classification/regression settings.
+%   STUDY           structure containing multivariate classification/regression settings
 % 
 %
 % Outputs:

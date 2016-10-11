@@ -8,43 +8,35 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % t statistic output is modified so that the same output arguments can be
 % used as the MATLAB ttest function, stored in t_yuen.tstat. 
 % 
-% required:
-% - cond_1_data (vectors of observations in group 1)
-% - cond_2_data (vectors of observations in group 2)
+% Inputs:
 %
-% optional:
-% - percent (percent trimming, must be between 0 and 100. Default = 20)
-% - alpha (alpha level. Default = 0.05)
+%   cond_1_data     vectors of observations in condition 1.
+%   cond_2_data     vectors of observations in condition 2.
+%   percent         percent trimming, must be between 0 and 100. 
+%                   Default = 20 corresponding to 20% trimmed mean.
+%   alpha           alpha level. Default = 0.05
 %
-% outputs:
+% Outputs:
 %
-% - t_yuen.tstat (Yuen T statistic. t_yuen is distributed approximately as Student's t 
-%      with estimated degrees of freedom, df)
-% - diff (difference between trimmed means of cond_1_data and cond_2_data)
-% - se (standard error)
-% - CI (confidence interval around the difference)
-% - p (p value)
-% - tcrit (1 - alpha / 2 quantile of the Student's t distribution with
-%   adjusted degrees of freedom)
-% - df (degrees of freedom)
+%   t_yuen.tstat    Yuen T statistic. t_yuen is distributed approximately as Student's t 
+%                   with estimated degrees of freedom, df.
+%   diff            difference between trimmed means of cond_1_data and cond_2_data
+%   se              standard error.
+%   CI              confidence interval around the difference.
+%   p               p-value.
+%   tcrit           1 - alpha / 2 quantile of the Student's t distribution with
+%                   adjusted degrees of freedom.
+%   df              adjusted degrees of freedom.
+%
+% Example:    [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, 20, 0.05)  
+%
 %
 % See Wilcox (2012), Introduction to Robust Estimation and Hypothesis
 % Testing (3rd Edition), page 195-198 for a description of the Yuen
-% procedure for dependent groups.
-%
-% _________________________________________________________________________
-% 
-% Written by Daniel Feuerriegel to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
-%
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
-%
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
+% procedure for dependent groups. 
 %
 %
-% Modified from the limo_yuend_ttest function in the LIMO Toolbox:
+% Modified by Daniel Feuerriegel from the limo_yuend_ttest function in the LIMO Toolbox:
 % Pernet, C.R., Chauveau, N., Gaspar, C. & Rousselet, G.A. 
 % LIMO EEG: a toolbox for hierarchical LInear Modeling of EletroEncephaloGraphic data.
 % Computational Intelligence and Neuroscience, Volume 2011 (2011), Article ID 831409, 
@@ -55,14 +47,29 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % 3D, standalone version: GAR, University of Glasgow, June 2010
 % GAR fixed bug for covariance / se
 %
-
+% Modified version copyright (c) 2016 Daniel Feuerriegel and contributors
+%
+% This file is part of DDTBox
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 % Defaults
 if nargin < 4 
-    alpha = .05; 
+    alpha = .05; % Set default alpha level of 0.05
 end
 if nargin < 3
-    percent = 20;
+    percent = 20; % Set default trimming level at 20 percent
 end
 
 if isempty(cond_1_data) || isempty(cond_2_data) 
