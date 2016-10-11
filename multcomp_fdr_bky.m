@@ -1,43 +1,49 @@
 function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_values, varargin)
-
-%__________________________________________________________________________
-% Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
-% to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
-%
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
-%
-% This script receives a vector of p-values and outputs
-% false discovery rate corrected null hypothesis test results (Benjamin-Krieger-Yekutieli procedure).
-% The number of tests is determined by the length of the vector of p-values.
+% This function receives a vector of p-values and outputs
+% false discovery rate corrected null hypothesis test results 
+% (Benjamin-Krieger-Yekutieli procedure). The number of tests is 
+% determined by the length of the vector of p-values.
 %
 % Benjamini, Y., Krieger, A. M., & Yekutieli, D. (2006). Adapting linear step-up
 % procedures that control the false discovery rate. Biometrika, 93, 491-507.
 % doi 10.1093/biomet/93.3.491
 %
 %
-% requires:
-% - p_values (vector of p-values from the hypothesis tests of interest)
+% Inputs:
+%   p_values        vector of p-values from the hypothesis tests of interest
+%   alpha           uncorrected alpha level for statistical significance, 
+%                   default 0.05
+%
+% Outputs:
+%
+%   fdr_corrected_h     vector of false discovery rate corrected hypothesis tests 
+%                       derived from comparing p-values to false discovery rate 
+%                       adjusted critical alpha level. 
+%                       1 = statistically significant, 0 = not statistically significant
+%
+%   bky_stage2_critical_alpha       adjusted alpha level. p-values smaller or
+%                                   equal to this are declared statistically-significant
+%
+% Example:              [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_values, 'alpha', 0.05)
+%
+%
+% Copyright (c) 2016 Daniel Feuerriegel and contributors
 % 
-% optional:
-% - alpha (uncorrected alpha level for statistical significance, default 0.05)
+% This file is part of DDTBOX.
 %
-%
-% outputs:
-% - fdr_corrected_h (vector of false discovery rate corrected hypothesis tests 
-% derived from comparing p-values to false discovery rate adjusted critical alpha level. 
-% 1 = statistically significant, 0 = not statistically significant)
-%
-% - bky_stage2_critical_alpha (adjusted alpha level. p-values smaller or
-% equal to this are declared statistically-significant).
-%__________________________________________________________________________
-%
-% Variable naming convention: STRUCTURE_NAME.example_variable
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %% Handling variadic inputs
 % Define defaults at the beginning

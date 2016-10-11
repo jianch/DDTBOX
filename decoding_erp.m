@@ -1,7 +1,7 @@
-% decoding_erp() - Perform MVPA on a single subject 
+function [results, cfg] = decoding_erp(dat, cfg, varargin)
 %
-% Usage: 
-%		 >> [results, cfg] = decoding_erp(dat,cfg,'Key1',Value1,...);
+% Performs MVPA on a single subject 
+%
 %
 % Inputs:
 %
@@ -25,6 +25,10 @@
 % 				   'independent' parameters, e.g window_width (in samples) calculated from 
 %				   window_width_ms (in milliseconds)
 %
+%
+% Usage:           [results, cfg] = decoding_erp(dat,cfg,'Key1',Value1,...);
+%
+%
 % Copyright (c) 2013-2016, Stefan Bode and contributors 
 % 
 % This file is part of DDTBOX.
@@ -42,7 +46,6 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [results, cfg] = decoding_erp(dat, cfg, varargin)
 cfg.window_width = floor(cfg.window_width_ms / ((1/cfg.srate) * 1000));
 cfg.step_width = floor(cfg.step_width_ms / ((1/cfg.srate) * 1000));
 % cross-validation defaults for single-trial decoding

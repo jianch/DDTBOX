@@ -1,23 +1,46 @@
 function [acc,feat_weights] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
-%
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
+% Performs multivariate pattern classification/regression using input
+% vectors of training/test data and condition labels. 
 %
 % This script interacts with LIBSVM toolbox (Chang & Lin) to do the classfication / regression
 % see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 % Chang CC, Lin CJ (2011). LIBSVM : a library for support vector machines. ACM TIST, 2(3):27,
 %
+% 
+% Inputs:
 %
-%__________________________________________________________________________
+%   vectors_train   data vectors that make up the training dataset
+%   labels_train    condition labels for the training dataset
+%   vectors_test    data vectors that make up the test dataset
+%   labels_test     condition labels for the test dataset
+%   STUDY           structure containing participant dataset information and 
+%                   multivariate classification/regression settings.
+% 
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+% Outputs:
+%
+%   acc             classifier accuracy for classification of the test dataset.
+%   feat_weights    feature weights from the multivariate pattern
+%                   classification.
+%
+%
+% Copyright (c) 2013-2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %% define samples and labels for training
 

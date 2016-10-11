@@ -1,20 +1,8 @@
 function [corrected_h] = multcomp_ktms(cond1_data, cond2_data, varargin)
-
-%__________________________________________________________________________
-% Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
-% to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
-%
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
-%
-% This script receives the original data and outputs corrected p-values and
+% This function receives the original data and outputs corrected p-values and
 % hypothesis test results based on control of the generalised family-wise error rate
-% (Korn, 2004, method A in appendices). The permutation test in this script is based
+% (Korn, 2004, method A in their appendices). The permutation test in this script is based
 % on the t-statistic, but could be adapted to use with other statistics
 % such as the trimmed mean.
 %
@@ -24,30 +12,48 @@ function [corrected_h] = multcomp_ktms(cond1_data, cond2_data, varargin)
 % doi 10.1016/S0378-3758(03)00211-8
 %
 %
-% requires:
-% - cond1_data (data from condition 1, a subjects x time windows matrix)
-% - cond2_data (data from condition 2, a subjects x time windows matrix)
+% Inputs:
 %
-% optional:
-% - alpha (uncorrected alpha level for statistical significance, default 0.05)
-% - iterations (number of permutation samples to draw, default 5000. 
-% At least 1000 is recommended for the p = 0.05 alpha level, and at least 5000 is
-% recommended for the p = 0.01 alpha level. This is due to extreme events
-% at the tails being very rare, needing many random permutations to find
-% enough of them).
-% - ktms_u (the u parameter of the procedure, or the number of hypotheses
-% to automatically reject. Allowing for more false discoveries improves the
-% sensitivity of the method. Default is 1).
+%   cond1_data      data from condition 1, a subjects x time windows matrix
+%   cond2_data      data from condition 2, a subjects x time windows matrix
+%   alpha           uncorrected alpha level for statistical significance, 
+%                   default 0.05
+%   iterations      number of permutation samples to draw, default 5000. 
+%                   At least 1000 is recommended for the p = 0.05 alpha level, 
+%                   and at least 5000 is recommended for the p = 0.01 alpha level.
+%                   This is due to extreme events at the tails being very rare, 
+%                   needing many random permutations to find enough of them.
+%   ktms_u          the u parameter of the procedure, or the number of hypotheses
+%                   to automatically reject. Allowing for more false discoveries
+%                   improves the sensitivity of the method to find real effects. 
+%                   Default is 1.
+%
+% Outputs:
+%
+%   corrected_h     vector of hypothesis tests in which statistical significance
+%                   is defined by values above a threshold of the (alpha_level * 100)th
+%                   percentile of the maximum statistic distribution.
+%                   1 = statistically significant, 0 = not statistically significant
+%
+% Example:          [corrected_h] = multcomp_ktms(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'ktms_u', 2)
 %
 %
-% outputs:
-% corrected_h (vector of hypothesis tests in which statistical significance
-% is defined by values above a threshold of the (alpha_level * 100)th percentile
-% of the maximum statistic distribution.
-% 1 = statistically significant, 0 = not statistically significant)
-%__________________________________________________________________________
+% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% 
+% This file is part of DDTBOX.
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %% Handling variadic inputs
 % Define defaults at the beginning
