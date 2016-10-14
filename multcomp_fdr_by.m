@@ -74,9 +74,6 @@ clear options;
 
 
 
-
-
-
 %% False Disovery Rate - Benjamini-Yekutieli
 n_total_comparisons = length(p_values); % Get the number of comparisons
 fdr_corrected_h = zeros(1, length(p_values)); % preallocate
@@ -90,13 +87,15 @@ for j_iteration = 1:n_total_comparisons
 end
 
 
-% Find critical k value (see tutorial notes)
+% Find critical k value
 for benyek_step = 1:n_total_comparisons
-
-    if sorted_p(benyek_step) <= (benyek_step / n_total_comparisons * sum(j_values)) * alpha_level
+    
+    if sorted_p(benyek_step) <= (benyek_step / (n_total_comparisons * sum(j_values))) * alpha_level
         benyek_critical_alpha = sorted_p(benyek_step);
     end
+    
 end
+
 % If no tests are significant set critical alpha to zero
 if ~exist('benyek_critical_alpha', 'var')
     benyek_critical_alpha = 0;
