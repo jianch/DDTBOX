@@ -104,12 +104,9 @@ p_values = zeros(1, n_total_comparisons); % Preallocate
 uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
 
 % Perform t-tests at each step
-for step = 1:n_total_comparisons
+[~, p_values, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', alpha_level);
+uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
 
-    [~, p_values(step), ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', alpha_level);
-    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
-    
-end
 
 % Make a vector to denote statistically significant steps
 ktms_sig_effect_locations = zeros(1, n_total_comparisons);
@@ -129,14 +126,15 @@ temp_signs = zeros(n_subjects, n_total_comparisons);
 for iteration = 1:n_iterations
 
     % Draw a random sample for each test
-    for step = 1:n_total_comparisons
-
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
+        temp = zeros(n_subjects, n_total_comparisons);
+    for step = 1:n_total_comparisons
         temp_signs(1:n_subjects, step) = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
-        temp = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+        temp(:, step) = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+    end
         [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
-        t_stat(step, iteration) = abs(temp_stats.tstat);
+        t_stat(:, iteration) = abs(temp_stats.tstat);
     end    
 
     % Get the maximum t-value within the family of tests and store in a
