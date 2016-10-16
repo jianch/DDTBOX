@@ -130,7 +130,7 @@ for iteration = 1:n_iterations
         % switching labels of conditions)
         temp = zeros(n_subjects, n_total_comparisons);
     for step = 1:n_total_comparisons
-        temp_signs(1:n_subjects, step) = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
+        temp_signs(1:n_subjects, step) = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
         temp(:, step) = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
     end
         [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);

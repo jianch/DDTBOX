@@ -128,7 +128,7 @@ for iteration = 1:n_iterations
     for step = 1:n_total_comparisons 
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
-        temp_signs = (rand(1, n_subjects) > .5) * 2 - 1; % Switches signs of labels
+        temp_signs = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
         temp(:,step) = temp_signs .* diff_scores(1:n_subjects, step);
     end % of for step
     % Run t tests
