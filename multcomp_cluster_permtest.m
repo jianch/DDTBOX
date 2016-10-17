@@ -108,12 +108,8 @@ n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparis
 uncorrected_h = zeros(1, n_total_comparisons); % preallocate
 uncorrected_t = zeros(1, n_total_comparisons); % preallocate
 
-for step = 1:n_total_comparisons
-
-    [uncorrected_h(step), ~, ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', clustering_alpha);
-    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
-    
-end
+[uncorrected_h, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', clustering_alpha);
+uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
 
 % Seed the random number generator based on the clock time
 rng('shuffle');
@@ -126,23 +122,28 @@ cluster_perm_test_h = zeros(n_total_comparisons, n_iterations); % Preallocate
 t_sign = zeros(n_total_comparisons, n_iterations); % Preallocate
 
 for iteration = 1:n_iterations
-    % Draw a random bootstrap sample for each test
+    
+    % Draw a random permutation sample for each test
+    temp = zeros(n_subjects, n_total_comparisons); % Preallocate
     for step = 1:n_total_comparisons 
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
-        temp_signs = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
-        temp = temp_signs .* diff_scores(1:n_subjects);
-        [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha);
-        t_stat(step, iteration) = temp_stats.tstat; % Get t statistic
+        temp_signs = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
+        temp(:,step) = temp_signs .* diff_scores(1:n_subjects, step);
+    end % of for step
+    % Run t tests
+    [cluster_perm_test_h(:, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha);
+    t_stat(:, iteration) = temp_stats.tstat; % Get t statistics
+        
         % Marking the sign of each t statistic to avoid clustering pos
-        % and neg significant results
-        if t_stat(step, iteration) < 0;
-            t_sign(step, iteration) = -1; 
-        else
-            t_sign(step, iteration) = 1; 
-        end
-    end    
-
+        % and neg direction significant results
+        for step = 1:n_total_comparisons
+            if t_stat(step, iteration) < 0;
+                t_sign(step, iteration) = -1; 
+            else
+                t_sign(step, iteration) = 1; 
+            end % of if t_stat
+        end % of for step
     % Identify clusters and generate a maximum cluster statistic
     cluster_mass_vector = [0]; % Resets vector of cluster masses
     cluster_counter = 0;

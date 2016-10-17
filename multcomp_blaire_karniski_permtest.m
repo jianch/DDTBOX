@@ -102,14 +102,9 @@ diff_scores = cond1_data - cond2_data;
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
-% Perform t-tests at each step
-uncorrected_t = zeros(1,n_total_comparisons); % Preallocate
-for step = 1:n_total_comparisons
-
-    [~, ~, ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', alpha_level);
-    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
-    
-end
+% Perform t-tests at each step    
+[~, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', alpha_level);
+uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
 
 % Seed the random number generator based on the clock time
 rng('shuffle');
@@ -122,16 +117,18 @@ t_stat = zeros(n_total_comparisons, n_iterations); % Preallocate
 for iteration = 1:n_iterations
     clear temp; % Clearing out temp variable
     temp_signs = zeros(n_subjects, n_total_comparisons);
+    temp = zeros(n_subjects, n_total_comparisons);
 
-    % Draw a random sample for each test
-    for step = 1:n_total_comparisons  
-        % Randomly switch the sign of difference scores (equivalent to
-        % switching labels of conditions)
-        temp_signs(1:n_subjects, step) = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of difference scores
-        temp = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
-        [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
-        t_stat(step, iteration) = abs(temp_stats.tstat);   
-    end    
+    % Draw a random permutation sample for each test
+    
+    % Randomly switch the sign of difference scores (equivalent to
+    % switching labels of conditions)
+    for step = 1:n_total_comparisons
+        temp_signs(1:n_subjects, step) = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of difference scores
+        temp(1:n_subjects, step) = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+    end % of for step
+    [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
+    t_stat(:, iteration) = abs(temp_stats.tstat);   
 
     % Get the maximum t-value within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
