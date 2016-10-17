@@ -104,12 +104,9 @@ p_values = zeros(1, n_total_comparisons); % Preallocate
 uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
 
 % Perform t-tests at each step
-for step = 1:n_total_comparisons
+[~, p_values, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', alpha_level);
+uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
 
-    [~, p_values(step), ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', alpha_level);
-    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
-    
-end
 
 % Make a vector to denote statistically significant steps
 ktms_sig_effect_locations = zeros(1, n_total_comparisons);
@@ -117,7 +114,12 @@ ktms_sig_effect_locations = zeros(1, n_total_comparisons);
 sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
 % Automatically reject the u smallest hypotheses (u is set by user as ktms_u variable).
-ktms_auto_reject_threshold = sorted_p(ktms_u);
+if ktms_u > 0
+    ktms_auto_reject_threshold = sorted_p(ktms_u);
+elseif ktms_u == 0 % if ktms_u is set to zero
+    ktms_auto_reject_threshold = 0;
+end
+
 ktms_sig_effect_locations(p_values <= ktms_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
 
 % Run strong FWER control permutation test but use u + 1th most extreme
@@ -129,21 +131,21 @@ temp_signs = zeros(n_subjects, n_total_comparisons);
 for iteration = 1:n_iterations
 
     % Draw a random sample for each test
-    for step = 1:n_total_comparisons
-
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
-        temp_signs(1:n_subjects, step) = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
-        temp = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+        temp = zeros(n_subjects, n_total_comparisons);
+    for step = 1:n_total_comparisons
+        temp_signs(1:n_subjects, step) = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
+        temp(:, step) = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
+    end % of for step
         [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
-        t_stat(step, iteration) = abs(temp_stats.tstat);
-    end    
+        t_stat(:, iteration) = abs(temp_stats.tstat);
 
     % Get the maximum t-value within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
     t_sorted = sort(t_stat(:, iteration), 'descend');
     ktms_t_max(iteration) = t_sorted(ktms_u + 1);
-end
+end % of for iteration
 
 % Calculating the 95th percentile of t_max values (used as decision
 % critieria for statistical significance)
@@ -154,7 +156,7 @@ for step = 1:n_total_comparisons
     if abs(uncorrected_t(step)) > ktms_Null_Cutoff;
         ktms_sig_effect_locations(step) = 1;
     end
-end
+end % of for step
 
 % Marking statistically significant tests
 corrected_h = ktms_sig_effect_locations;    
