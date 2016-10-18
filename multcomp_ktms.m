@@ -114,12 +114,7 @@ ktms_sig_effect_locations = zeros(1, n_total_comparisons);
 sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
 % Automatically reject the u smallest hypotheses (u is set by user as ktms_u variable).
-if ktms_u > 0
-    ktms_auto_reject_threshold = sorted_p(ktms_u);
-elseif ktms_u == 0 % if ktms_u is set to zero
-    ktms_auto_reject_threshold = 0;
-end
-
+ktms_auto_reject_threshold = sorted_p(ktms_u);
 ktms_sig_effect_locations(p_values <= ktms_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
 
 % Run strong FWER control permutation test but use u + 1th most extreme
@@ -137,15 +132,16 @@ for iteration = 1:n_iterations
     for step = 1:n_total_comparisons
         temp_signs(1:n_subjects, step) = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
         temp(:, step) = temp_signs(1:n_subjects, step) .* diff_scores(1:n_subjects, step);
-    end % of for step
+    end
         [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
         t_stat(:, iteration) = abs(temp_stats.tstat);
+    end    
 
     % Get the maximum t-value within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
     t_sorted = sort(t_stat(:, iteration), 'descend');
     ktms_t_max(iteration) = t_sorted(ktms_u + 1);
-end % of for iteration
+end
 
 % Calculating the 95th percentile of t_max values (used as decision
 % critieria for statistical significance)
@@ -156,7 +152,7 @@ for step = 1:n_total_comparisons
     if abs(uncorrected_t(step)) > ktms_Null_Cutoff;
         ktms_sig_effect_locations(step) = 1;
     end
-end % of for step
+end
 
 % Marking statistically significant tests
 corrected_h = ktms_sig_effect_locations;    
