@@ -1,22 +1,25 @@
 function DEMO_config_v1
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett,  Daniel Feuerriegel, Phillip Alday
-%
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Carsten Murawski, Carsten Bogler,
-% John-Dylan Haynes
-%__________________________________________________________________________
-%
-% This script is the configuration script for the DDTBOX. All
-% study-specific information for decoding, regression and groupl-level
+% This is the configuration script for the DDTBOX. All
+% study-specific information for decoding, regression and group-level
 % analyses are specified here.
 %
-%__________________________________________________________________________
+% Copyright (c) 2013-2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 global SLIST;
 global SBJTODO;
