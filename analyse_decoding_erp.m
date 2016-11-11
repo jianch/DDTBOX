@@ -1,20 +1,21 @@
 function analyse_decoding_erp(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
 %
-% This script is the master script for the group-level analysis of EEG decoding
+% This script is the master script for group-level analysis of EEG decoding
 % results. It will call several subscripts that run all possible analyses,
-% depending on the specific decoding analyses chosen.
+% depending on the analysis options chosen.
 %
 %
 % Inputs:
 %
-%   study_name       e.g. 'DEMO'
+%   study_name       Name corresponding to the study configuration script e.g. 'DEMO'
 %   vconf            version of study configuration script, e.g., "1" for DEMO_config_v1
-%   input_mode       1 = use coded varialbles from first section / 2 = enter manually
-%   sbjs_todo        e.g., [1 2 3 4 6 7 9 10 13]
+%   input_mode       0 = use hard-coded variables from first section / 1 = enter manually
+%   sbjs_todo        subject datasets to analyse e.g., [1 2 3 4 6 7 9 10 13]
 %   dcg_todo         discrimination group to analyse, as specified in SLIST.dcg_labels{dcg}
 %
 % Outputs:
 %  
+% Usage:            analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
 % Example:          analyse_decoding_erp('DEMO', 1, 1, [1:10], 1)
 %

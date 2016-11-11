@@ -1,15 +1,22 @@
 function [holm_corrected_h, holm_corrected_alpha] = multcomp_holm_bonferroni(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
-% Holm-Bonferroni corrected null hypothesis test results. The number of tests is
+% Holm-Bonferroni corrected results. The number of tests is
 % determined by the length of the vector of p-values.
 %
 % Holm, S. (1979). A simple sequentially rejective multiple test procedure. 
-% Scandinavian Journal of Statistics 6 (2): 65?70.
+% Scandinavian Journal of Statistics 6 (2): 65-70.
 %
 % Inputs:
 %
 %   p_values        vector of p-values from the hypothesis tests of interest
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+% Optional Keyword Inputs:
+%
 %   alpha           uncorrected alpha level for statistical significance, 
 %                   default 0.05
 %

@@ -12,6 +12,13 @@ function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_value
 %
 % Inputs:
 %   p_values        vector of p-values from the hypothesis tests of interest
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+% 
+% Optional Keyword Inputs:
+%
 %   alpha           uncorrected alpha level for statistical significance, 
 %                   default 0.05
 %

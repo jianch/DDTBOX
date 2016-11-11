@@ -15,14 +15,26 @@ function [corrected_h] = multcomp_ktms(cond1_data, cond2_data, varargin)
 % Inputs:
 %
 %   cond1_data      data from condition 1, a subjects x time windows matrix
+%
 %   cond2_data      data from condition 2, a subjects x time windows matrix
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+%   ...            ...
+%
+% Optional Keyword Inputs:
+%
 %   alpha           uncorrected alpha level for statistical significance, 
 %                   default 0.05
+%
 %   iterations      number of permutation samples to draw, default 5000. 
 %                   At least 1000 is recommended for the p = 0.05 alpha level, 
 %                   and at least 5000 is recommended for the p = 0.01 alpha level.
 %                   This is due to extreme events at the tails being very rare, 
 %                   needing many random permutations to find enough of them.
+%
 %   ktms_u          the u parameter of the procedure, or the number of hypotheses
 %                   to automatically reject. Allowing for more false discoveries
 %                   improves the sensitivity of the method to find real effects. 

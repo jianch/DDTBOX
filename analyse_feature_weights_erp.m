@@ -1,7 +1,7 @@
 function [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS)
 %
-% This script will analyse and plot the feature weights from the group
-% analysis.
+% This function performs group-level analyses on feature weights data and plots the results.
+% This function is called by analyse_decoding_erp.
 %
 %
 % Inputs:

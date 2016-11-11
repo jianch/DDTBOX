@@ -2,6 +2,7 @@ function [acc,feat_weights] = do_my_classification(vectors_train,labels_train,ve
 %
 % Performs multivariate pattern classification/regression using input
 % vectors of training/test data and condition labels. 
+% This function is called by prepare_my_vectors_erp.
 %
 % This script interacts with LIBSVM toolbox (Chang & Lin) to do the classfication / regression
 % see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
@@ -11,17 +12,21 @@ function [acc,feat_weights] = do_my_classification(vectors_train,labels_train,ve
 % Inputs:
 %
 %   vectors_train   data vectors that make up the training dataset
+%
 %   labels_train    condition labels for the training dataset
+%
 %   vectors_test    data vectors that make up the test dataset
+%
 %   labels_test     condition labels for the test dataset
+%
 %   STUDY           structure containing multivariate classification/regression settings
 % 
 %
 % Outputs:
 %
-%   acc             classifier accuracy for classification of the test dataset.
-%   feat_weights    feature weights from the multivariate pattern
-%                   classification.
+%   acc             classifier accuracy for classification of the test data
+%
+%   feat_weights    feature weights from the classifier
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors

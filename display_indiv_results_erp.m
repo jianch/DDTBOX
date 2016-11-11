@@ -2,18 +2,17 @@ function display_indiv_results_erp(STUDY,RESULTS)
 %
 % This script gets input from decoding_erp.m and uses specified step-width 
 % and results from mutltivariate classification/regression analysis and 
-% displays individual results. If permutation test is on and display of 
+% displays individual results. If permutation tests are run and display of 
 % permutation results is on, then these results are displayed for comparison.
-%
+% This function is called by decoding_erp.
 % 
 % Inputs:
 %
 %   STUDY       structure containing participant dataset information and 
 %               multivariate classification/regression settings.
+%
 %   RESULTS     structure containing decoding results for an individual
 %               subject datset.
-%
-% Outputs:
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors

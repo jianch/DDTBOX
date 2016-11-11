@@ -1,16 +1,19 @@
 function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUDY)
 %
 %
-% This function gets input from DECODING_ERP.m and organises the data stored in 
+% This function gets input from decoding_erp.m and organises the data stored in 
 % training_set and test_set for classification. The data is cut out and handed 
 % over to do_my_classification.m as data vectors and labels. 
-% The output is handed back to DECODING_ERP.
+% The output is handed back to decoding_erp.
 %
 % Inputs:
 %   
 %   training_set    data used for training the classifier
+%
 %   test_set        data used to test classifier performance
+%
 %   SLIST           structure containing participant dataset information
+%
 %   STUDY           structure containing multivariate classification/regression settings
 %
 % Outputs:

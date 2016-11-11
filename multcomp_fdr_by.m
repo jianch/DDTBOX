@@ -13,6 +13,13 @@ function [fdr_corrected_h, benyek_critical_alpha] = multcomp_fdr_by(p_values, va
 % Inputs:
 %
 %   p_values    vector of p-values from the hypothesis tests of interest
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+% Optional Keyword Inputs:
+%
 %   alpha       uncorrected alpha level for statistical significance, default 0.05
 %
 % Outputs:

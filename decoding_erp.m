@@ -1,26 +1,32 @@
 function [results, cfg] = decoding_erp(dat, cfg, varargin)
 %
-% Performs MVPA on a single subject 
+% Performs MVPA on a single subject dataset.
 %
 %
 % Inputs:
 %
 %   dat            Either a file name (including path) of file containing
 %                  floating point data, or a data matrix (chans x frames)
-%   cfg			   A MATLAB struct containing the necessary configuration, 
-%				   see pop_dd_decode() for more information on necessary fields				   
+%
+%   cfg            A MATLAB struct containing the necessary configuration, 
+%                  see pop_dd_decode() for more information on necessary fields		
+%
 %  'Key1'          Keyword string for argument 1
+%
 %   Value1         Value of argument 1
+%
 %   ...            ...
 %		
 % Optional keyword inputs:
 %
-%   outdir         name of directory to write output (does not have to exist), def=pwd/ddouttmp/
+%   outdir         name of directory to write output (does not have to exist), default = pwd/ddouttmp/
+%
 %   indir          optional input directory from which to load init
 %
 % Outputs:
 %
 %   results        classification results (for use in e.g. analyse_decoding_erp())
+%
 %   cfg            updated configuration with 'dependent' parameters calculated from 
 % 				   'independent' parameters, e.g window_width (in samples) calculated from 
 %				   window_width_ms (in milliseconds)

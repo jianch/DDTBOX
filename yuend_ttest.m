@@ -1,9 +1,7 @@
 function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
-
-% function [t_yuen, diff, se, CI, p, tcrit, df] = limo_yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
 %
 % Computes t_yuen (Yuen's T statistic) to compare the trimmed means of two
-% DEPENDENT groups (each group needs the same number of data points).
+% dependent groups (each group needs the same number of data points).
 % 
 % t statistic output is modified so that the same output arguments can be
 % used as the MATLAB ttest function, stored in t_yuen.tstat. 
@@ -11,22 +9,31 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % Inputs:
 %
 %   cond_1_data     vectors of observations in condition 1.
+%
 %   cond_2_data     vectors of observations in condition 2.
+%
 %   percent         percent trimming, must be between 0 and 100. 
 %                   Default = 20 corresponding to 20% trimmed mean.
+%
 %   alpha           alpha level. Default = 0.05
 %
 % Outputs:
 %
 %   t_yuen.tstat    Yuen T statistic. t_yuen is distributed approximately as Student's t 
 %                   with estimated degrees of freedom, df.
+%
 %   diff            difference between trimmed means of cond_1_data and cond_2_data
-%   se              standard error.
-%   CI              confidence interval around the difference.
-%   p               p-value.
+%
+%   se              standard error
+%
+%   CI              confidence interval around the difference
+%
+%   p               p-value
+%
 %   tcrit           1 - alpha / 2 quantile of the Student's t distribution with
-%                   adjusted degrees of freedom.
-%   df              adjusted degrees of freedom.
+%                   adjusted degrees of freedom
+%
+%   df              adjusted degrees of freedom
 %
 % Example:    [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, 20, 0.05)  
 %

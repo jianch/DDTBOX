@@ -13,6 +13,13 @@ function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, v
 % Inputs:
 %
 %   p_values            vector of p-values from the hypothesis tests of interest
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+% Optional Keyword Inputs:
+%
 %   alpha               uncorrected alpha level for statistical significance, default 0.05
 %
 % Outputs:
@@ -27,6 +34,7 @@ function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, v
 %                               or equal to this value are declared
 %                               statistically significant. This value is 0 
 %                               if no tests were statistically significant.
+%
 %
 % Example:              [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, 'alpha', 0.05)
 %

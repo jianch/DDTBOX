@@ -14,9 +14,21 @@ function [corrected_h, corrected_p, critical_t] = multcomp_blaire_karniski_permt
 % Inputs:
 %
 %   cond1_data      data from condition 1, a subjects x time windows matrix
+%
 %   cond2_data      data from condition 2, a subjects x time windows matrix
+%
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+%   ...            ...
+%
+% Optional Keyword Inputs:
+%
 %   alpha           uncorrected alpha level for statistical significance, 
 %                   default is 0.05
+%
 %   iterations      number of permutation samples to draw. Default is 5000
 %                   At least 1000 is recommended for the p = 0.05 alpha 
 %                   level, and at least 5000 is recommended for the 
@@ -37,7 +49,7 @@ function [corrected_h, corrected_p, critical_t] = multcomp_blaire_karniski_permt
 %                   percentile then p < .01.
 %
 %   critical_t      absolute critical t-value. t-values larger than this are
-%                   counted as statistically significant
+%                   counted as statistically significant.
 %
 % Example:          [corrected_h, corrected_p, critical_t] = multcomp_blaire_karniski_permtest(cond1_data, cond2_data, 'alpha', '0.05', 'iterations', 10000) 
 %

@@ -4,7 +4,7 @@ function [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, varar
 % hypothesis test results based on a maximum cluster statistic permutation test,
 % as described in Bullmore et al. (1999). The permutation test in this function
 % is based on the t-statistic but could be adapted to use with other 
-% statistics such as the trimmed mean.
+% statistics such as the trimmed mean or Yuen's t.
 %
 % 
 % Bullmore, E. T., Suckling, J., Overmeyer, S., Rabe-Hesketh, S., 
@@ -16,17 +16,29 @@ function [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, varar
 % Inputs:
 %
 %   cond1_data      data from condition 1, a subjects x time windows matrix
+%
 %   cond2_data      data from condition 2, a subjects x time windows matrix
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+%
+%   ...            ...
+%
+% Optional Keyword Inputs
+%
 %   alpha           uncorrected alpha level for statistical significance, default 0.05
+%
 %   iterations      number of permutation samples to draw. At least 1000 is
 %                   recommended for the p = 0.05 alpha level, and at least 5000 is
 %                   recommended for the p = 0.01 alpha level. This is due to extreme events
 %                   at the tails being very rare, needing many random permutations to find
 %                   enough of them.
+%
 %   clusteringalpha the significance threshold used to define individual points 
 %                   within a cluster. Setting this to larger values (e.g.
 %                   0.05) will detect broadly distributed clusters, whereas setting it to
-%                   0.01 will help detect smaller clusters that exhibit strong effects.
+%                   0.01 for example will help detect smaller clusters that exhibit strong effects.
 %
 % Outputs:
 %

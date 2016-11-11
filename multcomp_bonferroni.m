@@ -1,8 +1,9 @@
 function [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferroni(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
-% Bonferroni-corrected null hypothesis test results. The number of tests is
-% determined by the length of the vector of p-values.
+% Bonferroni-corrected results. The number of tests is
+% determined by the length of the vector of p-values. Note that
+% The alpha level is adjusted rather than the p-values.
 %
 %
 % Dunn, O. J. (1959). Estimation of the medians for dependent variables. 
@@ -16,6 +17,12 @@ function [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferr
 %
 %   p_values    vector of p-values from the hypothesis tests of interest
 % 
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
+% 
+% Optional Keyword Inputs:
+%
 %   alpha       uncorrected alpha level for statistical significance, default 0.05
 %
 %
