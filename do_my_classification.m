@@ -1,4 +1,4 @@
-function [acc,feat_weights] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY)
+function [acc,feat_weights, feat_weights_corrected] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY)
 %__________________________________________________________________________
 % DDTBOX script written by Stefan Bode 01/03/2013
 %
@@ -55,11 +55,20 @@ if STUDY.analysis_mode == 1 % SVM classification with libsvm
     b = -model.rho;
 
     feat_weights = zeros(size(w,1),3);
+    feat_weights_corrected = zeros(size(w,1),3);
     
     if STUDY.feat_weights_mode == 1 
+        % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
         feat_weights(:,3) = abs(w);
+        
+        % corrected feature weights according to Haufe et al. (2014) method
+        feat_weights_corrected(:,1) = 1:(size(w,1));
+        vectors_train_temp = (vectors_train - repmat(mean(vectors_train), size(vectors_train, 1), 1)) ./ sqrt(size(vectors_train, 1) - 1);
+        feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
+        clear vectors_train_temp;
+        feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
     end
 
     % extracting accuracy for 2-classes 
@@ -93,11 +102,20 @@ elseif STUDY.analysis_mode == 2 % SVM classification with liblinear
     w = model.w';
 
     feat_weights = zeros(size(w,1),3);
+    feat_weights_corrected = zeros(size(w,1),3);
     
     if STUDY.feat_weights_mode == 1 
+        % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
         feat_weights(:,3) = abs(w);
+        
+        % corrected feature weights according to Haufe et al. (2014) method
+        feat_weights_corrected(:,1) = 1:(size(w,1));
+        vectors_train_temp = (vectors_train - repmat(mean(vectors_train), size(vectors_train, 1), 1)) ./ sqrt(size(vectors_train, 1) - 1);
+        feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
+        clear vectors_train_temp;
+        feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
     end
 
     % extracting accuracy for 2-classes 
@@ -141,11 +159,20 @@ elseif STUDY.analysis_mode == 3 % SVR
     % calculating feature weights
     w = model.SVs' * model.sv_coef;
     feat_weights = zeros(size(w,1),3);  
+    feat_weights_corrected = zeros(size(w,1),3);
     
     if STUDY.feat_weights_mode == 1
+        % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
         feat_weights(:,3) = abs(w);
+        
+        % corrected feature weights according to Haufe et al. (2014) method
+        feat_weights_corrected(:,1) = 1:(size(w,1));
+        vectors_train_temp = (vectors_train - repmat(mean(vectors_train), size(vectors_train, 1), 1)) ./ sqrt(size(vectors_train, 1) - 1);
+        feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
+        clear vectors_train_temp;
+        feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
     end
     
 end % if analysis_mode

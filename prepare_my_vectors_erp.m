@@ -385,17 +385,19 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                     elseif main_analysis == 2
                         fprintf('Permutation test step %d of %d steps, cross-validation step %d in cycle %d: \n',s,nsteps,cv,rep);
                     end
-                    [acc,feat_weights] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY);
+                    [acc,feat_weights, feat_weights_corrected] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY);
                 
                     if main_analysis == 1
                         RESULTS.prediction_accuracy{ch}(s,cv,rep) = acc;
                         RESULTS.feature_weights{ch}{s,cv,rep} = feat_weights;
+                        RESULTS.feature_weights_corrected{ch}{s,cv,rep} = feat_weights_corrected;
                     elseif main_analysis == 2
                         RESULTS.perm_prediction_accuracy{ch}(s,cv,repetition_data_steps(rep)) = acc;           
                     end
                         
                     clear acc;
                     clear feat_weights;
+                    clear feat_weights_corrected;
                     
                 end % steps
                     
