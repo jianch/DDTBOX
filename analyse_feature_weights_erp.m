@@ -39,7 +39,7 @@ for sbj = 1:ANALYSIS.nsbj
            
     %% collect data from all participants
     % results are stored in:
-    % RESULTS.feature_weights{analysis}{time_step,cross_val_step,repetition_step}=(data_point,feature_weight,absolute_feature_weight)
+    % RESULTS.feature_weights{analysis}{time_step,cross_val_step,repetition_step}=(feature_number,feature_weight,absolute_feature_weight)
     %
     % Feature weights are then averaged. Attention - averaged absolute
     % feature weights are not just | average feature weights | (!!!)
@@ -57,8 +57,17 @@ for sbj = 1:ANALYSIS.nsbj
                 
                 for rep = 1:size(ANALYSIS.RES.feature_weights{sbj},3)
                     
-                    temp_step_fw = ANALYSIS.RES.feature_weights{1,sbj}{steps,cross_val,rep}(:,2);
-                    temp_step_abs = ANALYSIS.RES.feature_weights{1,sbj}{steps,cross_val,rep}(:,3);
+                    if ANALYSIS.fw.corrected == 0 % if analysing uncorrected feature weights
+                        
+                        temp_step_fw = ANALYSIS.RES.feature_weights{1,sbj}{steps,cross_val,rep}(:,2);
+                        temp_step_abs = ANALYSIS.RES.feature_weights{1,sbj}{steps,cross_val,rep}(:,3); 
+                        
+                    elseif ANALYSIS.fw.corrected == 1 % if analysing corrected feature weights
+                        
+                        temp_step_fw = ANALYSIS.RES.feature_weights_corrected{1,sbj}{steps,cross_val,rep}(:,2);
+                        temp_step_abs = ANALYSIS.RES.feature_weights_corrected{1,sbj}{steps,cross_val,rep}(:,3); 
+                        
+                    end % of if ANALYSIS.fw.corrected
                     
                     FW_ANALYSIS.ALL_FW{sbj,steps,cross_val,rep} = temp_step_fw; % feature weights
                     FW_ANALYSIS.ALL_FW{sbj,steps,cross_val,rep}(:,2) = temp_step_abs; % absolute feature weights

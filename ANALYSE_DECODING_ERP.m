@@ -77,6 +77,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
     ANALYSIS.fw.do = 1; % analyse feature weights? 0=no / 1=yes
+    ANALYSIS.fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
     ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction
@@ -157,6 +158,7 @@ elseif input_mode == 1 % Prompted manual input
     ANALYSIS.fw.do = input('Do you wish to analyse the feature weights (only for spatial or spatio-temporal decoding)? "0" for no; "1" for yes: ');
     
     if ANALYSIS.fw.do == 1
+        ANALYSIS.fw.corrected = input('Use feature weights corrected using Haufe et al. (2014) method? "0" for no; "1" for yes: ');
         ANALYSIS.fw.multcompstats = input(['\nSpecify which multiple comparisons correction method to use: \n' ...
         '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
         '"4" for Cluster-Based Permutation Testing (Currently not available) \n"5" for KTMS Generalised FWER Control \n' ...
@@ -346,6 +348,7 @@ for s = 1:ANALYSIS.nsbj
     % Extract feature weights
     if ~isempty(RESULTS.feature_weights)
         ANALYSIS.RES.feature_weights{s} = RESULTS.feature_weights{1};
+        ANALYSIS.RES.feature_weights_corrected{s} = RESULTS.feature_weights_corrected{1};
     end
     
     clear RESULTS;
