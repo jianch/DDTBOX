@@ -196,15 +196,15 @@ for j = 1:P2
     % test statistic: minimum across subjects
     m = min(classification_acc_perm(:, ind), [], 2);
     
-    % store result of neutral permutation (actual value) for each voxel
+    % store result of neutral permutation (actual value) for each time window
     if j == 1
         m1 = m;
     end
     
-    % Compare actual (observed) value with permutation value for each voxel separately,
+    % Compare actual (observed) value with permutation value for each time window separately,
     % determines uncorrected p-values for global null hypothesis.
     uRank = uRank + (m >= m1);          % part of Eq. 24
-    % Compare actual (observed) value at each voxel with maximum across voxels,
+    % Compare actual (observed) value at each time window with maximum across time windows,
     % determines corrected p-values for global null hypothesis.
     cRank = cRank + (max(m) >= m1);     % Eq. 25 & part of Eq. 26
 
@@ -215,7 +215,7 @@ for j = 1:P2
     puGN = uRank / j;                               % part of Eq. 24
     % corrected p-values for global null hypothesis
     pcGN = cRank / j;                               % part of Eq. 26
-    % significant voxels for global null hypothesis
+    % significant time windows for global null hypothesis
     sigGN = (pcGN <= alpha_level);
     
     
@@ -225,7 +225,7 @@ for j = 1:P2
     puMN = ((1 - 0.5) * puGN .^ (1/n_subjects) + 0.5) .^ n_subjects;  % Eq. 19
     % corrected p-values for majority null hypothesis
     pcMN = pcGN + (1 - pcGN) .* puMN;               % Eq. 21
-    % significant voxels for majority null hypothesis
+    % significant time windows for majority null hypothesis
     sigMN = (pcMN <= alpha_level);
     % lower bound on corrected p-values for majority null hypothesis
     puMNMin = ((1 - 0.5) * 1/j .^ (1/n_subjects) + 0.5) .^ n_subjects;
