@@ -380,6 +380,12 @@ fprintf('All data from all subjects loaded.\n');
 M(:,:) = mean(ANALYSIS.RES.all_subj_acc,1);
 ANALYSIS.RES.mean_subj_acc(:,:) = M'; clear M;
 
+if ANALYSIS.use_robust == 1 % If using robust group-level stats
+    % Calculate and store the trimmed mean of subject accuracies
+    trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.trimming, 1);
+    ANALYSIS.RES.trimmean_subj_acc(:,:) = trimmed_M'; clear trimmed_M;
+end % of if ANALYSIS.use_robust
+
 SE(:,:) = (std(ANALYSIS.RES.all_subj_acc,1))/(sqrt(ANALYSIS.nsbj));
 ANALYSIS.RES.se_subj_acc(:,:) = SE'; clear SE;
 
@@ -390,6 +396,12 @@ if ANALYSIS.permstats == 2
     M(:,:) = mean(ANALYSIS.RES.all_subj_perm_acc,1);
     ANALYSIS.RES.mean_subj_perm_acc(:,:) = M'; clear M;
     
+    if ANALYSIS.use_robust == 1 % If using robust group-level stats
+    % Calculate and store the trimmed mean of subject accuracies
+        trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_perm_acc, ANALYSIS.trimming, 1);
+        ANALYSIS.RES.trimmean_subj_perm_acc(:,:) = trimmed_M'; clear trimmed_M;
+    end % of if ANALYSIS.use_robust
+    
     SE(:,:) = (std(ANALYSIS.RES.all_subj_perm_acc,1)) / (sqrt(ANALYSIS.nsbj));
     ANALYSIS.RES.se_subj_perm_acc(:,:) = SE'; clear SE;
 
@@ -399,10 +411,19 @@ if ANALYSIS.permstats == 2
     for subj = 1:ANALYSIS.nsbj
         for ana = 1:ANALYSIS.allna
             for step = 1:ANALYSIS.laststep
+                
                 temp(:,:) = ANALYSIS.RES.all_subj_perm_acc_reps(subj,ana,step,:,:);
                 mtemp = mean(temp,1);
                 ANALYSIS.RES.all_subj_perm_acc_reps_draw{subj,ana,step} = mtemp;
-                clear temp; clear mtemp;
+                clear mtemp;
+                
+                if ANALYSIS.use_robust == 1 % If using robust group-level stats
+                    trimmed_mtemp = trimmean(temp, ANALYSIS.trimming, 1);
+                    ANALYSIS.RES.trimmean_all_subj_perm_acc_reps_draw{subj,ana,step} = trimmed_mtemp;  
+                    clear trimmed_mtemp;
+                end % of if ANALYSIS.use_robust
+                clear temp; 
+                
             end % step
         end % ana
     end % sbj

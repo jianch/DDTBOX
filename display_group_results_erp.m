@@ -140,18 +140,40 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         
         % get results to plot
         %__________________________________________________________________
-        temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
-        temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
         
+        if ANALYSIS.use_robust == 0 % If plotting the arithmetic mean
+            temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
+            temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
+            fprintf('\n\nArithmetic mean used for plotting group average accuracy\n\n');
+        
+        elseif ANALYSIS.use_robust == 1 % If plotting trimmed means 
+        
+            temp_data(1,:) = ANALYSIS.RES.trimmean_subj_acc(ana,:);
+            temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
+            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.trimming);
+
+        end % of if ANALYSIS.use_robust
+            
         % get permutation results to plot
         %__________________________________________________________________
         if ANALYSIS.permstats == 1
             temp_perm_data(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = ANALYSIS.chancelevel;
             temp_perm_se(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = zeros;
         elseif ANALYSIS.permstats == 2
-            temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
-            temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
-        end
+            
+            if ANALYSIS.use_robust == 0 % If plotting the arithmetic mean
+                
+                temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
+                
+            elseif ANALYSIS.use_robust == 1 % If plotting trimmed means 
+
+                temp_perm_data(1,:) = ANALYSIS.RES.trimmean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:); % Still plotting non-robust SE
+                
+            end % of if ANALYSIS.use_robust
+            
+        end % of if ANALYSIS.permstats
         
         % mark significant points
         %__________________________________________________________________
