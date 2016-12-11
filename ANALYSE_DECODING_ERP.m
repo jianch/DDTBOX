@@ -93,7 +93,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
     ANALYSIS.use_robust_fw = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
     ANALYSIS.trimming_fw = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
-    
+    ANALYSIS.fw_ttest_tail = 'right';
     ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction

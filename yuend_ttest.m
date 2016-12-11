@@ -1,4 +1,4 @@
-function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
+function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, varargin)
 %
 % Computes t_yuen (Yuen's T statistic) to compare the trimmed means of two
 % dependent groups. Each group needs the same number of data points.
@@ -10,10 +10,18 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %
 %   cond_2_data             vector of observations in group/condition 2
 %
-%   percent                 percent trimming, must be between 0 and 50 
-%                           Default = 20
+% Optional Keyword Inputs:
+%
+%   percent                 percent to trim for the trimmed mean, must be 
+%                           between 0 and 50. Default = 20                          
 %
 %   alpha                   nominal alpha level. Default = 0.05
+%
+%   tail                    choices for one- or two-tailed testing. Default
+%                           is two-tailed.
+%                           'both' = two-tailed
+%                           'right' = one-tailed test for positive diffs
+%                           'left' = one-tailed test for negative diffs
 %
 % Outputs:
 %
@@ -69,16 +77,42 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % GAR fixed bug for covariance / se
 %
 
-% Defaults (if not specified in input arguments)
-% Alpha level (default 0.05)
-if nargin < 4 
-    alpha = .05;
+%% Handling variadic inputs
+% Define defaults at the beginning
+options = struct(...
+    'alpha', 0.05, ...
+    'percent', 20, ...
+    'tail', 'both');
+
+% Read the acceptable names
+option_names = fieldnames(options);
+
+% Count arguments
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
+   error([mfilename ' needs property name/property value pairs'])
 end
 
-% Trimming percent (default 20)
-if nargin < 3
-    percent = 20;
+for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+   inp_name = lower(pair{1}); % make case insensitive
+
+   % Overwrite default options
+   if any(strcmp(inp_name, option_names))
+      options.(inp_name) = pair{2};
+   else
+      error('%s is not a recognized parameter name', inp_name)
+   end
 end
+clear pair
+clear inp_name
+
+% Renaming variables for use below:
+alpha = options.alpha;
+percent = options.percent;
+ttest_tail = options.tail;
+clear options;
+
+%% Yuen's paired-samples t test
 
 if isempty(cond_1_data) || isempty(cond_2_data) 
     error('yuend_ttest:InvalidInput', 'data vectors cannot have length = 0');
@@ -147,17 +181,35 @@ se = sqrt( (d_cond_1 + d_cond_2 - 2 .* winsorized_cov_cond_1_2) ./ (n_trimmed .*
 
 t_yuen = diff./se; % Calculate yuen's t
 
-p = 2 * (1 - tcdf(abs(t_yuen), df)); % 2-tailed probability
+% Calculate p-value depending on whether calculating one- or two-tailed
+% testing
 
+if strcmp(ttest_tail, 'both') == 1 % 2-tailed probability
+    p = 2 * (1 - tcdf(abs(t_yuen), df)); 
+    tcrit = tinv(1 - alpha ./ 2, df); % 1-alpha./2 quantile of Student's distribution with df degrees of freedom
+    % Two-tailed CI
+    CI(1) = diff - tcrit .* se; 
+    CI(2)= diff + tcrit .* se;
+    
+elseif strcmp(ttest_tail, 'right') == 1 % 1-tailed testing (test for positive differences)
+    p = 1 - tcdf(t_yuen, df);
+    tcrit = tinv(1 - alpha, df);
+    % One-tailed CI
+    CI(1) = diff - tcrit .* se;
+    CI(2) = Inf;
+        
+elseif strcmp(ttest_tail, 'left') == 1 % 1-tailed (test for negative differences)
+    p = tcdf(t_yuen, df);
+    tcrit = tinv(1 - alpha, df);
+    CI(1) = -Inf;
+    CI(2) = diff + tcrit .* se;
+    
+end % of if strcmp
+    
 if p < alpha;
     h_yuen = 1;
 else
     h_yuen = 0;
-end
+end % of if p < alpha
 
-tcrit = tinv(1 - alpha ./ 2, df); % 1-alpha./2 quantile of Student's distribution with df degrees of freedom
- 
-CI(1) = diff - tcrit .* se; 
-CI(2)= diff + tcrit .* se;
-
-end
+end % of function

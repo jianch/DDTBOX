@@ -238,12 +238,12 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 
                 if ANALYSIS.use_robust_fw == 0 % Student's t test
                     
-                    [h,p] = ttest(temp_z,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument.
+                    [h,p] = ttest(temp_z,0,p_crit,ANALYSIS.fw_ttest_tail); 
                 
                 elseif ANALYSIS.use_robust_fw == 1 % Yuen's t
                     
                     zero_data_temp = zeros(length(temp_z), 1); % Make vector of zeroes for single-sample comparison
-                    [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp_z, zero_data_temp, ANALYSIS.trimming_fw, ANALYSIS.pstats);
+                    [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp_z, zero_data_temp, 'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw_ttest_tail);
 
                 end % of if ANALYSIS.use_robust_fw
                 
@@ -355,12 +355,12 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
             if ANALYSIS.use_robust_fw == 0 % Student's t test
                 
-                [h,p] = ttest(temp,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument
+                [h,p] = ttest(temp,0,p_crit,ANALYSIS.fw_ttest_tail); 
             
             elseif ANALYSIS.use_robust_fw == 1 % Yuen's t test
             
                 zero_data_temp = zeros(length(temp), 1); % Make vector of zeroes for single-sample comparison
-                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, ANALYSIS.trimming_fw, ANALYSIS.pstats);
+                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, 'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw_ttest_tail);
                 
             end % of if ANALYSIS.use_robust_fw
             

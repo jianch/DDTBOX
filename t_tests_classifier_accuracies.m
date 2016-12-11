@@ -61,7 +61,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                 chance_level_data_temp = zeros(size(ANALYSIS.RES.all_subj_acc(:, na, step), 1), 1);
                 chance_level_data_temp(:) = ANALYSIS.chancelevel;
                 % Perform Yuen's t test
-                [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), chance_level_data_temp, ANALYSIS.trimming, ANALYSIS.pstats);
+                [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), chance_level_data_temp, 'percent', ANALYSIS.trimming, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.groupstats_ttest_tail);
             
             end % of if ANALYSIS.use_robust
             
@@ -79,7 +79,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                 
                 elseif ANALYSIS.use_robust == 1
                     
-                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:, na, step), ANALYSIS.trimming, ANALYSIS.pstats);
+                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:, na, step), 'percent', ANALYSIS.trimming, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.groupstats_ttest_tail);
                     
                 end % of if ANALYSIS.use_robust
                 
@@ -101,7 +101,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                 
                 elseif ANALYSIS.use_robust == 1
                     
-                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), ANALYSIS.trimming, ANALYSIS.pstats);
+                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), 'percent', ANALYSIS.trimming, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.groupstats_ttest_tail);
                     
                 end % of if ANALYSIS.use_robust
                 
