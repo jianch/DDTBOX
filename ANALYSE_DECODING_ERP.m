@@ -64,7 +64,9 @@ if input_mode == 0 % Hard-coded input
     % If using t test approach for group-level analyses:
     ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
-
+    ANALYSIS.use_robust = 1; % Use Yuen's t, the robust version of the t test? 1 = Yes / 0 = No
+    ANALYSIS.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
+    
     ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
     % 0 = no correction
     % 1 = Bonferroni correction

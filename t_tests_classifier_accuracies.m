@@ -21,15 +21,22 @@ function [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS)
 % Example:      % [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS)
 %
 %
-% Copyright (C) 2016 Stefan Bode and Contributors
+% Copyright (c) 2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
 %
-% This program is free software: you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation, either version 3 of the License, or (at your
-% option) any later version. This program is distributed in the hope that
-% it will be useful, but without any warranty; without even the implied
-% warranty of merchantability or fitness for a particular purpose. See the
-% GNU General Public License <http://www.gnu.org/licenses/> for more details.
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
@@ -42,19 +49,39 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         if ANALYSIS.permstats == 1
             
             % chance level = 100 / number conditions
-            [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.chancelevel,ANALYSIS.pstats); % simply against chance
-            T = otherstats.tstat;
-            clear otherstats;
+            if ANALYSIS.use_robust == 0
+                
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.chancelevel, ANALYSIS.pstats); % simply against chance
+                T = otherstats.tstat;
+                clear otherstats;
+                
+            elseif ANALYSIS.use_robust == 1
+                
+                % Generate a 'dummy' dataset of chance level values
+                chance_level_data_temp = zeros(size(ANALYSIS.RES.all_subj_acc(:, na, step), 1), 1);
+                chance_level_data_temp(:) = ANALYSIS.chancelevel;
+                % Perform Yuen's t test
+                [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), chance_level_data_temp, ANALYSIS.trimming, ANALYSIS.pstats);
+            
+            end % of if ANALYSIS.use_robust
             
         % test against permutation test results    
         elseif ANALYSIS.permstats == 2
             
             % against average permuted distribution
             if ANALYSIS.drawmode == 1
+
+                if ANALYSIS.use_robust == 0
+                    
+                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:,na,step), ANALYSIS.pstats);
+                    T = otherstats.tstat;
+                    clear otherstats;
                 
-                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.all_subj_perm_acc(:,na,step),ANALYSIS.pstats);
-                T = otherstats.tstat;
-                clear otherstats;
+                elseif ANALYSIS.use_robust == 1
+                    
+                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:, na, step), ANALYSIS.trimming, ANALYSIS.pstats);
+                    
+                end % of if ANALYSIS.use_robust
                 
             % against one randomly drawn value (from all cross-val repetitions for each participant) for stricter test    
             elseif ANALYSIS.drawmode == 2
@@ -66,9 +93,19 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                     clear drawone;
                 end % sbj
                 
-                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step),ANALYSIS.RES.draw_subj_perm_acc(:,na,step),ANALYSIS.pstats);
-                T = otherstats.tstat;
-                clear otherstats;
+                if ANALYSIS.use_robust == 0
+                    
+                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), ANALYSIS.pstats);
+                    T = otherstats.tstat;
+                    clear otherstats;
+                
+                elseif ANALYSIS.use_robust == 1
+                    
+                    [H,P, ~, T, ~, ~, ~, ~] = yuend_ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), ANALYSIS.trimming, ANALYSIS.pstats);
+                    
+                end % of if ANALYSIS.use_robust
+                
+                
             end % if ANALYSIS.drawmode
             
         end % if ANALYSIS.permstats

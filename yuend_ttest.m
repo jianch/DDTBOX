@@ -41,9 +41,10 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % _________________________________________________________________________
 % 
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
+% 
+% This file is part of DDTBOX.
 %
-%
-% This file is free software: you can redistribute it and/or modify
+% DDTBOX is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
@@ -55,7 +56,6 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%
 %
 % Modified from the limo_yuend_ttest function in the LIMO Toolbox:
 % Pernet, C.R., Chauveau, N., Gaspar, C. & Rousselet, G.A. 
@@ -69,11 +69,13 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % GAR fixed bug for covariance / se
 %
 
-
 % Defaults (if not specified in input arguments)
+% Alpha level (default 0.05)
 if nargin < 4 
     alpha = .05;
 end
+
+% Trimming percent (default 20)
 if nargin < 3
     percent = 20;
 end
