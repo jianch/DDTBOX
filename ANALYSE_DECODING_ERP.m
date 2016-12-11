@@ -51,11 +51,11 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
     ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
     ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    ANALYSIS.window_width_ms = 10; % width of sliding window in ms
-    ANALYSIS.step_width_ms = 10; % step size with which sliding window is moved through the trial
+    ANALYSIS.window_width_ms = 40; % width of sliding window in ms
+    ANALYSIS.step_width_ms = 40; % step size with which sliding window is moved through the trial
            
     ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.group_level_analysis = 1; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
+    ANALYSIS.group_level_analysis = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
     
     % If using minimum statistic approach for group-level analyses:
     ANALYSIS.P2 = 100000; % Number of second-level permutations to use
@@ -87,8 +87,11 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     
     % Feature weight analysis options
-    ANALYSIS.fw.do = 1; % analyse feature weights? 0=no / 1=yes
+    ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
     ANALYSIS.fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
+    ANALYSIS.use_robust_fw = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
+    ANALYSIS.trimming_fw = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
+    
     ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
     % 1 = Bonferroni correction
     % 2 = Holm-Bonferroni correction

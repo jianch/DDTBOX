@@ -235,7 +235,18 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 temp_z = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),channel);
 
                 % Run a one-sample t-test on Z-scored feature weights
-                [h,p] = ttest(temp_z,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument.
+                
+                if ANALYSIS.use_robust_fw == 0 % Student's t test
+                    
+                    [h,p] = ttest(temp_z,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument.
+                
+                elseif ANALYSIS.use_robust_fw == 1 % Yuen's t
+                    
+                    zero_data_temp = zeros(length(temp_z), 1); % Make vector of zeroes for single-sample comparison
+                    [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp_z, zero_data_temp, ANALYSIS.trimming_fw, ANALYSIS.pstats);
+
+                end % of if ANALYSIS.use_robust_fw
+                
                 h_matrix_z(channel,1) = h; % Stores significant/non-significant decisions
                 p_matrix_z(channel,1) = p; % Stores p-values
 
@@ -342,7 +353,17 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
             temp = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,channel);
 
-            [h,p] = ttest(temp,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument
+            if ANALYSIS.use_robust_fw == 0 % Student's t test
+                
+                [h,p] = ttest(temp,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument
+            
+            elseif ANALYSIS.use_robust_fw == 1 % Yuen's t test
+            
+                zero_data_temp = zeros(length(temp), 1); % Make vector of zeroes for single-sample comparison
+                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, ANALYSIS.trimming_fw, ANALYSIS.pstats);
+                
+            end % of if ANALYSIS.use_robust_fw
+            
             h_matrix_z(channel,1) = h; % Stores significant/non-significant decisions
             p_matrix_z(channel,1) = p; % Stores p-values
 
