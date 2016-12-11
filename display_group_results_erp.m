@@ -160,7 +160,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
             for step = 1:size(temp_data,2)
                 
                 % plot if found significant...
-                if ANALYSIS.RES.h_ttest(ana,step) == 1
+                if ANALYSIS.RES.h(ana,step) == 1
                     
 %                     % ... and if after baseline (careful - this might be a meaningful result!)
 %                     if step >= PLOT.PointZero.Point

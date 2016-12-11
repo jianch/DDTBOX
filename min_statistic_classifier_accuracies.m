@@ -83,6 +83,8 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
      ANALYSIS.RES.h_minstat_uncorrected(na, RESULTS.puGN < ANALYSIS.pstats) = 1;
      ANALYSIS.RES.h_minstat_corrected(na, RESULTS.pcGN < ANALYSIS.pstats) = 1;
      
+     
+     
      % Copy into generic (analysis-unspecific) matrices for p and h
      ANALYSIS.RES.p_uncorrected(na, :) = ANALYSIS.RES.p_minstat_uncorrected(na, :);
      ANALYSIS.RES.p_corrected(na, :) = ANALYSIS.RES.p_minstat_corrected(na, :);
@@ -107,3 +109,15 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
      
 end % of for na (loop through analyses)
 
+
+% Marking h values for plotting depending on whether using multiple
+ % comaparisons corrections
+ if ANALYSIS.minstat_multcomp == 1
+     
+     ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_corrected;
+     
+ elseif ANALYSIS.minstate_multcomp == 0
+
+     ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_uncorrected;
+
+ end % of if ANALYSIS.minstat_multcomp
