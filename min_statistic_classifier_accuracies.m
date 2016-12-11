@@ -35,6 +35,8 @@ function [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS)
 % warranty of merchantability or fitness for a particular purpose. See the
 % GNU General Public License <http://www.gnu.org/licenses/> for more details.
 
+
+
 % Get number of time windows, number of subject, number of permutations per
 % subject
 n_time_windows = size(ANALYSIS.RES.all_subj_perm_acc_reps_draw, 3);
@@ -110,8 +112,8 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 end % of for na (loop through analyses)
 
 
-% Marking h values for plotting depending on whether using multiple
- % comaparisons corrections
+% Marking h values (statistical significance) for plotting depending on whether using multiple
+% comparisons corrections
  if ANALYSIS.minstat_multcomp == 1
      
      ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_corrected;

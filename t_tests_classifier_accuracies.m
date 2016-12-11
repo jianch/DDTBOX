@@ -1,12 +1,42 @@
-
-function [~] = t_tests_classifier_accuracies(input1, input2, etc)
-% Put header here
+function [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS)
+%
+% This function runs group-level one-sample or paired-samples t tests 
+% on classifier accuracy measures derived from each subject. One-sample
+% tests are performed against chance level, and paired-samples tests
+% compare the decoding accuracy using the observed data with decoding
+% accuracy using the permuted data from each subject. The results are
+% added to the ANALYSIS structure.
+%
+% Inputs:
+%
+%   ANALYSIS            Structure containing organised data and analysis
+%                       parameters set in analyse_decoding_erp
+%
+% Outputs:
+%
+%   ANALYSIS            Structure containing the data input to the function
+%                       plus the results of the statistical analyses.
 %
 %
+% Example:      % [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS)
+%
+%
+% Copyright (C) 2016 Stefan Bode and Contributors
+%
+% This program is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version. This program is distributed in the hope that
+% it will be useful, but without any warranty; without even the implied
+% warranty of merchantability or fitness for a particular purpose. See the
+% GNU General Public License <http://www.gnu.org/licenses/> for more details.
 
+
+
+%% Perform group-level tests
 for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         
-    for step = 1:size(ANALYSIS.RES.mean_subj_acc,2) % step
+    for step = 1:size(ANALYSIS.RES.mean_subj_acc,2) % step/time window
             
         % simply test against chance
         if ANALYSIS.permstats == 1
@@ -52,8 +82,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 end % of for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) loop
 
 
-%% CORRECTION FOR MULTIPLE COMPARISONS
-%__________________________________________________________________________
+%% Correction for multiple comparisons
 
 ANALYSIS.RES.h_ttest = zeros(size(ANALYSIS.RES.mean_subj_acc,1), size(ANALYSIS.RES.mean_subj_acc,2));
 
@@ -61,38 +90,32 @@ switch ANALYSIS.multcompstats
 
 case 0 % No correction for multiple comparisons
 
-    fprintf('Correction for multiple comparisons has not been applied\n');
+    fprintf('\n\nCorrection for multiple comparisons has not been applied\n\n');
 
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 
-%__________________________________________________________________________
-
 case 1 % Bonferroni Correction
 
-    fprintf('Performing corrections for multiple comparisons (Bonferroni)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (Bonferroni)\n\n');
 
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bonferroni_adjusted_alpha(na)] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
         fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
     end
 
-%__________________________________________________________________________    
-
 case 2 % Holm-Bonferroni Correction
     
-    fprintf('Performing corrections for multiple comparisons (Holm-Bonferroni)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (Holm-Bonferroni)\n\n');
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.holm_adjusted_alpha(na)] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction      
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
-    end % of for na loop
-
-%__________________________________________________________________________    
+        fprintf('\n\nThe adjusted critical alpha for analysis %i is %1.6f   \n\n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
+    end % of for na loop    
 
 case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
-    fprintf('Performing corrections for multiple comparisons (permutation test)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
@@ -121,11 +144,10 @@ case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
     clear real_decoding_scores
     clear perm_decoding_scores
-%__________________________________________________________________________    
 
 case 4 % Cluster-Based Permutation Test
  
-    fprintf('Performing corrections for multiple comparisons (cluster-based permutation test)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (cluster-based permutation test)\n\n');
     
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     
@@ -150,12 +172,11 @@ case 4 % Cluster-Based Permutation Test
         [ANALYSIS.RES.h_ttest(na, :)] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
     end % of for na loop
     clear real_decoding_scores
-    clear perm_decoding_scores
-%__________________________________________________________________________    
+    clear perm_decoding_scores    
 
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
     
-    fprintf('Performing corrections for multiple comparisons (KTMS generalised FWER control)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (KTMS generalised FWER control)\n\n');
 
     % Adapted from permutation test script
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
@@ -183,23 +204,19 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
     clear real_decoding_scores
     clear perm_decoding_scores
 
-%__________________________________________________________________________    
-
 case 6 % Benjamini-Hochberg FDR Control
 
-    fprintf('Performing corrections for multiple comparisons (Benjamini-Hochberg)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Hochberg)\n\n');
     
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bh_crit_alpha(na)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bh_crit_alpha(na));
+        fprintf('\n\nThe adjusted critical alpha for analysis %i is %1.6f \n\n', na, ANALYSIS.RES.bh_crit_alpha(na));
     end % of for na loop
-
-%__________________________________________________________________________    
 
 case 7 % Benjamini-Krieger-Yekutieli FDR Control
     
-    fprintf('Performing corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n\n');
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
@@ -207,11 +224,9 @@ case 7 % Benjamini-Krieger-Yekutieli FDR Control
         fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bky_crit_alpha(na));
     end % of for na loop
 
-%__________________________________________________________________________    
-
 case 8 % Benjamini-Yekutieli FDR Control
     
-    fprintf('Performing corrections for multiple comparisons (Benjamini-Yekutieli)\n');
+    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Yekutieli)\n\n');
 
     % Here a family of tests is defined as all steps within a given analysis
     for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
@@ -219,9 +234,11 @@ case 8 % Benjamini-Yekutieli FDR Control
         fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.by_crit_alpha(na));
     end % of for na loop
 
-%__________________________________________________________________________    
-% If some other option is chosen then do not correct, but notify user
+% If some other option is chosen then do not correct for multiple comparisons, but notify user
 otherwise
-    fprintf('Unavailable multiple comparisons option chosen. Will use uncorrected p-values \n');
+    fprintf('\n\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values \n\n');
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 end % of ANALYSIS.multcompstats switch
+
+% Marking h values (statistical significance) for plotting
+ANALYSIS.RES.h = ANALYSIS.RES.h_ttest;

@@ -416,7 +416,7 @@ if ANALYSIS.group_level_analysis == 1 % Group-level stats based on the minimum s
     
 elseif ANALYSIS.group_level_analysis == 2 % Group-level stats based on t tests
     
-% [~, ~] = t_tests_classifier_accuracies(input1, input2, etc);
+    [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS);
 
 end % of if ANALYSIS.group_level_analysis
 
