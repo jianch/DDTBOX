@@ -64,6 +64,7 @@ if input_mode == 0 % Hard-coded input
     % If using t test approach for group-level analyses:
     ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
+    ANALYSIS.groupstats_ttest_tail = 'right'; % Choose between two-tailed or one-tailed tests. 'both' = two-tailed / 'right' / 'left' = one-tailed testing for above/below chance accuracy
     ANALYSIS.use_robust = 0; % Use Yuen's t, the robust version of the t test? 1 = Yes / 0 = No
     ANALYSIS.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
     

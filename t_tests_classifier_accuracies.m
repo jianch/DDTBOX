@@ -51,7 +51,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
             % chance level = 100 / number conditions
             if ANALYSIS.use_robust == 0
                 
-                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.chancelevel, ANALYSIS.pstats); % simply against chance
+                [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.chancelevel, 'Alpha', ANALYSIS.pstats, 'Tail', ANALYSIS.groupstats_ttest_tail); % simply against chance
                 T = otherstats.tstat;
                 clear otherstats;
                 
@@ -73,7 +73,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 
                 if ANALYSIS.use_robust == 0
                     
-                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:,na,step), ANALYSIS.pstats);
+                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:, na, step), ANALYSIS.RES.all_subj_perm_acc(:,na,step), 'Alpha', ANALYSIS.pstats, 'Tail', ANALYSIS.groupstats_ttest_tail);
                     T = otherstats.tstat;
                     clear otherstats;
                 
@@ -95,7 +95,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
                 
                 if ANALYSIS.use_robust == 0
                     
-                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), ANALYSIS.pstats);
+                    [H,P, ~, otherstats] = ttest(ANALYSIS.RES.all_subj_acc(:,na,step), ANALYSIS.RES.draw_subj_perm_acc(:,na,step), 'Alpha', ANALYSIS.pstats, 'Tail', ANALYSIS.groupstats_ttest_tail);
                     T = otherstats.tstat;
                     clear otherstats;
                 
