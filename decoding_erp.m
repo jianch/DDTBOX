@@ -1,29 +1,39 @@
-% decoding_erp() - Perform MVPA on a single subject 
+function [results, cfg] = decoding_erp(dat, cfg, varargin)
 %
-% Usage: 
-%		 >> [results, cfg] = decoding_erp(dat,cfg,'Key1',Value1,...);
+% Performs MVPA on a single subject dataset.
+%
 %
 % Inputs:
 %
 %   dat            Either a file name (including path) of file containing
 %                  floating point data, or a data matrix (chans x frames)
-%   cfg			   A MATLAB struct containing the necessary configuration, 
-%				   see pop_dd_decode() for more information on necessary fields				   
+%
+%   cfg            A MATLAB struct containing the necessary configuration, 
+%                  see pop_dd_decode() for more information on necessary fields		
+%
 %  'Key1'          Keyword string for argument 1
+%
 %   Value1         Value of argument 1
+%
 %   ...            ...
 %		
 % Optional keyword inputs:
 %
-%   outdir         name of directory to write output (does not have to exist), def=pwd/ddouttmp/
+%   outdir         name of directory to write output (does not have to exist), default = pwd/ddouttmp/
+%
 %   indir          optional input directory from which to load init
 %
 % Outputs:
 %
 %   results        classification results (for use in e.g. analyse_decoding_erp())
+%
 %   cfg            updated configuration with 'dependent' parameters calculated from 
 % 				   'independent' parameters, e.g window_width (in samples) calculated from 
 %				   window_width_ms (in milliseconds)
+%
+%
+% Usage:           [results, cfg] = decoding_erp(dat,cfg,'Key1',Value1,...);
+%
 %
 % Copyright (c) 2013-2016, Stefan Bode and contributors 
 % 
@@ -42,7 +52,6 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [results, cfg] = decoding_erp(dat, cfg, varargin)
 cfg.window_width = floor(cfg.window_width_ms / ((1/cfg.srate) * 1000));
 cfg.step_width = floor(cfg.step_width_ms / ((1/cfg.srate) * 1000));
 % cross-validation defaults for single-trial decoding

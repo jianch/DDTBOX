@@ -2,14 +2,25 @@ function make_chanlocs_file(EEG, varargin)
 %
 % This script copies the channel location information from a loaded EEGLab
 % dataset and uses this data to create a channel locations file. The channel locations file
-% is then saved at the specified location. An EEGLab dataset must be loaded 
-% first for this script to work.
+% is then saved at the specified location (does not have to exist). An EEGLab dataset must be loaded 
+% for this function to work.
 %
-% required:
-% - EEG (EEGLab data structure)
+% Inputs:
+%
+%   EEG            EEGLab data structure
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
 % 
-% optional:
-% - save_filepath (location in which to save the chanlocs file) 
+% Optional Keyword Inputs:
+%
+%   save_filepath 	location in which to save the channel locations file, including file name. Default = pwd/ddchanlocstmp/chanlocs.mat 
+%
+% Outputs:
+%
+%
+% Example:          make_chanlocs_file(EEG, 'save_filepath', 'Channel Locations/chanlocs_for_DDTBox.mat');
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -32,7 +43,7 @@ function make_chanlocs_file(EEG, varargin)
 %% Handling variadic inputs
 % Define defaults at the beginning
 options = struct(...
-    'save_filepath', []);
+    'save_filepath', [pwd '/ddchanlocstmp/chanlocs.mat']);
 
 % Read the acceptable names
 option_names = fieldnames(options);
