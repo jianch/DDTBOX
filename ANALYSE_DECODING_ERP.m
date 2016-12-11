@@ -87,6 +87,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
     ANALYSIS.plot_robust = 2; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
+    ANALYSIS.plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
     
     % Feature weight analysis options
     ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
@@ -384,7 +385,7 @@ ANALYSIS.RES.mean_subj_acc(:,:) = M'; clear M;
 
 if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     % Calculate and store the trimmed mean of subject accuracies
-    trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.trimming, 1);
+    trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.plot_robust_trimming, 1);
     ANALYSIS.RES.trimmean_subj_acc(:,:) = trimmed_M'; clear trimmed_M;
     
 elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
@@ -406,7 +407,7 @@ if ANALYSIS.permstats == 2
     
     if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     % Calculate and store the trimmed mean of subject accuracies
-        trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_perm_acc, ANALYSIS.trimming, 1);
+        trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_perm_acc, ANALYSIS.plot_robust_trimming, 1);
         ANALYSIS.RES.trimmean_subj_perm_acc(:,:) = trimmed_M'; clear trimmed_M;
         
     elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
@@ -433,7 +434,7 @@ if ANALYSIS.permstats == 2
                 
                 if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
                     
-                    trimmed_mtemp = trimmean(temp, ANALYSIS.trimming, 1);
+                    trimmed_mtemp = trimmean(temp, ANALYSIS.plot_robust_trimming, 1);
                     ANALYSIS.RES.trimmean_all_subj_perm_acc_reps_draw{subj,ana,step} = trimmed_mtemp;  
                     clear trimmed_mtemp;
                     

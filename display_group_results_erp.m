@@ -150,7 +150,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         
             temp_data(1,:) = ANALYSIS.RES.trimmean_subj_acc(ana,:);
             temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
-            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.trimming);
+            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
 
         elseif ANALYSIS.plot_robust == 2 % If plotting medians
             
