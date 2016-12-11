@@ -1,32 +1,38 @@
 function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
-
-% function [t_yuen, diff, se, CI, p, tcrit, df] = limo_yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
 %
 % Computes t_yuen (Yuen's T statistic) to compare the trimmed means of two
-% DEPENDENT groups (each group needs the same number of data points).
+% dependent groups. Each group needs the same number of data points.
+%  
 % 
-% t statistic output is modified so that the same output arguments can be
-% used as the MATLAB ttest function, stored in t_yuen.tstat. 
-% 
-% required:
-% - cond_1_data (vectors of observations in group 1)
-% - cond_2_data (vectors of observations in group 2)
+% Inputs:
 %
-% optional:
-% - percent (percent trimming, must be between 0 and 100. Default = 20)
-% - alpha (alpha level. Default = 0.05)
+%   cond_1_data             vector of observations in group/condition 1
 %
-% outputs:
+%   cond_2_data             vector of observations in group/condition 2
 %
-% - t_yuen.tstat (Yuen T statistic. t_yuen is distributed approximately as Student's t 
-%      with estimated degrees of freedom, df)
-% - diff (difference between trimmed means of cond_1_data and cond_2_data)
-% - se (standard error)
-% - CI (confidence interval around the difference)
-% - p (p value)
-% - tcrit (1 - alpha / 2 quantile of the Student's t distribution with
-%   adjusted degrees of freedom)
-% - df (degrees of freedom)
+%   percent                 percent trimming, must be between 0 and 50 
+%                           Default = 20
+%
+%   alpha                   nominal alpha level. Default = 0.05
+%
+% Outputs:
+%
+%   t_yuen.tstat            Yuen T statistic. t_yuen is distributed approximately
+%                           as Student's t with estimated degrees of freedom, df.
+%   diff                    difference between trimmed means of cond_1_data 
+%                           and cond_2_data.
+%
+%   se                      standard error
+%
+%   CI                      confidence interval around the difference
+%
+%   p                       p-value
+%
+%   tcrit                   1 - alpha / 2 quantile of the Student's t distribution 
+%                           with adjusted degrees of freedom        
+%
+%   df                      degrees of freedom
+%
 %
 % See Wilcox (2012), Introduction to Robust Estimation and Hypothesis
 % Testing (3rd Edition), page 195-198 for a description of the Yuen
@@ -34,14 +40,21 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %
 % _________________________________________________________________________
 % 
-% Written by Daniel Feuerriegel to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
+% Copyright (c) 2016 Daniel Feuerriegel and contributors
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
+% This file is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 %
 % Modified from the limo_yuend_ttest function in the LIMO Toolbox:
@@ -57,9 +70,9 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %
 
 
-% Defaults
+% Defaults (if not specified in input arguments)
 if nargin < 4 
-    alpha = .05; 
+    alpha = .05;
 end
 if nargin < 3
     percent = 20;
@@ -70,11 +83,11 @@ if isempty(cond_1_data) || isempty(cond_2_data)
 end
 
 if (percent >= 100) || (percent < 0)
-    error('yuend_ttest:InvalidPercent', 'PERCENT must be between 0 and 100.');
+    error('yuend_ttest:InvalidPercent', 'PERCENT must be between 0 and 50.');
 end
 
-if percent == 50
-    error('yuend_ttest:InvalidPercent', 'PERCENT cannot be 50, use a method for medians instead.');
+if percent >= 50
+    error('yuend_ttest:InvalidPercent', 'PERCENT cannot be 50 or higher, use a method for medians instead.');
 end
 
 % number of trials
@@ -130,9 +143,9 @@ diff = mean_cond_1 - mean_cond_2; % Calculate difference in trimmed means
 df = n_trimmed - 1; % Calculate degrees of freedom
 se = sqrt( (d_cond_1 + d_cond_2 - 2 .* winsorized_cov_cond_1_2) ./ (n_trimmed .* (n_trimmed - 1)) ); % Calculate standard error
 
-t_yuen.tstat = diff./se; % Calculate yuen's t
+t_yuen = diff./se; % Calculate yuen's t
 
-p = 2 * (1 - tcdf(abs(t_yuen.tstat), df)); % 2-tailed probability
+p = 2 * (1 - tcdf(abs(t_yuen), df)); % 2-tailed probability
 
 if p < alpha;
     h_yuen = 1;
