@@ -1,6 +1,6 @@
 function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, varargin)
 %
-% This script implements the group-level statistical inference testing
+% This function implements the group-level statistical inference testing
 % based on the minimum statistic (described in detail in Allefeld et al.,
 % 2016). The testing procedure includes a test for global null (i.e. that
 % no subject show any effects, i.e. a fixed effects analysis) and also
@@ -34,8 +34,8 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 %
 % Optional Keyword Inputs:
 %
-%   P2                  The number of second-level permutations to
-%                       generate. Default = 100000
+%   n_second_level_permutations     The number of second-level permutations to
+%                                   generate. Default = 100000
 %
 %   alpha_level         The nominal alpha level for significance testing.
 %                       Default = 0.05
@@ -65,7 +65,7 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 %
 %
 % Example:      % [Results, Params] = allefeld_algorithm(observed_data, permtest_data, 'P2', 100000, 'alpha_level', 0.05)
-
+%
 %
 % Copyright (C) 2016 Daniel Feuerriegel and Contributors
 %
@@ -81,7 +81,7 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % Define defaults at the beginning
 options = struct(...
     'alpha_level', 0.05,...
-    'P2', 100000);
+    'n_second_level_permutations', 100000);
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -107,7 +107,7 @@ clear inp_name
 
 % Renaming variables for use below:
 alpha_level = options.alpha_level;
-P2 = options.P2;
+n_second_level_permutations = options.n_second_level_permutations;
 clear options;
 
 
@@ -117,7 +117,7 @@ n_subjects = size(observed_data, 2); % Number of subject datasets
 n_time_windows = size(observed_data, 1); % Number of time windows to analyse
 n_permutations_per_subject = size(permtest_data, 3); % Number of permutation sample analyses per subject
 P1 = n_permutations_per_subject + 1; % Number of first-level permutations + 1 extra for observed data
-
+P2 = n_second_level_permutations; % Number of second-level permutations to draw
 % Checking if the P2 value is larger than the possible number of unique
 % permutations
 if P2 > P1 ^ n_subjects 
