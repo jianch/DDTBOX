@@ -64,7 +64,7 @@ if input_mode == 0 % Hard-coded input
     % If using t test approach for group-level analyses:
     ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
     ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
-    ANALYSIS.use_robust = 1; % Use Yuen's t, the robust version of the t test? 1 = Yes / 0 = No
+    ANALYSIS.use_robust = 0; % Use Yuen's t, the robust version of the t test? 1 = Yes / 0 = No
     ANALYSIS.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
     
     ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
@@ -85,6 +85,7 @@ if input_mode == 0 % Hard-coded input
     ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
     ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
     ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
+    ANALYSIS.plot_robust = 2; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
     
     % Feature weight analysis options
     ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
@@ -380,11 +381,17 @@ fprintf('All data from all subjects loaded.\n');
 M(:,:) = mean(ANALYSIS.RES.all_subj_acc,1);
 ANALYSIS.RES.mean_subj_acc(:,:) = M'; clear M;
 
-if ANALYSIS.use_robust == 1 % If using robust group-level stats
+if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     % Calculate and store the trimmed mean of subject accuracies
     trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.trimming, 1);
     ANALYSIS.RES.trimmean_subj_acc(:,:) = trimmed_M'; clear trimmed_M;
-end % of if ANALYSIS.use_robust
+    
+elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
+    
+    median_M(:,:) = median(ANALYSIS.RES.all_subj_acc, 1);
+    ANALYSIS.RES.median_subj_acc(:,:) = median_M'; clear median_M;
+    
+end % of if ANALYSIS.plot_robust
 
 SE(:,:) = (std(ANALYSIS.RES.all_subj_acc,1))/(sqrt(ANALYSIS.nsbj));
 ANALYSIS.RES.se_subj_acc(:,:) = SE'; clear SE;
@@ -396,11 +403,17 @@ if ANALYSIS.permstats == 2
     M(:,:) = mean(ANALYSIS.RES.all_subj_perm_acc,1);
     ANALYSIS.RES.mean_subj_perm_acc(:,:) = M'; clear M;
     
-    if ANALYSIS.use_robust == 1 % If using robust group-level stats
+    if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     % Calculate and store the trimmed mean of subject accuracies
         trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_perm_acc, ANALYSIS.trimming, 1);
         ANALYSIS.RES.trimmean_subj_perm_acc(:,:) = trimmed_M'; clear trimmed_M;
-    end % of if ANALYSIS.use_robust
+        
+    elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
+        
+        median_M(:,:) = median(ANALYSIS.RES.all_subj_perm_acc, 1);
+        ANALYSIS.RES.median_subj_perm_acc(:,:) = median_M'; clear median_M;
+        
+    end % of if ANALYSIS.plot_robust
     
     SE(:,:) = (std(ANALYSIS.RES.all_subj_perm_acc,1)) / (sqrt(ANALYSIS.nsbj));
     ANALYSIS.RES.se_subj_perm_acc(:,:) = SE'; clear SE;
@@ -417,11 +430,19 @@ if ANALYSIS.permstats == 2
                 ANALYSIS.RES.all_subj_perm_acc_reps_draw{subj,ana,step} = mtemp;
                 clear mtemp;
                 
-                if ANALYSIS.use_robust == 1 % If using robust group-level stats
+                if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
+                    
                     trimmed_mtemp = trimmean(temp, ANALYSIS.trimming, 1);
                     ANALYSIS.RES.trimmean_all_subj_perm_acc_reps_draw{subj,ana,step} = trimmed_mtemp;  
                     clear trimmed_mtemp;
-                end % of if ANALYSIS.use_robust
+                    
+                elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
+                    
+                    median_mtemp = median(temp, 1);
+                    ANALYSIS.RES.median_all_subj_perm_acc_reps_draw{subj,ana,step} = median_mtemp;  
+                    clear median_mtemp;
+                    
+                end % of if ANALYSIS.plot_robust
                 clear temp; 
                 
             end % step
