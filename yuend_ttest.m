@@ -20,10 +20,17 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %   tail                    choices for one- or two-tailed testing. Default
 %                           is two-tailed.
 %                           'both' = two-tailed
-%                           'right' = one-tailed test for positive diffs
-%                           'left' = one-tailed test for negative diffs
+%                           'right' = one-tailed test for positive differences
+%                           'left' = one-tailed test for negative differences
 %
 % Outputs:
+%
+%   h_yuen                  Null hypothesis test result. 
+%                           1 = reject / 0 = don't reject
+%
+%   p                       p-value
+%
+%   CI                      confidence interval around the difference
 %
 %   t_yuen.tstat            Yuen T statistic. t_yuen is distributed approximately
 %                           as Student's t with estimated degrees of freedom, df.
@@ -32,14 +39,13 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %
 %   se                      standard error
 %
-%   CI                      confidence interval around the difference
-%
-%   p                       p-value
-%
 %   tcrit                   1 - alpha / 2 quantile of the Student's t distribution 
 %                           with adjusted degrees of freedom        
 %
 %   df                      degrees of freedom
+%
+%
+% Example:  [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, 'alpha', 0.05, 'percent', 20, 'tail', 'both')
 %
 %
 % See Wilcox (2012), Introduction to Robust Estimation and Hypothesis
