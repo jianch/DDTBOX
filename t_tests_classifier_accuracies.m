@@ -181,7 +181,7 @@ case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
         tmp = squeeze(perm_decoding_scores);
         perm_decoding_scores = tmp;
 
-        [MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+        [MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
         
         ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
         ANALYSIS.RES.p_ttest(na,:) = MCC_Results.corrected_p;
@@ -216,7 +216,7 @@ case 4 % Cluster-Based Permutation Test
         tmp = squeeze(perm_decoding_scores);
         perm_decoding_scores = tmp;
         
-        [MCC_Results] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha);
+        [MCC_Results] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
         ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
         ANALYSIS.RES.critical_cluster_mass(na) = MCC_Results.critical_cluster_mass;
         ANALYSIS.RES.n_sig_clusters(na) = MCC_Results.n_sig_clusters;
@@ -255,7 +255,7 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
         tmp = squeeze(perm_decoding_scores);
         perm_decoding_scores = tmp;
 
-        [MCC_Results] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
+        [MCC_Results] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
         
         ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
         ANALYSIS.RES.t_values(na, :) = MCC_Results.t_values;

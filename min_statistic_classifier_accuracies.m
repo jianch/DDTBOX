@@ -79,7 +79,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     [RESULTS, PARAMS] = allefeld_algorithm(observed_data, permtest_data, 'n_second_level_permutations', ANALYSIS.P2, 'alpha_level', ANALYSIS.pstats);
      
      % Extract p-values and check for statistical significance
-     % Outputs from Results structure are vectors of lenght n_time_windows
+     % Outputs from Results structure are vectors of length n_time_windows
 
      ANALYSIS.RES.p_minstat_uncorrected(na, :) = RESULTS.puGN; % Uncorrected for multiple comparisons
      ANALYSIS.RES.p_minstat_corrected(na, :) = RESULTS.pcGN; % Corrected for multiple comparisons
@@ -90,8 +90,6 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
      
      ANALYSIS.RES.h_minstat_uncorrected(na, RESULTS.puGN < ANALYSIS.pstats) = 1;
      ANALYSIS.RES.h_minstat_corrected(na, RESULTS.pcGN < ANALYSIS.pstats) = 1;
-     
-     
      
      % Copy into generic (analysis-unspecific) matrices for p and h
      ANALYSIS.RES.p_uncorrected(na, :) = ANALYSIS.RES.p_minstat_uncorrected(na, :);

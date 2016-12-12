@@ -2,9 +2,11 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 %
 % This function receives the original data and outputs corrected p-values and
 % hypothesis test results based on a maximum cluster mass statistic permutation test,
-% as described in Bullmore et al. (1999). The permutation test in this function
-% is based on the t-statistic but could be adapted to use with other 
-% statistics such as the trimmed mean or Yuen's t.
+% as described in Bullmore et al. (1999). The permutation test in this script is based
+% on the t-statistic from Student's paired-samples t-test, but can also be used
+% with the more robust Yuen's paired-samples t test. If using Yuen's t this
+% function calls another function yuend_ttest which should be provided with
+% DDTBOX.
 %
 % Bullmore, E. T., Suckling, J., Overmeyer, S., Rabe-Hesketh, S., 
 % Taylor, E., & Brammer, M. J. (1999). Global, voxel, and cluster tests, 
@@ -47,6 +49,16 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 %                   0.05) will detect broadly distributed clusters, whereas setting it to
 %                   0.01 for example will help detect smaller clusters that exhibit strong effects.
 %
+%   use_yuen        option to use Yuen's paired-samples t instead of
+%                   Student's t. 1 = Yuen's t / 0 = Student's t
+%
+%   percent         percent to trim when using the trimmed mean. Value must
+%                   be between 0 and 50. Default is 20.
+%
+%   tail            choices for one- or two-tailed testing. Default is two-tailed.
+%                           'both' = two-tailed
+%                           'right' = one-tailed test for positive differences
+%                           'left' = one-tailed test for negative differences
 %
 % Outputs:
 %
@@ -82,7 +94,7 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 %   n_sig_clusters  Number of statistically significant clusters
 %
 %
-% Example:          [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'clusteringalpha', 0.01)
+% Example:          [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'clusteringalpha', 0.01, 'use_yuen', 1, 'percent', 20, 'tail', 'both')
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -108,7 +120,10 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 options = struct(...
     'alpha', 0.05,...
     'iterations', 5000,...
-    'clusteringalpha', 0.05);
+    'clusteringalpha', 0.05,...
+    'use_yuen', 0,...
+    'percent', 20,...
+    'tail', 'both');
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -136,6 +151,9 @@ clear inp_name
 alpha_level = options.alpha;
 n_iterations = options.iterations;
 clustering_alpha = options.clusteringalpha;
+use_yuen = options.use_yuen;
+percent = options.percent;
+tail = options.tail;
 clear options;
 
 
@@ -155,8 +173,22 @@ diff_scores = cond1_data - cond2_data;
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
-[uncorrected_h, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', clustering_alpha);
-uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
+
+% Preallocate vector of uncorrected h values (1 = sig / 0 = nonsig)
+uncorrected_h = zeros(n_total_comparisons, 1);
+
+% Perform t-tests at each step 
+if use_yuen == 0 % If using Student's t
+    [uncorrected_h, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', clustering_alpha, 'tail', tail);
+    uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
+
+elseif use_yuen == 1 % If using Yuen's t
+    uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
+    for step = 1:n_total_comparisons
+        [uncorrected_h(step), ~, ~, uncorrected_t(step)] = yuend_ttest(cond1_data(:, step), cond2_data(:, step), 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+    end % of for step
+end % of if use_yuen
+
 
 % Seed the random number generator based on the clock time
 rng('shuffle');
@@ -182,9 +214,19 @@ for iteration = 1:n_iterations
         % switching labels of conditions)
         temp(:,step) = temp_signs .* diff_scores(1:n_subjects, step);
     end % of for step
+    
     % Run t tests
-    [cluster_perm_test_h(:, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha);
-    t_stat(:, iteration) = temp_stats.tstat; % Get t statistics
+    if use_yuen == 0 % If using Student's t
+        % Run t tests
+        [cluster_perm_test_h(:, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha, 'tail', tail);
+        t_stat(:, iteration) = temp_stats.tstat; % Get t statistics
+
+    elseif use_yuen == 1 % If using Yuen's t
+        temp_comparison_dataset = zeros(size(temp, 1), 1); % Create dummy comparison dataset of zeroes
+        for step = 1:n_total_comparisons
+            [cluster_perm_test_h(step, iteration), ~, ~, t_stat(step, iteration)] = yuend_ttest(temp(:, step), temp_comparison_dataset, 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+        end % of for step
+    end % of if use_yuen
         
         % Marking the sign of each t statistic to avoid clustering pos
         % and neg direction significant results
@@ -279,6 +321,10 @@ for cluster_no = 1:length(cluster_mass_vector)
     b = sum(abs(max_cluster_mass) >= abs(cluster_mass_vector(cluster_no)));
     p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
     
+    if strcmp(tail, 'both') == 1 % If using two-tailed testing
+        p_t = p_t .* 2; % Doubling of p-value for two-tailed testing (essentially Bonferroni correction for two tests)
+    end % of if strcmp tail
+
     cluster_p(cluster_no) = p_t; % P-value for each cluster
     
 end % of for cluster_no

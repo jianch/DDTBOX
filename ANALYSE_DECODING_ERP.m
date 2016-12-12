@@ -59,7 +59,9 @@ if input_mode == 0 % Hard-coded input
     
     % If using minimum statistic approach for group-level analyses:
     ANALYSIS.P2 = 100000; % Number of second-level permutations to use
-    ANALYSIS.minstat_multcomp = 1; % Correct for multiple comparisons using the maximum statistic approach? 1 = Yes / 0 = No
+    ANALYSIS.minstat_multcomp = 1; % Correct for multiple comparisons using the maximum statistic approach:
+    % 0 = no correction
+    % 1 = correction based on the maximum statistic (also applied to prevalence lower bound testing)
     
     % If using t test approach for group-level analyses:
     ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
