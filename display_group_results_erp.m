@@ -140,18 +140,51 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         
         % get results to plot
         %__________________________________________________________________
-        temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
-        temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
         
+        if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+            temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
+            temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
+            fprintf('\n\nArithmetic mean used for plotting group average accuracy\n\n');
+        
+        elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+        
+            temp_data(1,:) = ANALYSIS.RES.trimmean_subj_acc(ana,:);
+            temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
+            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
+
+        elseif ANALYSIS.plot_robust == 2 % If plotting medians
+            
+            temp_data(1,:) = ANALYSIS.RES.median_subj_acc(ana,:);
+            temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
+            fprintf('\n\nMedian used for plotting group average accuracy\n\n');
+
+        end % of if ANALYSIS.plot_robust
+            
         % get permutation results to plot
         %__________________________________________________________________
         if ANALYSIS.permstats == 1
             temp_perm_data(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = ANALYSIS.chancelevel;
             temp_perm_se(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = zeros;
         elseif ANALYSIS.permstats == 2
-            temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
-            temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
-        end
+            
+            if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+                
+                temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
+                
+            elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+                temp_perm_data(1,:) = ANALYSIS.RES.trimmean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:); % Still plotting non-robust SE
+                
+            elseif ANALYSIS.plot_robust == 2 % If plotting medians
+                
+                temp_perm_data(1,:) = ANALYSIS.RES.median_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:); % Still plotting non-robust SE
+                
+            end % of if ANALYSIS.plot_robust
+            
+        end % of if ANALYSIS.permstats
         
         % mark significant points
         %__________________________________________________________________
@@ -160,7 +193,7 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
             for step = 1:size(temp_data,2)
                 
                 % plot if found significant...
-                if ANALYSIS.RES.h_ttest(ana,step) == 1
+                if ANALYSIS.RES.h(ana,step) == 1
                     
 %                     % ... and if after baseline (careful - this might be a meaningful result!)
 %                     if step >= PLOT.PointZero.Point

@@ -1,32 +1,52 @@
-function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
-
-% function [t_yuen, diff, se, CI, p, tcrit, df] = limo_yuend_ttest(cond_1_data, cond_2_data, percent, alpha)
+function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, varargin)
 %
 % Computes t_yuen (Yuen's T statistic) to compare the trimmed means of two
-% DEPENDENT groups (each group needs the same number of data points).
+% dependent groups. Each group needs the same number of data points.
+%  
 % 
-% t statistic output is modified so that the same output arguments can be
-% used as the MATLAB ttest function, stored in t_yuen.tstat. 
-% 
-% required:
-% - cond_1_data (vectors of observations in group 1)
-% - cond_2_data (vectors of observations in group 2)
+% Inputs:
 %
-% optional:
-% - percent (percent trimming, must be between 0 and 100. Default = 20)
-% - alpha (alpha level. Default = 0.05)
+%   cond_1_data             vector of observations in group/condition 1
 %
-% outputs:
+%   cond_2_data             vector of observations in group/condition 2
 %
-% - t_yuen.tstat (Yuen T statistic. t_yuen is distributed approximately as Student's t 
-%      with estimated degrees of freedom, df)
-% - diff (difference between trimmed means of cond_1_data and cond_2_data)
-% - se (standard error)
-% - CI (confidence interval around the difference)
-% - p (p value)
-% - tcrit (1 - alpha / 2 quantile of the Student's t distribution with
-%   adjusted degrees of freedom)
-% - df (degrees of freedom)
+% Optional Keyword Inputs:
+%
+%   percent                 percent to trim for the trimmed mean, must be 
+%                           between 0 and 50. Default = 20                          
+%
+%   alpha                   nominal alpha level. Default = 0.05
+%
+%   tail                    choices for one- or two-tailed testing. Default
+%                           is two-tailed.
+%                           'both' = two-tailed
+%                           'right' = one-tailed test for positive differences
+%                           'left' = one-tailed test for negative differences
+%
+% Outputs:
+%
+%   h_yuen                  Null hypothesis test result. 
+%                           1 = reject / 0 = don't reject
+%
+%   p                       p-value
+%
+%   CI                      confidence interval around the difference
+%
+%   t_yuen.tstat            Yuen T statistic. t_yuen is distributed approximately
+%                           as Student's t with estimated degrees of freedom, df.
+%   diff                    difference between trimmed means of cond_1_data 
+%                           and cond_2_data.
+%
+%   se                      standard error
+%
+%   tcrit                   1 - alpha / 2 quantile of the Student's t distribution 
+%                           with adjusted degrees of freedom        
+%
+%   df                      degrees of freedom
+%
+%
+% Example:  [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, 'alpha', 0.05, 'percent', 20, 'tail', 'both')
+%
 %
 % See Wilcox (2012), Introduction to Robust Estimation and Hypothesis
 % Testing (3rd Edition), page 195-198 for a description of the Yuen
@@ -34,15 +54,22 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 %
 % _________________________________________________________________________
 % 
-% Written by Daniel Feuerriegel to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
+% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% 
+% This file is part of DDTBOX.
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
-%
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 % Modified from the limo_yuend_ttest function in the LIMO Toolbox:
 % Pernet, C.R., Chauveau, N., Gaspar, C. & Rousselet, G.A. 
@@ -56,25 +83,53 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % GAR fixed bug for covariance / se
 %
 
+%% Handling variadic inputs
+% Define defaults at the beginning
+options = struct(...
+    'alpha', 0.05, ...
+    'percent', 20, ...
+    'tail', 'both');
 
-% Defaults
-if nargin < 4 
-    alpha = .05; 
+% Read the acceptable names
+option_names = fieldnames(options);
+
+% Count arguments
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
+   error([mfilename ' needs property name/property value pairs'])
 end
-if nargin < 3
-    percent = 20;
+
+for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+   inp_name = lower(pair{1}); % make case insensitive
+
+   % Overwrite default options
+   if any(strcmp(inp_name, option_names))
+      options.(inp_name) = pair{2};
+   else
+      error('%s is not a recognized parameter name', inp_name)
+   end
 end
+clear pair
+clear inp_name
+
+% Renaming variables for use below:
+alpha = options.alpha;
+percent = options.percent;
+ttest_tail = options.tail;
+clear options;
+
+%% Yuen's paired-samples t test
 
 if isempty(cond_1_data) || isempty(cond_2_data) 
     error('yuend_ttest:InvalidInput', 'data vectors cannot have length = 0');
 end
 
 if (percent >= 100) || (percent < 0)
-    error('yuend_ttest:InvalidPercent', 'PERCENT must be between 0 and 100.');
+    error('yuend_ttest:InvalidPercent', 'PERCENT must be between 0 and 50.');
 end
 
-if percent == 50
-    error('yuend_ttest:InvalidPercent', 'PERCENT cannot be 50, use a method for medians instead.');
+if percent >= 50
+    error('yuend_ttest:InvalidPercent', 'PERCENT cannot be 50 or higher, use a method for medians instead.');
 end
 
 % number of trials
@@ -130,19 +185,37 @@ diff = mean_cond_1 - mean_cond_2; % Calculate difference in trimmed means
 df = n_trimmed - 1; % Calculate degrees of freedom
 se = sqrt( (d_cond_1 + d_cond_2 - 2 .* winsorized_cov_cond_1_2) ./ (n_trimmed .* (n_trimmed - 1)) ); % Calculate standard error
 
-t_yuen.tstat = diff./se; % Calculate yuen's t
+t_yuen = diff./se; % Calculate yuen's t
 
-p = 2 * (1 - tcdf(abs(t_yuen.tstat), df)); % 2-tailed probability
+% Calculate p-value depending on whether calculating one- or two-tailed
+% testing
 
+if strcmp(ttest_tail, 'both') == 1 % 2-tailed probability
+    p = 2 * (1 - tcdf(abs(t_yuen), df)); 
+    tcrit = tinv(1 - alpha ./ 2, df); % 1-alpha./2 quantile of Student's distribution with df degrees of freedom
+    % Two-tailed CI
+    CI(1) = diff - tcrit .* se; 
+    CI(2)= diff + tcrit .* se;
+    
+elseif strcmp(ttest_tail, 'right') == 1 % 1-tailed testing (test for positive differences)
+    p = 1 - tcdf(t_yuen, df);
+    tcrit = tinv(1 - alpha, df);
+    % One-tailed CI
+    CI(1) = diff - tcrit .* se;
+    CI(2) = Inf;
+        
+elseif strcmp(ttest_tail, 'left') == 1 % 1-tailed (test for negative differences)
+    p = tcdf(t_yuen, df);
+    tcrit = tinv(1 - alpha, df);
+    CI(1) = -Inf;
+    CI(2) = diff + tcrit .* se;
+    
+end % of if strcmp
+    
 if p < alpha;
     h_yuen = 1;
 else
     h_yuen = 0;
-end
+end % of if p < alpha
 
-tcrit = tinv(1 - alpha ./ 2, df); % 1-alpha./2 quantile of Student's distribution with df degrees of freedom
- 
-CI(1) = diff - tcrit .* se; 
-CI(2)= diff + tcrit .* se;
-
-end
+end % of function

@@ -3,13 +3,22 @@ function [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, va
 % This script receives paired-samples data and outputs corrected p-values and
 % hypothesis test results based on a maximum statistic permutation test
 % (Blair & Karniski, 1993). The permutation test in this script is based
-% on the t-statistic from a paired-samples t-test, but could be adapted 
-% to use with other statistics such as the trimmed mean or yuen's t. 
-% This method controls the strong familywise error rate.
+% on the t-statistic from Student's paired-samples t-test, but can also be used
+% with the more robust Yuen's paired-samples t test. If using Yuen's t this
+% function calls another function yuend_ttest which should be provided with
+% DDTBOX.
 %
 % Blair, R. C., & Karniski, W. (1993). An alternative method for 
 % significance testing of waveform difference potentials. 
 % Psychophysiology, 30, 518-524. DOI: 10.1111/j.1469-8986.1993.tb02075.x
+%
+% This function also implements a conservative p-value correction (for
+% p-values after multiple comparisons correction) to avoid p-values of zero
+% in permutation tests. The conservative method in Phipson & Smyth (2010) is used:
+%
+% Permutation p-values should never be zero: Calculating exact p-values
+% when permutations are randomly drawn. Statistical Applications in
+% Genetics and Molecular Biology, 9, 39. doi 10.2202/1544-6115.1585
 %
 %
 % Inputs:
@@ -37,6 +46,17 @@ function [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, va
 %                   at the tails of the permutation distribution being very 
 %                   rare, needing many random permutations to accurately estimate them.
 %
+%   use_yuen        option to use Yuen's paired-samples t instead of
+%                   Student's t. 1 = Yuen's t / 0 = Student's t
+%
+%   percent         percent to trim when using the trimmed mean. Value must
+%                   be between 0 and 50. Default is 20.
+%
+%   tail            choices for one- or two-tailed testing. Default is two-tailed.
+%                           'both' = two-tailed
+%                           'right' = one-tailed test for positive differences
+%                           'left' = one-tailed test for negative differences
+%
 % Outputs:
 % 
 %   Results structure containing:
@@ -57,7 +77,7 @@ function [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, va
 %   t_values        t-values resulting from each paired-samples test.
 %
 %
-% Example:          [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, 'alpha', '0.05', 'iterations', 10000) 
+% Example:          [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'use_yuen', 1, 'percent', 20, 'tail', 'both') 
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -82,7 +102,10 @@ function [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, va
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05,...
-    'iterations', 5000);
+    'iterations', 5000,...
+    'use_yuen', 0,...
+    'percent', 20,...
+    'tail', 'both');
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -109,6 +132,9 @@ clear inp_name
 % Renaming variables for use below:
 alpha_level = options.alpha;
 n_iterations = options.iterations;
+use_yuen = options.use_yuen;
+percent = options.percent;
+tail = options.tail;
 clear options;
 
 
@@ -127,10 +153,21 @@ diff_scores = cond1_data - cond2_data;
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
-% Perform t-tests at each step    
-[~, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', alpha_level);
-uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
+% Preallocate vector of uncorrected p-values
+uncorrected_p = zeros(n_total_comparisons, 1);
 
+% Perform t-tests at each step 
+if use_yuen == 0 % If using Student's t
+    [~, uncorrected_p, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', alpha_level, 'tail', tail);
+    uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
+elseif use_yuen == 1 % If using Yuen's t
+    uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
+    for step = 1:n_total_comparisons
+        [~, uncorrected_p(step), ~, uncorrected_t(step)] = yuend_ttest(cond1_data(:, step), cond2_data(:, step), 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+    end % of for step
+end % of if use_yuen
+    
+    
 % Seed the random number generator based on the clock time
 rng('shuffle');
 
@@ -156,27 +193,44 @@ for iteration = 1:n_iterations
     for step = 1:n_total_comparisons
         temp(1:n_subjects, step) = temp_signs(1:n_subjects) .* diff_scores(1:n_subjects, step);
     end % of for step
-    % Perform Student's paired-samples t tests
-    [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level);
-    t_stat(:, iteration) = temp_stats.tstat;   
-
+    
+    % Perform paired-samples t tests
+    if use_yuen == 0 % If using Student's t 
+        
+        [~, ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', alpha_level, 'tail', tail);
+        t_stat(:, iteration) = temp_stats.tstat;  
+        
+    elseif use_yuen == 1 % If using Yuen's t
+        
+        temp_t = zeros(1, n_total_comparisons); % Preallocate
+        temp_comparison_dataset = zeros(size(temp, 1), 1);
+        for step = 1:n_total_comparisons
+            [~, ~, ~, temp_t(step)] = yuend_ttest(temp(1:n_subjects, step), temp_comparison_dataset, 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+        end % of for step
+        t_stat(:, iteration) = temp_t;
+        
+    end % of if use_yuen
+        
     % Get the maximum t-value (postive or negative) within the family of tests and store in a
     % vector. This is to create a null hypothesis distribution.
-    t_max(iteration) = max(abs(t_stat(:, iteration)));  
+    if strcmp(tail, 'both') == 1 % If using two-tailed testing
+        t_max(iteration) = max(abs(t_stat(:, iteration)));  
+    elseif strcmp(tail, 'right') == 1; % One-tailed testing for positive differences
+        t_max(iteration) = max(t_stat(:, iteration));  
+    elseif strcmp(tail, 'left') == 1; % One-tailed testing for negative differences
+        t_max(iteration) = min(t_stat(:, iteration)) .* -1;
+    end % of if strcmp tail
+    
 end % of for iteration loop
 
 % Calculating the 95th percentile of t_max values. This is the significance
 % threshold for the test statistic (e.g. the t statistic)
 critical_t = prctile(t_max(1:n_iterations), ((1 - alpha_level) * 100));
 
-% Compare observed t statistics against critical_t and calculate resulting
-% p-values corrected for multiple comparisons.
+% Calculate p-values corrected for multiple comparisons and null hypothesis
+% test results
 corrected_h = zeros(1,n_total_comparisons); % Preallocate
 corrected_p = zeros(1,n_total_comparisons); % Preallocate
-
-% Compare each result with the t-value threshold. Mark statistically
-% significant when the t value > critical_t
-corrected_h(abs(uncorrected_t) > critical_t) = 1;
 
 % Calculating a p-value for each step
 for step = 1:n_total_comparisons
@@ -185,14 +239,34 @@ for step = 1:n_total_comparisons
     % Smyth (2010)
     % Calculate the number of permutation samples with maximum statistics
     % larger than the observed test statistic for a given cluster
-    b = sum(t_max(:) >= abs(uncorrected_t(step)));
-    p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
-    corrected_p(step) = p_t;
     
+    if strcmp(tail, 'both') == 1 % If using two-tailed testing
+        b = sum(t_max(:) >= abs(uncorrected_t(step)));
+        p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
+        p_t = p_t .* 2; % Doubling of p-value for two-tailed testing (essentially Bonferroni correction for two tests)
+        corrected_p(step) = p_t;
+    elseif strcmp(tail, 'right') == 1 % One-tailed testing for positive differences
+        b = sum(t_max(:) >= uncorrected_t(step));
+        p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
+        corrected_p(step) = p_t;
+    elseif strcmp(tail, 'left') == 1 % One-tailed testing for negative differences
+        b = sum(t_max(:) >= uncorrected_t(step) .* -1);
+        p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
+        corrected_p(step) = p_t;
+    end % of if strcmp tail
+
 end % of for step loop
+
+% Adjusting p-values that are larger than 1 (can occur due to doubling of
+% p-values with two-tailed testing)
+corrected_p(corrected_p > 1) = 1;
+
+% Mark statistically significant steps
+corrected_h(corrected_p < alpha_level) = 1;
 
 % Copy output into a results structure
 Results.corrected_h = corrected_h;
+Results.uncorrected_p = uncorrected_p;
 Results.corrected_p = corrected_p;
 Results.critical_t = critical_t;
 Results.t_values = uncorrected_t;

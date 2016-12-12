@@ -235,7 +235,18 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 temp_z = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),channel);
 
                 % Run a one-sample t-test on Z-scored feature weights
-                [h,p] = ttest(temp_z,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument.
+                
+                if ANALYSIS.use_robust_fw == 0 % Student's t test
+                    
+                    [h,p] = ttest(temp_z,0,p_crit,ANALYSIS.fw_ttest_tail); 
+                
+                elseif ANALYSIS.use_robust_fw == 1 % Yuen's t
+                    
+                    zero_data_temp = zeros(length(temp_z), 1); % Make vector of zeroes for single-sample comparison
+                    [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp_z, zero_data_temp, 'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw_ttest_tail);
+
+                end % of if ANALYSIS.use_robust_fw
+                
                 h_matrix_z(channel,1) = h; % Stores significant/non-significant decisions
                 p_matrix_z(channel,1) = p; % Stores p-values
 
@@ -275,7 +286,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                        [FW_MCC_Results] = multcomp_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+                        [FW_MCC_Results] = multcomp_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust_fw, 'percent', ANALYSIS.trimming_fw, 'tail', ANALYSIS.fw_ttest_tail);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_MCC_Results.corrected_p;
                     end % steps loop
@@ -303,7 +314,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
                         real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                        [FW_MCC_Results] = multcomp_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
+                        [FW_MCC_Results] = multcomp_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust_fw, 'percent', ANALYSIS.trimming_fw, 'tail', ANALYSIS.fw_ttest_tail);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_MCC_Results.corrected_p;
                     end % steps loop
@@ -351,7 +362,17 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
             temp = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,channel);
 
-            [h,p] = ttest(temp,0,p_crit,'right'); % DF NOTE: One-tailed test, denoted by 'right' argument
+            if ANALYSIS.use_robust_fw == 0 % Student's t test
+                
+                [h,p] = ttest(temp,0,p_crit,ANALYSIS.fw_ttest_tail); 
+            
+            elseif ANALYSIS.use_robust_fw == 1 % Yuen's t test
+            
+                zero_data_temp = zeros(length(temp), 1); % Make vector of zeroes for single-sample comparison
+                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, 'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw_ttest_tail);
+                
+            end % of if ANALYSIS.use_robust_fw
+            
             h_matrix_z(channel,1) = h; % Stores significant/non-significant decisions
             p_matrix_z(channel,1) = p; % Stores p-values
 
@@ -385,7 +406,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
                     real_decoding_fw = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,:); % Results matrix (subjects x channels)
                     fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                    [FW_MCC_Results] = multcomp_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations);
+                    [FW_MCC_Results] = multcomp_blaire_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust_fw, 'percent', ANALYSIS.trimming_fw, 'tail', ANALYSIS.fw_ttest_tail);
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = FW_MCC_Results.corrected_h;
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_MCC_Results.corrected_p;
                     clear real_decoding_fw;
@@ -404,7 +425,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label;
                     real_decoding_fw = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z(:,:); % Results matrix (subjects x channels)
                     fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
-                    [FW_MCC_Results] = multcomp_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u);
+                    [FW_MCC_Results] = multcomp_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust_fw, 'percent', ANALYSIS.trimming_fw, 'tail', ANALYSIS.fw_ttest_tail);
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = FW_MCC_Results.corrected_h;
                     clear real_decoding_fw;
                     clear fw_chance_level;
