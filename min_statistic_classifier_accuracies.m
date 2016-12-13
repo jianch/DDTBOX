@@ -122,7 +122,7 @@ end % of for na (loop through analyses)
      
      ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_corrected;
      
- elseif ANALYSIS.minstate_multcomp == 0
+ elseif ANALYSIS.minstat_multcomp == 0
 
      ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_uncorrected;
 
