@@ -1,4 +1,4 @@
-function [holm_corrected_h, holm_corrected_alpha] = multcomp_holm_bonferroni(p_values, varargin)
+function [Results] = multcomp_holm_bonferroni(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
 % Holm-Bonferroni corrected results. The number of tests is
@@ -22,14 +22,18 @@ function [holm_corrected_h, holm_corrected_alpha] = multcomp_holm_bonferroni(p_v
 %
 % Outputs:
 %
-%   holm_corrected_h    vector of Holm-Bonferroni corrected hypothesis tests 
-%                       derived from comparing p-values to Holm-Bonferroni 
-%                       adjusted critical alpha level. 
-%                       1 = statistically significant, 0 = not statistically significant
+%   Results structure containing:
 %
-%   holm_corrected_alpha        the Holm-Bonferroni adjusted alpha level
+%   corrected_h    vector of Holm-Bonferroni corrected hypothesis tests 
+%                  derived from comparing p-values to Holm-Bonferroni 
+%                  adjusted critical alpha level. 
+%                  1 = statistically significant, 0 = not statistically significant
 %
-% Example:            [holm_corrected_h, holm_corrected_alpha] = multcomp_holm_bonferroni(p_values, 'alpha', 0.05)  
+%   critical_alpha      the Holm-Bonferroni adjusted alpha level. 
+%                       p-values smaller than this are declared as
+%                       statistically significant.
+%
+% Example:  [Results] = multcomp_holm_bonferroni(p_values, 'alpha', 0.05)  
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -101,3 +105,7 @@ if ~exist('holm_corrected_alpha', 'var') % If all null hypotheses are rejected
 end
 
 holm_corrected_h(p_values < holm_corrected_alpha) = 1; % Compare each p-value to the corrected threshold.
+
+%% Copy output to Results structure
+Results.corrected_h = holm_corrected_h;
+Results.critical_alpha = holm_corrected_alpha;

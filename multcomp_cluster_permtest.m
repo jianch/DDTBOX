@@ -1,17 +1,26 @@
-function [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
+function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 %
 % This function receives the original data and outputs corrected p-values and
-% hypothesis test results based on a maximum cluster statistic permutation test,
-% as described in Bullmore et al. (1999). The permutation test in this function
-% is based on the t-statistic but could be adapted to use with other 
-% statistics such as the trimmed mean or Yuen's t.
+% hypothesis test results based on a maximum cluster mass statistic permutation test,
+% as described in Bullmore et al. (1999). The permutation test in this script is based
+% on the t-statistic from Student's paired-samples t-test, but can also be used
+% with the more robust Yuen's paired-samples t test. If using Yuen's t this
+% function calls another function yuend_ttest which should be provided with
+% DDTBOX.
 %
-% 
 % Bullmore, E. T., Suckling, J., Overmeyer, S., Rabe-Hesketh, S., 
 % Taylor, E., & Brammer, M. J. (1999). Global, voxel, and cluster tests, 
 % by theory and permutation, for a difference between two groups of 
 % structural MR images of the brain. IEEE Transactions on Medical Imaging,
 % 18, 32-42. doi 10.1109/42.750253
+%
+% This function implements a conservative correction for p-values when
+% using permutation tests, as described by Phipson & Smyth (2010).
+%
+% Permutation p-values should never be zero: Calculating exact p-values
+% when permutations are randomly drawn. Statistical Applications in
+% Genetics and Molecular Biology, 9, 39. doi 10.2202/1544-6115.1585
+%
 %
 % Inputs:
 %
@@ -40,14 +49,52 @@ function [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, varar
 %                   0.05) will detect broadly distributed clusters, whereas setting it to
 %                   0.01 for example will help detect smaller clusters that exhibit strong effects.
 %
+%   use_yuen        option to use Yuen's paired-samples t instead of
+%                   Student's t. 1 = Yuen's t / 0 = Student's t
+%
+%   percent         percent to trim when using the trimmed mean. Value must
+%                   be between 0 and 50. Default is 20.
+%
+%   tail            choices for one- or two-tailed testing. Default is two-tailed.
+%                           'both' = two-tailed
+%                           'right' = one-tailed test for positive differences
+%                           'left' = one-tailed test for negative differences
+%
 % Outputs:
 %
+%   Results structure containing:
+%
+%   uncorrected_h   vector of hypothesis tests not corrected for multiple
+%                   comparisons.
+%
 %   corrected_h     vector of hypothesis tests in which statistical significance
-%                   is defined by values above a threshold of the (alpha_level * 100)th
-%                   percentile of the maximum statistic distribution.
+%                   is defined by clsuter masses above a threshold of the 
+%                   ((1 - alpha_level) * 100)th percentile of the maximum
+%                    cluster mass statistic distribution.
 %                   1 = statistically significant, 0 = not statistically significant
 %
-% Example:          [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'clusteringalpha', 0.01)
+%   t_values        t values from each individual hypothesis test.
+%
+%   critical_cluster_mass       The threshold of cluster mass statistics
+%                               above which clusters are declared
+%                               statistically significant. Calculated as the
+%                               ((1 - alpha_level) * 100)th of the
+%                               maximum cluster mass permutation distribution.
+%
+%   cluster_p       p_value of each cluster. 
+% 
+%   cluster_sig     Marks whether each observed cluster is statistically
+%                   significant. 1 = sig. / 0 = nonsig.
+%
+%   cluster_masses  Cluster masses (summed t-values within a cluster) for 
+%                   each observed cluster of effects.
+%
+%   n_clusters      Number of observed clusters of effects
+%
+%   n_sig_clusters  Number of statistically significant clusters
+%
+%
+% Example:          [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'clusteringalpha', 0.01, 'use_yuen', 1, 'percent', 20, 'tail', 'both')
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -66,13 +113,17 @@ function [corrected_h] = multcomp_cluster_permtest(cond1_data, cond2_data, varar
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 
 %% Handling variadic inputs
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05,...
     'iterations', 5000,...
-    'clusteringalpha', 0.05);
+    'clusteringalpha', 0.05,...
+    'use_yuen', 0,...
+    'percent', 20,...
+    'tail', 'both');
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -100,11 +151,13 @@ clear inp_name
 alpha_level = options.alpha;
 n_iterations = options.iterations;
 clustering_alpha = options.clusteringalpha;
+use_yuen = options.use_yuen;
+percent = options.percent;
+tail = options.tail;
 clear options;
 
 
-
-%% Cluster-based permutation test
+%% Tests on observed data
 
 % Checking whether the number of steps of the first and second datasets are equal
 if size(cond1_data, 2) ~= size(cond2_data, 2)
@@ -120,45 +173,70 @@ diff_scores = cond1_data - cond2_data;
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
-% Perform t-tests at each step
-uncorrected_h = zeros(1, n_total_comparisons); % preallocate
-uncorrected_t = zeros(1, n_total_comparisons); % preallocate
 
-for step = 1:n_total_comparisons
+% Preallocate vector of uncorrected h values (1 = sig / 0 = nonsig)
+uncorrected_h = zeros(n_total_comparisons, 1);
 
-    [uncorrected_h(step), ~, ~, extra_stats] = ttest(diff_scores(:, step), 0, 'Alpha', clustering_alpha);
-    uncorrected_t(step) = extra_stats.tstat; % Recording t statistic for each test
-    
-end
+% Perform t-tests at each step 
+if use_yuen == 0 % If using Student's t
+    [uncorrected_h, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', clustering_alpha, 'tail', tail);
+    uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
+
+elseif use_yuen == 1 % If using Yuen's t
+    uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
+    for step = 1:n_total_comparisons
+        [uncorrected_h(step), ~, ~, uncorrected_t(step)] = yuend_ttest(cond1_data(:, step), cond2_data(:, step), 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+    end % of for step
+end % of if use_yuen
+
 
 % Seed the random number generator based on the clock time
 rng('shuffle');
 
-% Generate t(max) distribution from the randomly-permuted data
-
+% Generate the maximum cluster mass distribution from the randomly-permuted data
 t_stat = zeros(n_total_comparisons, n_iterations); % Preallocate
 max_cluster_mass = zeros(1, n_iterations); % Preallocate
 cluster_perm_test_h = zeros(n_total_comparisons, n_iterations); % Preallocate
 t_sign = zeros(n_total_comparisons, n_iterations); % Preallocate
 
 for iteration = 1:n_iterations
-    % Draw a random bootstrap sample for each test
+    
+    % Draw a random permutation sample for each test
+    temp = zeros(n_subjects, n_total_comparisons); % Preallocate
+    
+    % Randomly switch signs of difference scores to create a random
+    % partition (permutation sample). Switched signs are consistent across
+    % tests within each participant.
+    temp_signs = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
+
     for step = 1:n_total_comparisons 
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
-        temp_signs = (rand(1,n_subjects) > .5) * 2 - 1; % Switches signs of labels
-        temp = temp_signs .* diff_scores(1:n_subjects);
-        [cluster_perm_test_h(step, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha);
-        t_stat(step, iteration) = temp_stats.tstat; % Get t statistic
-        % Marking the sign of each t statistic to avoid clustering pos
-        % and neg significant results
-        if t_stat(step, iteration) < 0;
-            t_sign(step, iteration) = -1; 
-        else
-            t_sign(step, iteration) = 1; 
-        end
-    end    
+        temp(:,step) = temp_signs .* diff_scores(1:n_subjects, step);
+    end % of for step
+    
+    % Run t tests
+    if use_yuen == 0 % If using Student's t
+        % Run t tests
+        [cluster_perm_test_h(:, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha, 'tail', tail);
+        t_stat(:, iteration) = temp_stats.tstat; % Get t statistics
 
+    elseif use_yuen == 1 % If using Yuen's t
+        temp_comparison_dataset = zeros(size(temp, 1), 1); % Create dummy comparison dataset of zeroes
+        for step = 1:n_total_comparisons
+            [cluster_perm_test_h(step, iteration), ~, ~, t_stat(step, iteration)] = yuend_ttest(temp(:, step), temp_comparison_dataset, 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+        end % of for step
+    end % of if use_yuen
+        
+        % Marking the sign of each t statistic to avoid clustering pos
+        % and neg direction significant results
+        for step = 1:n_total_comparisons
+            if t_stat(step, iteration) < 0;
+                t_sign(step, iteration) = -1; 
+            else
+                t_sign(step, iteration) = 1; 
+            end % of if t_stat
+        end % of for step
     % Identify clusters and generate a maximum cluster statistic
     cluster_mass_vector = [0]; % Resets vector of cluster masses
     cluster_counter = 0;
@@ -186,11 +264,9 @@ for iteration = 1:n_iterations
     max_cluster_mass(iteration) = max(cluster_mass_vector);
 end % of iterations loop
 
-
 % Calculating the 95th percentile of maximum cluster mass values (used as decision
 % critieria for statistical significance)
 cluster_mass_null_cutoff = prctile(max_cluster_mass, ((1 - alpha_level) * 100));
-
 
 % Calculate cluster masses in the actual (non-permutation) tests
 cluster_mass_vector = [0]; % Resets vector of cluster masses
@@ -228,17 +304,54 @@ for step = 1:n_total_comparisons
                 cluster_counter = cluster_counter + 1;
                 cluster_mass_vector(cluster_counter) = abs(uncorrected_t(step));
                 cluster_locations(step) = cluster_counter;
-            end 
+            end % of if uncorrected_h
         end % of if step == 1
-    end % of if ANALYSIS.RES.h_ttest_uncorrected(na,step) == 1  
-end % of for step = 1:n_total_steps
+    end % of if uncorrected_h(step) == 1  
+end % of for step = 1:n_total_comparisons
+
+%% Calculate p-values for each cluster
+% Calculating a p-value for each cluster
+% p-values are corrected according to Phipson and Smyth (2010) methods
+cluster_p = ones(length(cluster_mass_vector), 1); % Preallocate p-values
+
+for cluster_no = 1:length(cluster_mass_vector)
+    
+    % Calculate the number of permutation samples with cluster masses
+    % larger than the observed cluster mass for a given cluster
+    b = sum(abs(max_cluster_mass) >= abs(cluster_mass_vector(cluster_no)));
+    p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
+    
+    if strcmp(tail, 'both') == 1 % If using two-tailed testing
+        p_t = p_t .* 2; % Doubling of p-value for two-tailed testing (essentially Bonferroni correction for two tests)
+    end % of if strcmp tail
+
+    cluster_p(cluster_no) = p_t; % P-value for each cluster
+    
+end % of for cluster_no
+
+% Check whether the p-value of each cluster is smaller than the critical
+% alpha level
+cluster_sig = zeros(length(cluster_mass_vector), 1); % Preallocate vector that marks sig. clusters
 
 for cluster_no = 1:length(cluster_mass_vector);
-    if cluster_mass_vector(cluster_no) > cluster_mass_null_cutoff
-        cluster_corrected_sig_steps(cluster_locations == cluster_no) = 1;
+    if cluster_p(cluster_no) < alpha_level % if cluster is statistically significant
+        % Mark tests within cluster as significant
+        cluster_corrected_sig_steps(cluster_locations == cluster_no) = 1;    
+        cluster_sig(cluster_no) = 1;
     end
 end
 
 % Update analysis structure with cluster-corrected significant time
 % windows
 corrected_h = cluster_corrected_sig_steps;
+
+%% Copy output into Results structure
+Results.uncorrected_h = uncorrected_h;
+Results.corrected_h = corrected_h;
+Results.t_values = uncorrected_t;
+Results.critical_cluster_mass = cluster_mass_null_cutoff;
+Results.cluster_p = cluster_p;
+Results.cluster_sig = cluster_sig;
+Results.cluster_masses = cluster_mass_vector;
+Results.n_clusters = length(cluster_mass_vector);
+Results.n_sig_clusters = sum(cluster_sig);
