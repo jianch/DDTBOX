@@ -23,23 +23,23 @@
 classdef DDMultComp < DDEnum
     enumeration
         % no correction
-        none (0)
+        none (1)
         % Bonferroni correction
-        bonferroni (1)
+        bonferroni (2)
         % Holm-Bonferroni correction
-        holm_bonferroni (2)
+        holm_bonferroni (3)
         % Strong FWER Control Permutation Test
-        fwer (3) 
+        fwer (4) 
         % Cluster-Based Permutation Test
-        cluster (4) 
+        cluster (5) 
         % KTMS Generalised FWER Control
-        ktms (5) 
+        ktms (6) 
         % Benjamini-Hochberg FDR Control
-        hochberg_fdr (6) 
+        hochberg_fdr (7) 
         % Benjamini-Krieger-Yekutieli FDR Control
-        krieger_fdr (7)
+        krieger_fdr (8)
         % Benjamini-Yekutieli FDR Control
-        yekutieli_fdr (8)
+        yekutieli_fdr (9)
     end
 end
 
