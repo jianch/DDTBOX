@@ -1,5 +1,26 @@
 function analyse_decoding_erp(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
-% Copyright (c) 2013-2016, Stefan Bode and contributors 
+%
+% This script is the master script for group-level analysis of EEG decoding
+% results. It will call several subscripts that run all possible analyses,
+% depending on the analysis options chosen.
+%
+%
+% Inputs:
+%
+%   study_name       Name corresponding to the study configuration script e.g. 'DEMO'
+%   vconf            version of study configuration script, e.g., "1" for DEMO_config_v1
+%   input_mode       0 = use hard-coded variables from first section / 1 = enter manually
+%   sbjs_todo        subject datasets to analyse e.g., [1 2 3 4 6 7 9 10 13]
+%   dcg_todo         discrimination group to analyse, as specified in SLIST.dcg_labels{dcg}
+%
+% Outputs:
+%  
+% Usage:            analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
+%
+% Example:          analyse_decoding_erp('DEMO', 1, 1, [1:10], 1)
+%
+%
+% Copyright (c) 2013-2016 Stefan Bode and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -15,22 +36,6 @@ function analyse_decoding_erp(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-%
-% This script is the master-script for the group-level analysis of EEG-decoding
-% results. It will call several subscripts that run all possible analyses,
-% depending on the specific decoding analyses.
-%
-% requires:
-% - study_name (e.g. 'DEMO')
-% - vconf (version of study configuration script, e.g., "1" for DEMO_config_v1)
-% - input_mode (1 = use coded varialbles from first section / 2 = enter manually)
-% - sbjs_todo (e.g., [1 2 3 4 6 7 9 10 13])
-% - dcg_todo (discrimination group to analyse, as specified in SLIST.dcg_labels{dcg})
-
-%__________________________________________________________________________
-%
-% Variable naming convention: STRUCTURE_NAME.example_variable
 
 %% GENERAL PARAMETERS AND GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________

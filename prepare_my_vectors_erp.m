@@ -1,23 +1,42 @@
 function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUDY)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
 %
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
-%
-% This function gets input from DECODING_ERP.m and organises the data stored in 
+% This function gets input from decoding_erp.m and organises the data stored in 
 % training_set and test_set for classification. The data is cut out and handed 
 % over to do_my_classification.m as data vectors and labels. 
-% The output is handed back to DECODING_ERP.
+% The output is handed back to decoding_erp.
 %
-%__________________________________________________________________________
+% Inputs:
+%   
+%   training_set    data used for training the classifier
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+%   test_set        data used to test classifier performance
+%
+%   SLIST           structure containing participant dataset information
+%
+%   STUDY           structure containing multivariate classification/regression settings
+%
+% Outputs:
+%
+%   RESULTS         Structure containing the decoding results
+%
+%
+% Copyright (c) 2013-2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 %% DEFINE NUMBER OF STEPS (default = all possible steps)
