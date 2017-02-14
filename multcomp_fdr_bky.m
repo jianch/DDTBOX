@@ -1,4 +1,4 @@
-function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_values, varargin)
+function [Results] = multcomp_fdr_bky(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
 % false discovery rate corrected null hypothesis test results 
@@ -11,6 +11,7 @@ function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_value
 %
 %
 % Inputs:
+%
 %   p_values        vector of p-values from the hypothesis tests of interest
 %
 %  'Key1'          Keyword string for argument 1
@@ -24,15 +25,18 @@ function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_value
 %
 % Outputs:
 %
-%   fdr_corrected_h     vector of false discovery rate corrected hypothesis tests 
-%                       derived from comparing p-values to false discovery rate 
-%                       adjusted critical alpha level. 
-%                       1 = statistically significant, 0 = not statistically significant
+%   Results structure containing:
 %
-%   bky_stage2_critical_alpha       adjusted alpha level. p-values smaller or
-%                                   equal to this are declared statistically-significant
+%   corrected_h     vector of false discovery rate-corrected hypothesis tests 
+%                   derived from comparing p-values to false discovery rate 
+%                   adjusted critical alpha level. 
+%                   1 = statistically significant, 0 = not statistically significant
 %
-% Example:              [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_values, 'alpha', 0.05)
+%   critical_alpha       adjusted alpha level. p-values smaller or
+%                        equal to this are declared statistically-significant
+%
+%
+% Example:      [Results] = multcomp_fdr_bky(p_values, 'alpha', 0.05)
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -51,6 +55,7 @@ function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_value
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 %% Handling variadic inputs
 % Define defaults at the beginning
@@ -84,11 +89,10 @@ alpha_level = options.alpha;
 clear options;
 
 
-
 %% False Disovery Rate - Benjamini-Krieger-Yekutieli
 
 n_total_comparisons = length(p_values); % Get the number of comparisons
-fdr_corrected_h = zeros(1, length(p_values)); % preallocate
+fdr_corrected_h = zeros(1, length(p_values)); % Preallocate
 
 sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
@@ -109,7 +113,6 @@ end
 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
 bky_stage1_h = zeros(1, n_total_comparisons); % Preallocate for speed
 bky_stage1_h(p_values <= bky_stage1_critical_alpha) = 1;
-
 
 % Count the number of rejected null hypotheses (for use in stage 2)
 bky_stage1_n_rejections = sum(bky_stage1_h);
@@ -141,3 +144,7 @@ else % If some (but not all) null hypotheses were rejected
     fdr_corrected_h(p_values <= bky_stage2_critical_alpha) = 1;
 
 end % of if bky_stage1_n_rejections
+
+%% Copy output into Results structure
+Results.corrected_h = fdr_corrected_h;
+Results.critical_alpha = bky_stage2_critical_alpha;

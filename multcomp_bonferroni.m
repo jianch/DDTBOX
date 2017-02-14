@@ -1,9 +1,10 @@
-function [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferroni(p_values, varargin)
+function [Results] = multcomp_bonferroni(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
 % Bonferroni-corrected results. The number of tests is
-% determined by the length of the vector of p-values. Note that
-% The alpha level is adjusted rather than the p-values.
+% determined by the length of the vector of p-values. 
+% This function outputs both the corrected alpha level and 
+% Bonferroni-corrected p-values.
 %
 %
 % Dunn, O. J. (1959). Estimation of the medians for dependent variables. 
@@ -28,18 +29,26 @@ function [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferr
 %
 % Outputs:
 %
-%   bonferroni_corrected_h      vector of Bonferroni-corrected hypothesis tests 
+%   Results structure containing:
+%
+%   corrected_h                 vector of Bonferroni-corrected hypothesis tests 
 %                               derived from comparing p-values to Bonferroni 
 %                               adjusted critical alpha level. 
 %                               1 = statistically significant, 
 %                               0 = not statistically significant
 %
-%   bonferroni_corrected_alpha      adjusted alpha level. p-values below
+%   corrected_alpha                 adjusted alpha level. p-values below
 %                                   threshold are declared statistically
 %                                   significant.
 %
+%   uncorrected_p       Uncorrected p-values
 %
-% Example:      [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferroni(p_values, 'alpha', 0.01)          
+%   corrected_p         Bonferroni-corrected p-values. These are the
+%                       uncorrected p-values multiplied by the number of
+%                       tests.
+%
+%
+% Example:      [Results] = multcomp_bonferroni(p_values, 'alpha', 0.01)          
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -58,6 +67,7 @@ function [bonferroni_corrected_h, bonferroni_corrected_alpha] = multcomp_bonferr
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 %% Handling variadic inputs
 % Define defaults at the beginning
@@ -90,12 +100,17 @@ clear inp_name
 alpha_level = options.alpha;
 clear options;
 
-
-
 %% Bonferroni correction
 n_total_comparisons = length(p_values); % Get the number of comparisons
 bonferroni_corrected_alpha = alpha_level / n_total_comparisons; % Calculate bonferroni-corrected alpha
-
 bonferroni_corrected_h = zeros(1, length(p_values)); % preallocate
-
 bonferroni_corrected_h(p_values < bonferroni_corrected_alpha) = 1; % Compare each p-value to the corrected threshold.
+
+% Multiply p-values by the number of tests
+bonferroni_corrected_p = p_values * n_total_comparisons;
+
+%% Copy output into Results structure
+Results.corrected_h = bonferroni_corrected_h;
+Results.corrected_alpha = bonferroni_corrected_alpha;
+Results.uncorrected_p = p_values;
+Results.corrected_p = bonferroni_corrected_p;

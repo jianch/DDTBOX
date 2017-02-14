@@ -1,7 +1,7 @@
-function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, varargin)
+function [Results] = multcomp_fdr_bh(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
-% false discovery rate corrected null hypothesis test results (Benjamin-Hochberg procedure).
+% false discovery rate-corrected null hypothesis test results (Benjamin-Hochberg procedure).
 % The number of tests is determined by the length of the vector of p-values.
 %
 % Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: 
@@ -12,7 +12,7 @@ function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, v
 %
 % Inputs:
 %
-%   p_values            vector of p-values from the hypothesis tests of interest
+%   p_values       vector of p-values from the hypothesis tests of interest
 %
 %  'Key1'          Keyword string for argument 1
 %
@@ -24,19 +24,21 @@ function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, v
 %
 % Outputs:
 %
-%   fdr_corrected_h     vector of false discovery rate corrected hypothesis tests 
-%                       derived from comparing p-values to false discovery rate 
-%                       adjusted critical alpha level. 
-%                       1 = statistically significant, 0 = not statistically significant
+%   Results structure containing:
 %
-%   benhoch_critical_alpha      the adjusted critical alpha for the false
-%                               discovery rate procedure. p-values smaller
-%                               or equal to this value are declared
-%                               statistically significant. This value is 0 
-%                               if no tests were statistically significant.
+%   corrected_h     vector of false discovery rate corrected hypothesis tests 
+%                   derived from comparing p-values to false discovery rate 
+%                   adjusted critical alpha level. 
+%                   1 = statistically significant, 0 = not statistically significant
+%
+%   critical_alpha      the adjusted critical alpha for the false
+%                       discovery rate procedure. p-values smaller
+%                       or equal to this value are declared
+%                       statistically significant. This value is 0 
+%                       if no tests were statistically significant.
 %
 %
-% Example:              [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, 'alpha', 0.05)
+% Example:      [Results] = multcomp_fdr_bh(p_values, 'alpha', 0.05)
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -55,6 +57,7 @@ function [fdr_corrected_h, benhoch_critical_alpha] = multcomp_fdr_bh(p_values, v
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 %% Handling variadic inputs
 % Define defaults at the beginning
@@ -88,7 +91,6 @@ alpha_level = options.alpha;
 clear options;
 
 
-
 %% Benjamini-Hochberg False Discovery Rate Correction
 n_total_comparisons = length(p_values); % Get the number of comparisons
 fdr_corrected_h = zeros(1, length(p_values)); % preallocate
@@ -109,3 +111,7 @@ end
 
 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
 fdr_corrected_h(p_values <= benhoch_critical_alpha) = 1;
+
+%% Copy output into Results structure
+Results.corrected_h = fdr_corrected_h;
+Results.critical_alpha = benhoch_critical_alpha;

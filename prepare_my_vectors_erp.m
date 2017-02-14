@@ -152,9 +152,16 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 for trl = 1:size(temp,2)
                                     labels_train = [labels_train  training_labels{1,con,cv,ncv}(trl)];
                                 end
-                                clear temp;
-                                                               
+                            
+                            else % if not SVR
+                                
+                                for ntrls = 1:(size(temp,2))
+                                    labels_train = [labels_train con];
+                                end
+                                
                             end % if SVR
+                            
+                            clear temp;
                             %________________________________________________________________________________
                             
                             % permutation test data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -175,7 +182,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                         
                             % Test data vectors
                             temp(:,:) = mean_data_test(1,:,:);
-                            vectors_test = [vectors_test temp];      
+                            vectors_test = [vectors_test temp];     
                             
                             %________________________________________________________________________________
                             if STUDY.analysis_mode == 3 % if SVR
@@ -183,9 +190,16 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 for trl = 1:size(temp,2)
                                     labels_test = [labels_test  test_labels{1,con,cv,ncv}(trl)];
                                 end
-                                clear temp;                                  
+                                
+                            else % if not SVR
+                                
+                                for ntrls = 1:(size(temp,2))
+                                    labels_test = [labels_test con];
+                                end  
                                                           
                             end % if SVR
+                            
+                            clear temp;
                             %________________________________________________________________________________
                         
                         % temporal decoding: vectors consist of single data-points within time
@@ -201,9 +215,14 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 if STUDY.analysis_mode == 3 % if SVR
                                         
                                     labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
-                                    clear temp;
-                                                                           
+                                      
+                                else % if not SVR
+                                    
+                                    labels_train=[labels_train con];
+                                    
                                 end % if SVR
+                                
+                                clear temp;
                                 %________________________________________________________________________________
                                 
                             end % exmpl
@@ -235,9 +254,14 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                     for ntrls = 1:size(temp,2)
                                         labels_test = [labels_test  test_labels{1,con,cv,ncv}(exmpl)];
                                     end
-                                    clear temp;
-                                                               
+                                      
+                                else % if not SVR
+                                    
+                                    labels_test=[labels_test con];
+                                    
                                 end % if SVR
+                                
+                                clear temp;
                                 %________________________________________________________________________________
                                 
                             end % exmpl 
@@ -263,7 +287,11 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 if STUDY.analysis_mode == 3 % if SVR
                                         
                                     labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
-                                        
+                                  
+                                else % if not SVR
+                                    
+                                    labels_train = [labels_train con];
+                                    
                                 end % if SVR
                                 %________________________________________________________________________________
                                 
@@ -300,7 +328,12 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 if STUDY.analysis_mode == 3 % if SVR
                                         
                                     labels_test = [labels_test test_labels{1,con,cv,ncv}(exmpl)];
-                                                                                                     
+                                      
+                                else % if not SVR
+                                    
+                                    labels_test = [labels_test con];
+                                    
+                                    
                                 end % if SVR
                                 %________________________________________________________________________________
                                 
@@ -371,17 +404,19 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                     elseif main_analysis == 2
                         fprintf('Permutation test step %d of %d steps, cross-validation step %d in cycle %d: \n',s,nsteps,cv,rep);
                     end
-                    [acc,feat_weights] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY);
+                    [acc,feat_weights, feat_weights_corrected] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY);
                 
                     if main_analysis == 1
                         RESULTS.prediction_accuracy{ch}(s,cv,rep) = acc;
                         RESULTS.feature_weights{ch}{s,cv,rep} = feat_weights;
+                        RESULTS.feature_weights_corrected{ch}{s,cv,rep} = feat_weights_corrected;
                     elseif main_analysis == 2
                         RESULTS.perm_prediction_accuracy{ch}(s,cv,repetition_data_steps(rep)) = acc;           
                     end
                         
                     clear acc;
                     clear feat_weights;
+                    clear feat_weights_corrected;
                     
                 end % steps
                     

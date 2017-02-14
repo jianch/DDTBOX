@@ -1,5 +1,4 @@
-function [fdr_corrected_h, benyek_critical_alpha] = multcomp_fdr_by(p_values, varargin)
-%
+function [Results] = multcomp_fdr_by(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs false discovery rate 
 % corrected null hypothesis test results (Benjamin-Yekutieli procedure).
@@ -24,18 +23,21 @@ function [fdr_corrected_h, benyek_critical_alpha] = multcomp_fdr_by(p_values, va
 %
 % Outputs:
 %
-%   fdr_corrected_h     vector of false discovery rate corrected hypothesis 
-%                       tests derived from comparing p-values to false 
-%                       discovery rate adjusted critical alpha level. 
-%                       1 = statistically significant, 0 = not statistically significant
+%   Results structure containing:
 %
-%   benyek_critical_alpha       the adjusted critical alpha for the false
-%                               discovery rate procedure. p-values smaller 
-%                               or equal to this value are declared 
-%                               statistically significant. This value is 0 
-%                               if no tests were statistically significant.
+%   corrected_h     vector of false discovery rate corrected hypothesis 
+%                   tests derived from comparing p-values to false 
+%                   discovery rate adjusted critical alpha level. 
+%                   1 = statistically significant, 0 = not statistically significant
 %
-% Example:              [fdr_corrected_h, benyek_critical_alpha] = multcomp_fdr_by(p_values, 'alpha', 0.05)
+%   critical_alpha       the adjusted critical alpha for the false
+%                        discovery rate procedure. p-values smaller 
+%                        or equal to this value are declared 
+%                        statistically significant. This value is 0 
+%                        if no tests were statistically significant.
+%
+%
+% Example:  [Results] = multcomp_fdr_by(p_values, 'alpha', 0.05)
 %
 %
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
@@ -54,6 +56,7 @@ function [fdr_corrected_h, benyek_critical_alpha] = multcomp_fdr_by(p_values, va
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 %% Handling variadic inputs
 % Define defaults at the beginning
@@ -86,12 +89,7 @@ clear inp_name
 alpha_level = options.alpha;
 clear options;
 
-
-
-
-
-
-%% False Disovery Rate - Benjamini-Yekutieli
+%% False Disovery Rate Correction - Benjamini-Yekutieli
 n_total_comparisons = length(p_values); % Get the number of comparisons
 fdr_corrected_h = zeros(1, length(p_values)); % preallocate
 
@@ -103,14 +101,13 @@ for j_iteration = 1:n_total_comparisons
     j_values(j_iteration) = 1 / j_iteration;
 end
 
-
-% Find critical k value (see tutorial notes)
+% Find critical k value
 for benyek_step = 1:n_total_comparisons
-
-    if sorted_p(benyek_step) <= (benyek_step / n_total_comparisons * sum(j_values)) * alpha_level
+    if sorted_p(benyek_step) <= (benyek_step / (n_total_comparisons * sum(j_values))) * alpha_level
         benyek_critical_alpha = sorted_p(benyek_step);
     end
 end
+
 % If no tests are significant set critical alpha to zero
 if ~exist('benyek_critical_alpha', 'var')
     benyek_critical_alpha = 0;
@@ -118,3 +115,7 @@ end
 
 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
 fdr_corrected_h(p_values <= benyek_critical_alpha) = 1;
+
+%% Copy output into Results structure
+Results.corrected_h = fdr_corrected_h;
+Results.critical_alpha = benyek_critical_alpha;

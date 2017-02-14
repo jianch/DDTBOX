@@ -40,6 +40,16 @@ classdef DDEnum < double
         function disp(obj)
             disp( name(obj) )
         end
-    end    
+    end
+    
+    methods(Static)
+        function s = enum2str(obj,delimiter)
+            [~, names] = enumeration(obj);
+            % join() was introduced in 2013b
+            s = join(names,delimiter);
+        end
+
+    end
+    
 end
 
