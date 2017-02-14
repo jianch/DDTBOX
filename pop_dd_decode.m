@@ -25,7 +25,7 @@
 %				   window_width_ms (in milliseconds).
 %				   Stored in EEG.ddtbox.cfg
 %
-% Copyright (c) 2016, Phillip Alday and contributors
+% Copyright (c) 2016-2017 Phillip Alday and contributors
 %
 % This file is part of DDTBOX.
 %
@@ -89,6 +89,7 @@ backend_flags.extra_flags = [];
 
 % Read the acceptable names
 optionNames = fieldnames(cfg);
+optionNames{length(optionNames)+1} = 'run_analysis';
 
 % DCGs
 
@@ -120,6 +121,14 @@ if nArgs/2 ~= length(cfg);
     % back to double, otherwise we get a weird crash with a cryptic error
     % message
     uilist = { ...
+      { 'Style', 'text', 'string', 'Event Codes', 'fontweight', 'bold'  } ...
+      { 'Style', 'edit', 'string', '', 'tag', 'cond_numbers'} ...
+      { 'Style', 'text', 'string', 'Condition Labels', 'fontweight', 'bold'  } ...
+      { 'Style', 'edit', 'string', '', 'tag', 'cond_labels'} ...
+      ...
+      { 'Style', 'text', 'string', 'Discrimination Groups', 'fontweight', 'bold'  } ...
+      { 'Style', 'edit', 'string', '', 'tag', 'dcg'} ...
+      ...
       { 'Style', 'text', 'string', 'Sliding window width (ms)', 'fontweight', 'bold'  } ...
       { 'Style', 'edit', 'string', cfg.window_width_ms, 'tag', 'window_width_ms'} ...
       { 'Style', 'text', 'string', 'Step interval (ms)', 'fontweight', 'bold'  } ...
@@ -154,12 +163,16 @@ if nArgs/2 ~= length(cfg);
        ...
       { 'Style', 'text', 'string', 'Multiple comparisons correction', 'fontweight', 'bold'  } ...
       { 'Style', 'popupmenu', 'string',  DDEnum.enum2str('DDMultComp','|') 'tag' 'multcompstats' 'value', double(cfg.multcompstats)} ...
-      ...
+      ... 
       { 'Style', 'checkbox', 'string' 'Run analysis' 'tag' 'run_analysis' 'value' 1} ...
+      ....
+      
     };
 
 
     geometry = {...
+        [0.4 0.4 0.3 0.5] ...
+        [0.4 1.2] ...
         [0.4 0.4 0.4 0.4] ...
         [0.4 0.4 0.4 0.4] ...
         [0.4 0.4 0.4 0.4] ...
@@ -182,18 +195,12 @@ if nArgs/2 ~= length(cfg);
     end
 end
 
-% remember, this is still not exposed publicly
-cfg.backend_flags = backend_flags;
-
-cfg.srate = EEG.srate;
-cfg.nchannels = EEG.nbchan;
-cfg.chaninfo = EEG.chaninfo;
-cfg.chanlocs = EEG.chanlocs;
-
-% the GUI functions return strings, so we need to convert just to make sure
+% the GUI functions return char-arrays, so we need to convert just to make sure
 % that we have numbers
-for fn = fieldnames(cfg)
-    key = cell2str(fn);
+fn = fieldnames(cfg);
+pzauto = 0;
+for i = 1:length(fn)
+    key = char(fn{i});
     value = cfg.(key);
     if ischar(value)
         if strcmp(key,'pointzero') & strcmp(value,'auto')
@@ -202,6 +209,18 @@ for fn = fieldnames(cfg)
             % zeropoint is the time locking event, for xmin > 0, this will
             % simply give the left edge of the epoch as the zeropoint
             value = max(0, abs(EEG.xmin)) * 1000;
+            pzauto = 1;
+        elseif strcmp(key,'cond_labels') || strcmp(key, 'dcg')
+            try
+                value = eval(value);
+            catch
+                try 
+                    value = eval(strcat('{',value,'}'));
+                catch
+                    warning(strcat('Failed to evaluate code in ',key,'.'));
+                end
+            end
+            
         else
             value = str2num(value);
         end
@@ -216,24 +235,16 @@ cfg.stmode = DDSTMode(cfg.stmode);
 cfg.avmode = DDAverage(cfg.avmode);
 cfg.analysis_mode = DDMethod(cfg.analysis_mode);
 cfg.backend = DDBackend(cfg.backend);
-
-if cfg.run_analysis
-    % EEG.ddtbox.results = results;
-    % need to call decode_erp()
-    % [results, cfg] = decoding_erp(EEG.data, cfg, varargin);
-    % EEG.ddtbox.results = results;
-    % need to fix decode_erp to use new combi structure
-    % need to fix do_my_classification to use new backend/method distinction
-end
-
-EEG.ddtbox.cfg = cfg;
+cfg.multcompstats = DDMultComp(cfg.multcompstats);
 
 % need to reassemble the pop command
 % Joel is cringing at this Painter algorithm
-% but then again Joel is cringing at this language
+% but then again Joel is cringing at this language as a whole`2
 % so that's what you get for a weird string datatype, an alternate syntax
 % for funky heterogeneous arrays, and lack of support for map/apply
-com = 'EEG =  pop_dd_decode(EEG';
+%
+% We do this before the programmatic generation of additional cfg fields
+com = 'EEG = pop_dd_decode(EEG';
 
 names = fieldnames(cfg);
 for i = 1:length(names)
@@ -246,6 +257,13 @@ for i = 1:length(names)
         % supported, so we can skip
         continue
     end
+    
+    % force enums to behave like explicit enums instead of magic nums
+    % isenum introduced in 2015a, this could be a better replacement when
+    % compatibility with old MATLAB isn't an support issue
+    if isa(value, 'DDEnum')
+        value = value.name;
+    end
 
     if ischar(value)
         % can't use str2double here because strings are char arrays and
@@ -256,17 +274,56 @@ for i = 1:length(names)
             % Who at Mathworks thought that this was a good way to escape
             % quotation marks?
             newargs = sprintf(', ''%s'', ''%s''',key,value);
+        elseif isa(numvalue, 'DDEnum')
+            newargs = sprintf(', ''%s'', %s',key,value);
         else
             value = numvalue;
         end
     end
 
     if isnumeric(value)
-        newargs = sprintf(', ''%s'', %f',key,value);
+        % we use integer instead of float formatting because most of the 
+        % values here should be integers most of the time and the extra
+        % zeros after the decimal may be misleading
+        newargs = sprintf(', ''%s'', %d',key,value);
+        if pzauto && strcmp(key,'pointzero')
+            newargs = sprintf(', ''%s'', ''%s''',key,'auto');
+        end
+        
     end
 
     com = strcat(com,newargs);
 
 end
 
-com = strcat(com,');')
+com = strcat(com,');');
+
+% remember, this is still not exposed publicly
+cfg.backend_flags = backend_flags;
+
+% these bits are generated programmatically and should not be in the 
+% reconstructed function call
+cfg.srate = EEG.srate;
+cfg.nchannels = EEG.nbchan;
+cfg.chaninfo = EEG.chaninfo;
+cfg.chanlocs = EEG.chanlocs;
+if cfg.run_analysis
+    % EEG.ddtbox.results = results;
+    % need to call decode_erp()
+    % [results, cfg] = decoding_erp(EEG.data, cfg, varargin);
+    % EEG.ddtbox.results = results;
+    % need to fix decode_erp to use new combi structure
+    % need to fix do_my_classification to use new backend/method distinction
+end
+
+cfg.dcg_labels = {};
+for i = 1:length(cfg.dcg)
+    [g1, g2] = str2num(cfg.dcg{i}); %#ok<ST2NM>
+    l1 = cfg.cond_labels{g1};
+    l2 = cfg.cond_labels{g2};
+    
+    cfg.dcg_labels{i} = strcat(l1,' vs. ',l2);
+end
+
+
+EEG.ddtbox.cfg = rmfield(cfg,'run_analysis');
