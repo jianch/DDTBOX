@@ -5,8 +5,7 @@ function [results, cfg] = decoding_erp(dat, cfg, varargin)
 %
 % Inputs:
 %
-%   dat            Either a file name (including path) of file containing
-%                  floating point data, or a data matrix (chans x frames)
+%   dat            A data matrix (chans x frames)
 %
 %   cfg            A MATLAB struct containing the necessary configuration, 
 %                  see pop_dd_decode() for more information on necessary fields		
@@ -20,8 +19,6 @@ function [results, cfg] = decoding_erp(dat, cfg, varargin)
 % Optional keyword inputs:
 %
 %   outdir         name of directory to write output (does not have to exist), default = pwd/ddouttmp/
-%
-%   indir          optional input directory from which to load init
 %
 % Outputs:
 %
