@@ -45,8 +45,9 @@ classdef DDEnum < double
     methods(Static)
         function s = enum2str(obj,delimiter)
             [~, names] = enumeration(obj);
-            % join() was introduced in 2013b
-            s = join(names,delimiter);
+            % This provides a compatibility layer for issues with strjoin()
+            % being shadowed by other EEGLAB plugins
+            s = ddwrap_strjoin(names,delimiter);
         end
 
     end
