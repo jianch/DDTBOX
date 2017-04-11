@@ -1,48 +1,57 @@
-function DECODING_ERP(study_name,vconf,input_mode,sbj,dcg_todo,cross)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
+function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
+% Performs MVPA on a single subject dataset.
 %
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
 %
-% This master-script prepares the data for the decoding analysis. It requires a
-% configuration-script (e.g. "DEMO_config_v1.m") for the current study in 
-% which all study parameters are specified. 
+% Inputs:
 %
-% The script outputs the average decoding accuracies for each analysis & time-
-% step as well as feature weights.
+%   study_name          The name of the study and config file (e.g. 'DEMO')
 %
-% This toolbox interacts with LIBSVM toolbox to do the classfication / regression
-% see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
-% Chang CC, Lin CJ (2011). LIBSVM : a library for support vector machines. ACM TIST, 2(3):27,
+%   vconf               Version number of the study configuration script,
+%                       e.g. "1" for DEMO_config_v1.m
 %
-% requires:
+%   input_mode          0 = Use hard-coded variables from section 1
+%                       1 = enter manually
 %
-% - study_name (e.g. 'DEMO')
+%   sbj                 Subject number to analyse
 %
-% - vconf (version of study configuration script, e.g., "1" for DEMO_config_v1)
+%   dcg_tod             Discrimination group to use, as specified in
+%                       SLIST.dcg_labels{dcg}. For SVR dcg_todo defines the
+%                       condition that the target variable comes from (to
+%                       be saved in SVR_matrix, rows = trials, columns =
+%                       variable names)
 %
-% - input_mode (0 = use coded varialbles from first section / 1 = enter manually)
+%   cross               Use cross-condition classification (0 = no / 1 = yes)
+%                       Allows training on data from one DCG and predicting
+%                       the left-out data from the respective condition in
+%                       the other DCG (if "1" is chosen, two DCGs must be
+%                       entered for dcg_todo, e.g. [1 2])
 %
-% - sbj (number of subject to analyse, e.g., 1)
+%		
+% Optional keyword inputs:
 %
-% - dcg_todo (discrimination group to analyse, as specified in SLIST.dcg_labels{dcg})
-%   For SVR dcg_todo defines the condition that the target variable comes from 
-%   (to be saved in SVR_matrix (rows=trials; columns = varialbe values)
 %
-% - cross (cross-condition classification (0 = no / 1 = yes): Allows training on
-%   data from one DCG and predicting the left-out data from the respective
-%   condition in the other DCG (if "1" is chosen, two DCGs have to be entered
-%   for dcg_todo, e.g. [1 2])
+%
+% Usage:           DECODING_ERP(DEMO, 1, 0, 3, [1 2], 1)
+%
+%
+% Copyright (c) 2013-2016, Stefan Bode and contributors 
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%__________________________________________________________________________
-%
-% Variable naming convention: STRUCTURE_NAME.example_variable
 
 
 %% SECTION 1: PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

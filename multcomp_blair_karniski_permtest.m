@@ -1,6 +1,6 @@
 function [Results] = multcomp_blair_karniski_permtest(cond1_data, cond2_data, varargin)
 %
-% This script receives paired-samples data and outputs corrected p-values and
+% This function receives paired-samples data and outputs corrected p-values and
 % hypothesis test results based on a maximum statistic permutation test
 % (Blair & Karniski, 1993). The permutation test in this script is based
 % on the t-statistic from Student's paired-samples t-test, but can also be used

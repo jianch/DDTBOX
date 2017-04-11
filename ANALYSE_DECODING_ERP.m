@@ -1,29 +1,41 @@
-function ANALYSE_DECODING_ERP(study_name,vconf,input_mode,sbjs_todo,dcg_todo)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
+function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
+% This is the master script for group-level analysis of EEG decoding
+% results.
 %
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
 %
-% This script is the master-script for the group-level analysis of EEG-decoding
-% results. It will call several subscripts that run all possible analyses,
-% depending on the specific decoding analyses.
+% Inputs:
 %
-% requires:
-% - study_name (e.g. 'DEMO')
-% - vconf (version of study configuration script, e.g., "1" for DEMO_config_v1)
-% - input_mode (1 = use coded varialbles from first section / 2 = enter manually)
-% - sbjs_todo (e.g., [1 2 3 4 6 7 9 10 13])
-% - dcg_todo (discrimination group to analyse, as specified in SLIST.dcg_labels{dcg})
+%   study_name       Name corresponding to the study configuration script e.g. 'DEMO'
+%   vconf            version of study configuration script, e.g., "1" for DEMO_config_v1
+%   input_mode       0 = use hard-coded variables from first section / 1 = enter manually
+%   sbjs_todo        subject datasets to analyse e.g., [1 2 3 4 6 7 9 10 13]
+%   dcg_todo         discrimination group to analyse, as specified in SLIST.dcg_labels{dcg}
+%
+% Outputs:
+%  
+% Usage:            analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
+%
+% Example:          analyse_decoding_erp('DEMO', 1, 1, [1:10], 2)
+%
+%
+% Copyright (c) 2013-2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%__________________________________________________________________________
-%
-% Variable naming convention: STRUCTURE_NAME.example_variable
 
 %% GENERAL PARAMETERS AND GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
