@@ -141,7 +141,7 @@ case 1 % Bonferroni Correction
         ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
         ANALYSIS.RES.bonferroni_adjusted_alpha(na) = MCC_Results.corrected_alpha;
         fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
-    end
+    end % of for na
 
 case 2 % Holm-Bonferroni Correction
     
@@ -154,8 +154,8 @@ case 2 % Holm-Bonferroni Correction
         ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
         ANALYSIS.RES.holm_adjusted_alpha(na) = MCC_Results.critical_alpha;
         fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
-    end % of for na loop  
-
+    end % of for na
+    
 case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
     fprintf('\n\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
@@ -172,8 +172,8 @@ case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
                 perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
             elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
                 perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end
-        end
+            end % of if ANALYSIS.drawmode
+        end % of if ANALYSIS.permstats
         
         % Convert to two-dimensional matrix for multcomp correction algorithm
         tmp = squeeze(real_decoding_scores);
@@ -208,8 +208,9 @@ case 4 % Cluster-Based Permutation Test
                 perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
             elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
                 perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end    
-        end
+            end % of if ANALYSIS.drawmode    
+        end % of if ANALYSIS.permstats
+        
         % Convert to two-dimensional matrix for multcomp correction algorithm
         tmp = squeeze(real_decoding_scores);
         real_decoding_scores = tmp;
@@ -247,8 +248,9 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
                 perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
             elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
                 perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end
-        end
+            end % of if ANALYSIS.drawmode
+        end % of if ANALYSIS.permstats
+        
         % Convert to two-dimensional matrix for multcomp correction algorithm
         tmp = squeeze(real_decoding_scores);
         real_decoding_scores = tmp;
@@ -304,7 +306,7 @@ case 8 % Benjamini-Yekutieli FDR Control
 
 % If some other option is chosen then do not correct for multiple comparisons, but notify user
 otherwise
-    fprintf('\n\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values \n\n');
+    fprintf('\n\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values\n\n');
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 end % of ANALYSIS.multcompstats switch
 

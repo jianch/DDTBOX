@@ -1,24 +1,36 @@
-function display_indiv_results_erp(STUDY,RESULTS)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
+function display_indiv_results_erp(STUDY, RESULTS)
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Daniel Feuerriegel, Phillip Alday
+% This function gets input from decoding_erp.m and displays decoding results 
+% for a single subject. If permutation tests are run and display of 
+% permutation results is on, then these results are displayed for comparison.
 %
-% The author further acknowledges helpful conceptual input/work from: 
-% Jutta Stahl, Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
+% This function is called by decoding_erp.
+% 
+% Inputs:
 %
-% Gets input from DECODING_ERP.m
-% Uses specified step-width and results from mutltivariate classification/
-% regression analysis and displays individual results.
-% If premutation test is on and display of permutation results is on, then
-% these results are displayed for comparison.
-
-%__________________________________________________________________________
+%   STUDY       structure containing participant dataset information and 
+%               multivariate classification/regression settings.
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+%   RESULTS     structure containing decoding results for an individual
+%               subject datset.
+%
+%
+% Copyright (c) 2013-2016 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %% SET GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________

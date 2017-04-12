@@ -1,9 +1,15 @@
 function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, varargin)
 %
 % Computes t_yuen (Yuen's T statistic) to compare the trimmed means of two
-% dependent groups. Each group needs the same number of data points.
-%  
+% dependent samples. Each sample needs the same number of data points.
+%
+% Yuen's t test was first described in Yuen, K.K. (1974). The two-sample
+% trimmed t for unequal population variances. Biometrika, 61, 165-170.
+% See also Wilcox (2012), Introduction to Robust Estimation and Hypothesis 
+% Testing (3rd Edition), page 195-198 for a description of the Yuen
+% procedure for dependent groups.
 % 
+%
 % Inputs:
 %
 %   cond_1_data             vector of observations in group/condition 1
@@ -48,11 +54,6 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % Example:  [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data, cond_2_data, 'alpha', 0.05, 'percent', 20, 'tail', 'both')
 %
 %
-% See Wilcox (2012), Introduction to Robust Estimation and Hypothesis
-% Testing (3rd Edition), page 195-198 for a description of the Yuen
-% procedure for dependent groups.
-%
-% _________________________________________________________________________
 % 
 % Copyright (c) 2016 Daniel Feuerriegel and contributors
 % 
@@ -70,6 +71,7 @@ function [h_yuen, p, CI, t_yuen, diff, se, tcrit, df] = yuend_ttest(cond_1_data,
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 %
 % Modified from the limo_yuend_ttest function in the LIMO Toolbox:
 % Pernet, C.R., Chauveau, N., Gaspar, C. & Rousselet, G.A. 

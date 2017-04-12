@@ -8,6 +8,8 @@ function [Results] = multcomp_fdr_by(p_values, varargin)
 % rate in multiple testing under dependency. The Annals of Statistics, 29, 1165-1188.
 % doi 10.1093/biomet/93.3.491
 %
+% Please cite this article when using this multiple comparisons correction.
+%
 %
 % Inputs:
 %

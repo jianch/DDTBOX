@@ -21,6 +21,10 @@ function [Results] = multcomp_ktms(cond1_data, cond2_data, varargin)
 % when permutations are randomly drawn. Statistical Applications in
 % Genetics and Molecular Biology, 9, 39. doi 10.2202/1544-6115.1585
 %
+% Please cite these articles when using this multiple comparisons
+% correction method.
+%
+%
 % Inputs:
 %
 %   cond1_data      data from condition 1, a subjects x time windows matrix
