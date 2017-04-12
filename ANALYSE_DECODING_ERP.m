@@ -16,11 +16,12 @@ function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo
 %
 %   dcg_todo         discrimination group to analyse, as specified in SLIST.dcg_labels{dcg}
 %
+%
 % Outputs:
 %  
-% Usage:            analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
+% Usage:            ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
-% Example:          analyse_decoding_erp('DEMO', 1, 1, [1:10], 2)
+% Example:          ANALYSE_DECODING_ERP('DEMO', 1, 1, [1:10], 2)
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors
@@ -488,15 +489,12 @@ elseif ANALYSIS.group_level_analysis == 2 % Group-level stats based on t tests
 end % of if ANALYSIS.group_level_analysis
 
 
-
-
-
 fprintf('All group statistics performed.\n');
 
 %% FEATURE WEIGHT ANALYSIS
 %__________________________________________________________________________
 
-if ANALYSIS.fw.do == 1
+if ANALYSIS.fw.do == 1 % If chosen to analyse feature weights
     
     [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS);
     

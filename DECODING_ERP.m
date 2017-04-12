@@ -15,7 +15,7 @@ function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
 %
 %   sbj                 Subject number to analyse
 %
-%   dcg_tod             Discrimination group to use, as specified in
+%   dcg_todo            Discrimination group to use, as specified in
 %                       SLIST.dcg_labels{dcg}. For SVR dcg_todo defines the
 %                       condition that the target variable comes from (to
 %                       be saved in SVR_matrix, rows = trials, columns =
@@ -92,7 +92,7 @@ if input_mode == 0 % Hard-coded input
     
     STUDY.perm_test = 1; % run the permutation-decoding? 0=no / 1=yes
     STUDY.perm_disp = 1; % display the permutation results in figure? 0=no / 1=yes
-    STUDY.display_on = 1; % 1=figure displayed, 0=no figure
+    STUDY.display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
     
     STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
     STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
