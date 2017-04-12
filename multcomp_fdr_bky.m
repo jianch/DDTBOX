@@ -9,6 +9,7 @@ function [Results] = multcomp_fdr_bky(p_values, varargin)
 % procedures that control the false discovery rate. Biometrika, 93, 491-507.
 % doi 10.1093/biomet/93.3.491
 %
+% Please cite this article when using this multiple comparisons correction.
 %
 % Inputs:
 %

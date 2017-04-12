@@ -1,6 +1,7 @@
 function [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS)
 %
 % This function performs group-level analyses on feature weights data and plots the results.
+% 
 % This function is called by analyse_decoding_erp.
 %
 %

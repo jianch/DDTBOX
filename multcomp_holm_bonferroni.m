@@ -7,6 +7,10 @@ function [Results] = multcomp_holm_bonferroni(p_values, varargin)
 % Holm, S. (1979). A simple sequentially rejective multiple test procedure. 
 % Scandinavian Journal of Statistics 6 (2): 65-70.
 %
+% Please cite this article when using this multiple comparisons correction
+% method.
+%
+%
 % Inputs:
 %
 %   p_values        vector of p-values from the hypothesis tests of interest

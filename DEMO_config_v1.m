@@ -1,6 +1,6 @@
 function DEMO_config_v1
 %
-% This is the configuration script for the DDTBOX. All
+% This is a configuration script for the DDTBOX. All
 % study-specific information for decoding, regression and group-level
 % analyses are specified here.
 %

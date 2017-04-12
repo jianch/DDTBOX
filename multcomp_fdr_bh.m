@@ -1,13 +1,15 @@
 function [Results] = multcomp_fdr_bh(p_values, varargin)
 %
 % This function receives a vector of p-values and outputs
-% false discovery rate-corrected null hypothesis test results (Benjamin-Hochberg procedure).
+% false discovery rate-corrected null hypothesis test results (Benjamini-Hochberg procedure).
 % The number of tests is determined by the length of the vector of p-values.
 %
 % Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: 
 % A practical and powerful approach to multiple testing. Journal of the 
 % Royal Statistical Society. Series B (Methodological), 57, 289-300. 
 % Stable link:http://www.jstor.org/stable/2346101 
+%
+% Please cite this article when using this multiple comparisons correction.
 %
 %
 % Inputs:

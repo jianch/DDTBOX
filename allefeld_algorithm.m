@@ -3,8 +3,8 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % This function implements the group-level statistical inference testing
 % based on the minimum statistic (described in detail in Allefeld et al.,
 % 2016). The testing procedure includes a test for global null (i.e. that
-% no subject show any effects, i.e. a fixed effects analysis) and also
-% tests for the prevalence of an effect as a proportion of the sample.
+% no subjects show any effects, which is a fixed effects analysis) and also
+% estimates the prevalence of an effect as a proportion of the sample.
 %
 % Allefeld, C., Gorgen, K., Haynes, J.D. (2016). Valid population inference
 % for information-based imaging: From the second-level t-test to prevalence

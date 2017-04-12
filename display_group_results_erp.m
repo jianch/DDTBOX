@@ -1,7 +1,8 @@
 function display_group_results_erp(ANALYSIS)
 %
-% This script is will plot results from the group-level analyses.  
-% This function is called by analyse_decoding_erp.
+% This script is will plot results of group-level analyses.  
+
+%% This function is called by analyse_decoding_erp.
 %
 %
 % Inputs:

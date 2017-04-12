@@ -1,7 +1,7 @@
 function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 %
-% This function receives the original data and outputs corrected p-values and
-% hypothesis test results based on a maximum cluster mass statistic permutation test,
+% This function receives paired-samples data and outputs corrected p-values and
+% null hypothesis test results based on a maximum cluster mass statistic permutation test,
 % as described in Bullmore et al. (1999). The permutation test in this script is based
 % on the t-statistic from Student's paired-samples t-test, but can also be used
 % with the more robust Yuen's paired-samples t test. If using Yuen's t this
@@ -20,6 +20,9 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 % Permutation p-values should never be zero: Calculating exact p-values
 % when permutations are randomly drawn. Statistical Applications in
 % Genetics and Molecular Biology, 9, 39. doi 10.2202/1544-6115.1585
+%
+% Please cite these articles when using this multiple comparisons
+% correction.
 %
 %
 % Inputs:

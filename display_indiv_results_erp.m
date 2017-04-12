@@ -3,6 +3,7 @@ function display_indiv_results_erp(STUDY, RESULTS)
 % This function gets input from decoding_erp.m and displays decoding results 
 % for a single subject. If permutation tests are run and display of 
 % permutation results is on, then these results are displayed for comparison.
+%
 % This function is called by decoding_erp.
 % 
 % Inputs:

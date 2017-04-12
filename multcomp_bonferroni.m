@@ -6,12 +6,14 @@ function [Results] = multcomp_bonferroni(p_values, varargin)
 % This function outputs both the corrected alpha level and 
 % Bonferroni-corrected p-values.
 %
-%
 % Dunn, O. J. (1959). Estimation of the medians for dependent variables. 
 % Annals of Mathematical Statistics, 30(1), 192-197. doi 10.1214/aoms/1177706374
 %
 % Dunn, O.J. (1961). Multiple comparisons among means. Journal of the 
 % American Statistical Association, 56(293), 52-64. doi 10.1080/01621459.1961.10482090
+%
+% Please cite the articles listed above when using this multiple comparisons
+% correction.
 %
 %
 % Inputs:
