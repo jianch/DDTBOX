@@ -1,4 +1,4 @@
-function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
+function decoding_erp(cfg)
 %
 % Performs MVPA on a single subject dataset.
 %
@@ -58,20 +58,20 @@ function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
 %__________________________________________________________________________
 
 global SBJTODO;
-SBJTODO = sbj;
-STUDY.sbj = sbj;
+SBJTODO = cfg.sbj;
+STUDY.sbj = cfg.sbj;
 
 global DCGTODO;
-DCGTODO = dcg_todo;
-STUDY.dcg_todo = dcg_todo;
+DCGTODO = cfg.dcg_todo;
+STUDY.dcg_todo = cfg.dcg_todo;
 STUDY.regr_todo = [];
-STUDY.cross = cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
+STUDY.cross = cfg.cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
 
 % get subject parameters
 % sbj_list = input('Enter subject list: ','s');
-STUDY.study_name = study_name;
-STUDY.vconf = vconf;
-STUDY.sbj_list = [study_name '_config_v' num2str(vconf)]; % use latest slist-function!
+STUDY.study_name = cfg.study_name;
+STUDY.vconf = cfg.vconf;
+STUDY.sbj_list = [cfg.study_name '_config_v' num2str(cfg.vconf)]; % use latest slist-function!
 
 global SLIST;
 eval(STUDY.sbj_list); % Gets subject parameters from the configuration script
@@ -80,72 +80,38 @@ eval(STUDY.sbj_list); % Gets subject parameters from the configuration script
 % get study parameters and save in STUDY structure
 %__________________________________________________________________________
 
-if input_mode == 0 % Hard-coded input
-
-    % get study parameters (hardcoded)
-    STUDY.analysis_mode = 3; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
-    STUDY.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-    STUDY.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-        
-    STUDY.window_width_ms = 10; % width of sliding window in ms
-    STUDY.step_width_ms = 10; % step size with which sliding window is moved through the trial
+    % Multivariate classification/regression parameters
+    STUDY.analysis_mode = cfg.analysis_mode; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
+    STUDY.stmode = cfg.stmode; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
+    STUDY.avmode = cfg.avmode; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
+    STUDY.window_width_ms = cfg.window_width_ms; % width of sliding window in ms
+    STUDY.step_width_ms = cfg.step_width_ms; % step size with which sliding window is moved through the trial
+    STUDY.zscore_convert = cfg.zscore_convert; % Convert data into z-scores before decoding? 0 = no / 1 = yes
+    STUDY.perm_test = cfg.perm_test; % run the permutation-decoding? 0=no / 1=yes
+    STUDY.cross_val_steps =  cfg.cross_val_steps; % How many cross-validation steps (if no runs available)?
+    STUDY.n_rep_cross_val = cfg.n_rep_cross_val; % How many repetitions of full cross-validation with re-ordered data?
+    STUDY.permut_rep = cfg.permut_rep; % How many repetitions of full cross-validation with permutation results?
     
-    STUDY.perm_test = 1; % run the permutation-decoding? 0=no / 1=yes
-    STUDY.perm_disp = 1; % display the permutation results in figure? 0=no / 1=yes
-    STUDY.display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
-    
-    STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
-    STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
-    STUDY.cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
-    STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with re-ordered data?
-    STUDY.permut_rep = 10; % How many repetitions of full cross-validation with permutation results?
+    % Feature weights extraction
+    STUDY.feat_weights_mode = cfg.feat_weights_mode; % Extract feature weights? 0=no / 1=yes
 
-elseif input_mode == 1 % Prompt user for input
-
-    % get study parameters via input
-    STUDY.analysis_mode = input('Specifiy analysis method: "1" SVM with LIBSVM , "2" SVM with liblinear, "3" with LIBSVM: '); 
-    if STUDY.analysis_mode~=3
-        STUDY.avmode = input('Enter "1" for single-trial decoding or "2" for run-average decoding: ');
-    else
-        STUDY.avmode = 1; % need single trials for SVR
-    end
-    STUDY.stmode = input('Enter "1" for spatial, "2" for temporal, or "3" for spatio-temporal decoding: ');
-    
-    if STUDY.avmode == 1 % Options for single-trial decoding
-        STUDY.cross_val_steps = input('How many cross-validation steps do you wish to perform?');
-        STUDY.n_rep_cross_val = input('How many independent repetitions of the analysis do you wish to perform?');
-    end
-    
-    STUDY.window_width_ms = input('Enter decoding window width in ms: ');
-    STUDY.step_width_ms = input('Enter step width for moving the decoding window in ms: ');
-    STUDY.zscore_convert = input('Convert data to z-scores before decoding? "0" for no, "1" for yes: ');
-    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes: ');
-    if STUDY.cross > 0
-        dcgs = input('Enter two discriminations groups for cross-decoding (e.g.[1 2]):');
-        STUDY.dcg_todo = dcgs;
-    end
-        STUDY.perm_test = input('Do you want to run a permutation test? (1=yes, 0=no) '); 
-    if STUDY.perm_test == 1
-        STUDY.permut_rep = input('How many repetitions of the permutation test do you wish to perform? ');
-        STUDY.perm_disp = input('Do you wish to plot the permutation test results? (1=yes, 0=no) '); 
-    end
-    STUDY.display_on = input('Do you wish to plot the individual decoding results? (1=yes, 0=no) ');
-
-end
+    % Single subject decoding results plotting
+    STUDY.display_on = cfg.display_on; % Display individual subject results? 1=figure displayed / 0=no figure
+    STUDY.perm_disp = cfg.perm_disp; % display the permutation results in figure? 0=no / 1=yes
 
 if STUDY.analysis_mode == 1 
-    STUDY.analysis_mode_label='SVM_LIBSVM';
+    STUDY.analysis_mode_label = 'SVM_LIBSVM';
 elseif STUDY.analysis_mode == 2 
-    STUDY.analysis_mode_label='SVM_LIBLIN';
+    STUDY.analysis_mode_label = 'SVM_LIBLIN';
 elseif STUDY.analysis_mode == 3
-    STUDY.analysis_mode_label='SVR_LIBSVM';
+    STUDY.analysis_mode_label = 'SVR_LIBSVM';
 end
 
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
 STUDY.sampling_rate = SLIST.sampling_rate;
 STUDY.pointzero = SLIST.pointzero;
-STUDY.dcg_label=SLIST.dcg_labels{dcg_todo};
+STUDY.dcg_label = SLIST.dcg_labels{dcg_todo};
 
 STUDY.window_width = floor(STUDY.window_width_ms / ((1/STUDY.sampling_rate) * 1000));
 STUDY.step_width = floor(STUDY.step_width_ms / ((1/STUDY.sampling_rate) * 1000));
@@ -157,7 +123,7 @@ STUDY.n_all_permutation = STUDY.cross_val_steps * STUDY.permut_rep;
 if STUDY.cross == 0 
     fprintf('DCG %d will be analysed. \n',STUDY.dcg_todo);                
 elseif STUDY.cross > 0
-    fprintf('DCG %d and %d will be analysed for cross-condition classification. \n',STUDY.dcg_todo(1), STUDY.dcg_todo(2));
+    fprintf('DCG %d and %d will be analysed for cross-condition classification. \n', STUDY.dcg_todo(1), STUDY.dcg_todo(2));
 end
 
 % For SVR dcg_todo defines condition that the target variable comes from 

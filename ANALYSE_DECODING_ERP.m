@@ -1,4 +1,4 @@
-function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
+function analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
 % This is the master script for group-level analysis of EEG decoding
 % results.
