@@ -133,12 +133,12 @@ if input_mode == 0 % Hard-coded input
         % maps and stats for averaged analysis time windows
         ANALYSIS.fw.display_average_zmap = 0; % z-standardised average FWs
         ANALYSIS.fw.display_average_uncorr_threshmap = 0; % thresholded map uncorrected t-test results
-        ANALYSIS.fw.display_average_corr_threshmap = 0; % thresholded map corrected t-test results (Bonferroni)
+        ANALYSIS.fw.display_average_corr_threshmap = 0; % thresholded map t-test results corrected for multiple comparisons
         
         % maps and stats for each analysis time window
         ANALYSIS.fw.display_all_zmaps = 0; % z-standardised average FWs
         ANALYSIS.fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
-        ANALYSIS.fw.display_all_corr_thresh_maps = 0; % thresholded map corrected t-test results (Bonferroni)
+        ANALYSIS.fw.display_all_corr_thresh_maps = 0; % thresholded map t-test results corrected for multiple comparisons
 %__________________________________________________________________________    
 
 elseif input_mode == 1 % Prompted manual input
