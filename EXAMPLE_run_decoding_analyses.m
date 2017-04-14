@@ -25,14 +25,18 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+%% Housekeeping
+clear variables;
+close all;
+
 
 %% Filepaths and locations of subject datasets
 
 % Base directory path (where single subject EEG datasets and channel locations information will be stored)
-bdir = '/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/';
+bdir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/';
 
 % Output directory (where decoding results will be saved)
-output_dir = '/Volumes/PROJECTS/MVPA WORKSHOP COLOGNE/DECODING_RESULTS/results/';
+output_dir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Test/';
     
 % Filepaths of single subject datasets (relative to the base directory)
 sbj_code = {...
@@ -51,11 +55,10 @@ nsbj = size(sbj_code, 1);
 
 
 % MATLAB workspace names for single subject data arrays and structures
-SLIST.data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace
+data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace
     
 % Settings for support vector regression
-SLIST.regress_label_name = [bdir, sbj_code{sn}, 'regress_sorted_data.mat'];
-SLIST.regress_struct_name = 'SVR_matrix'; % DO NOT CHANGE NAME
+regress_struct_name = 'SVR_matrix'; % DO NOT CHANGE NAME
 
 
 
@@ -92,53 +95,40 @@ pointzero = 100; % Corresponds to the time of the event/trigger code relative to
 
 % Label each condition
 % Example: SLIST.cond_labels{condition number} = 'Name of condition';
-SLIST.cond_labels{1} = 'condition_A';
-SLIST.cond_labels{2} = 'condition_B';
-SLIST.cond_labels{3} = 'condition_C';
-SLIST.cond_labels{4} = 'condition_D';
+cond_labels{1} = 'condition_A';
+cond_labels{2} = 'condition_B';
+cond_labels{3} = 'condition_C';
+cond_labels{4} = 'condition_D';
         
 % Discrimination groups
 % Enter the condition numbers of the conditions to discriminate between
 % Example: SLIST.dcg{discrimination group number} = [condition number 1, condition number 2];
-SLIST.dcg{1} = [1, 3]; 
-SLIST.dcg{2} = [2, 4]; 
+dcg{1} = [1, 3]; 
+dcg{2} = [2, 4]; 
               
 % Label each discrimination group
 % Example: SLIST.dcg_labels{Discrimination group number} = 'Name of discrimination group'
-SLIST.dcg_labels{1} = 'A vs. B';
-SLIST.dcg_labels{2} = 'C vs. D';
-
+dcg_labels{1} = 'A vs. C';
+dcg_labels{2} = 'B vs. D';
 
 
 % This section automaticallly fills in various parameters related to dcgs and conditions 
-SLIST.ndcg = size(SLIST.dcg, 2);
-SLIST.nclasses = size(SLIST.dcg{1}, 2);      
-SLIST.ncond = size(SLIST.cond_labels, 2);
-
-SLIST.data_open_name = [bdir, (sbj_code{sn}), '.mat'];
-SLIST.data_save_name = [bdir, (sbj_code{sn}), '_data.mat'];
-
-
-
-
-
-
+ndcg = size(dcg, 2);
+nclasses = size(dcg{1}, 2);      
+ncond = size(cond_labels, 2);
 
 
 %% Select experiment, subject datasets and discrimination groups
 
-% Enter the name of the study (used to find the study config script file). 
-% e.g. if the study_name = 'EXAMPLE' and vconf = 1 then DDTBOX will use
-% the config script EXAMPLE_config_v1.m
+% Enter the name of the study (for labeling saved decoding results files)
 study_name = 'EXAMPLE';
-vconf = 1;
 
 % Set which subjects datasets to decode
-sbj = [];
+sbj_todo = [1];
 
 % Enter the discrimination group for classification. Two discrimination
 % groups can be entered when using cross-condition decoding.
-dcg_todo = [];
+dcgs_for_analyses = [1];
 
 % Perform cross-condition decoding? 1 = yes / 0 = no
 cross = 0;
@@ -149,13 +139,13 @@ cross = 0;
 analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
 stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
 avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-window_width_ms = 10; % width of sliding window in ms
-step_width_ms = 10; % step size with which sliding window is moved through the trial
+window_width_ms = 50; % width of sliding window in ms
+step_width_ms = 50; % step size with which sliding window is moved through the trial
 zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
 perm_test = 1; % Run decoding using permuted condition labels? 0=no / 1=yes
-cross_val_steps = 5; % How many cross-validation steps (if no runs available)?
-n_rep_cross_val = 10; % How many repetitions of full cross-validation with re-ordered data?
-permut_rep = 10; % How many repetitions of full cross-validation with permutation results?
+cross_val_steps = 2; % How many cross-validation steps (if no runs available)?
+n_rep_cross_val = 3; % How many repetitions of full cross-validation with re-ordered data?
+permut_rep = 3; % How many repetitions of full cross-validation with permutation results?
 
 % Feature weights extraction
 feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
@@ -165,16 +155,58 @@ display_on = 1; % Display individual subject results? 1=figure displayed / 0=no 
 perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
 
 
+%% Copy all settings into the cfg structure
+cfg.bdir = bdir;
+cfg.output_dir = output_dir;
+cfg.sbj_code = sbj_code;
+cfg.nsbj = nsbj;
+cfg.data_struct_name = data_struct_name;
+cfg.regress_struct_name = regress_struct_name;
+cfg.nchannels = nchannels;
+cfg.channel_names_file = channel_names_file;
+cfg.channellocs = channellocs;
+cfg.sampling_rate = sampling_rate;
+cfg.pointzero = pointzero;
+cfg.cond_labels = cond_labels;
+cfg.dcg = dcg;
+cfg.dcg_labels = dcg_labels;
+cfg.ndcg = ndcg;
+cfg.nclasses = nclasses;
+cfg.ncond = ncond;
+cfg.study_name = study_name;
+cfg.cross = cross;
+cfg.analysis_mode = analysis_mode;
+cfg.stmode = stmode;
+cfg.avmode = avmode;
+cfg.window_width_ms = window_width_ms;
+cfg.step_width_ms = step_width_ms;
+cfg.zscore_convert = zscore_convert;
+cfg.perm_test = perm_test;
+cfg.cross_val_steps = cross_val_steps;
+cfg.n_rep_cross_val = n_rep_cross_val;
+cfg.permut_rep = permut_rep;
+cfg.feat_weights_mode = feat_weights_mode;
+cfg.display_on = display_on;
+cfg.perm_disp = perm_disp;
 
-%% Run the decoding analyses
 
-for dcg = 1:length(discriminationGroups)
-    for sbj = subjects
+%% Run the decoding analyses for specified subjects and dcgs
 
+for dcg_todo = dcgs_for_analyses
+    for sbj = sbj_todo
+
+        % Save subject and dcg numbers into the configuration settings
+        % structure
         cfg.sbj = sbj;
-        cfg.dcg = dcg;
+        cfg.dcg_todo = dcg_todo;
         
-        DECODING_ERP(cfg);
+        % Set subject-specific filepaths for opening and saving files
+        cfg.data_open_name = [bdir, (sbj_code{sbj}), '.mat'];
+        cfg.data_save_name = [bdir, (sbj_code{sbj}), '_data.mat'];
+        cfg.regress_label_name = [bdir, sbj_code{sbj}, 'regress_sorted_data.mat']; % Filepath for regression labels file
+
+        % Run the decoding analyses!
+        decoding_erp(cfg);
 
     end % of for sbj
 end % of for dcg

@@ -57,12 +57,8 @@ function decoding_erp(cfg)
 %% SECTION 1: PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
-global SBJTODO;
-SBJTODO = cfg.sbj;
+cfg.sbj_todo = cfg.sbj;
 STUDY.sbj = cfg.sbj;
-
-global DCGTODO;
-DCGTODO = cfg.dcg_todo;
 STUDY.dcg_todo = cfg.dcg_todo;
 STUDY.regr_todo = [];
 STUDY.cross = cfg.cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
@@ -70,11 +66,7 @@ STUDY.cross = cfg.cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
 % get subject parameters
 % sbj_list = input('Enter subject list: ','s');
 STUDY.study_name = cfg.study_name;
-STUDY.vconf = cfg.vconf;
-STUDY.sbj_list = [cfg.study_name '_config_v' num2str(cfg.vconf)]; % use latest slist-function!
 
-global SLIST;
-eval(STUDY.sbj_list); % Gets subject parameters from the configuration script
 %__________________________________________________________________________
 
 % get study parameters and save in STUDY structure
@@ -109,9 +101,9 @@ end
 
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
-STUDY.sampling_rate = SLIST.sampling_rate;
-STUDY.pointzero = SLIST.pointzero;
-STUDY.dcg_label = SLIST.dcg_labels{dcg_todo};
+STUDY.sampling_rate = cfg.sampling_rate;
+STUDY.pointzero = cfg.pointzero;
+STUDY.dcg_label = cfg.dcg_labels{cfg.dcg_todo};
 
 STUDY.window_width = floor(STUDY.window_width_ms / ((1/STUDY.sampling_rate) * 1000));
 STUDY.step_width = floor(STUDY.step_width_ms / ((1/STUDY.sampling_rate) * 1000));
@@ -130,7 +122,7 @@ end
 % (to be saved in SLIST.regress_struct_name(rows=trials; columns = varialbe values)
 % The data is always the same, so by default: dcg_todo = 1 
 if STUDY.analysis_mode == 3 
-    STUDY.regr_todo = dcg_todo;
+    STUDY.regr_todo = cfg.dcg_todo;
     STUDY.dcg_todo = 1;
 end
     
@@ -222,22 +214,22 @@ STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' ' STUDY.backend
 % *** converted into work_data{run,cond}(timepoints,channels,trials)
 
 fprintf('Reading in data. Please wait... \n');
-open_name = (SLIST.data_open_name);
+open_name = (cfg.data_open_name);
 load(open_name);
 fprintf('Data loading complete.\n');
 
 % read in regression labels if performing SVR
 if STUDY.analysis_mode == 3
     
-    STUDY.regress_open_name = SLIST.regress_label_name;
+    STUDY.regress_open_name = cfg.regress_label_name;
     STUDY.regress_data = load(STUDY.regress_open_name);    
 
     fprintf('Loaded regressand labels.\n');
 
 end
 
-work_data = eval(SLIST.data_struct_name); % Copies eeg_sorted_cond data into work_data
-STUDY.nchannels=SLIST.nchannels;
+work_data = eval(cfg.data_struct_name); % Copies eeg_sorted_cond data into work_data
+STUDY.nchannels=cfg.nchannels;
 
 %__________________________________________________________________________
 % if data is stored in a structure and not a cell:
@@ -305,10 +297,10 @@ if STUDY.analysis_mode ~= 3 % SVR does not require conditions
         % go through either one DCG (regular) or two DCGs (cross-condition decoding)
         for d = 1:size(STUDY.dcg_todo,2)
             
-            for cond = 1:size(SLIST.dcg{STUDY.dcg_todo(d)},2) % for all conditions specified
+            for cond = 1:size(cfg.dcg{STUDY.dcg_todo(d)},2) % for all conditions specified
 
-                fprintf('Run %d: Extracting condition %d as specified in DCG %d.\n',r,(SLIST.dcg{STUDY.dcg_todo(d)}(cond)),STUDY.dcg_todo(d));
-                temp(:,:,:) = work_data{r,(SLIST.dcg{STUDY.dcg_todo(d)}(cond))}(:,:,:);
+                fprintf('Run %d: Extracting condition %d as specified in DCG %d.\n',r,(cfg.dcg{STUDY.dcg_todo(d)}(cond)),STUDY.dcg_todo(d));
+                temp(:,:,:) = work_data{r,(cfg.dcg{STUDY.dcg_todo(d)}(cond))}(:,:,:);
                 reduced_data{d,r,cond} = temp; 
 
                 clear temp;                    
@@ -354,7 +346,7 @@ for r = 1:size(reduced_data,2)
     
 end %r
 
-fprintf('Minimum number of trials per condition computed for participant %d \n',SBJTODO);
+fprintf('Minimum number of trials per condition computed for participant %d \n', cfg.sbj_todo);
 
 % select min trials in all conditions
 for r = 1:size(reduced_data,2)
@@ -606,7 +598,7 @@ end % avmode
 % input('Do you wish to continue with decoding? Press any button!')
 
 fprintf('Starting with vector preparation... \n');
-[RESULTS] = prepare_my_vectors_erp(training_set, test_set, SLIST, STUDY);
+[RESULTS] = prepare_my_vectors_erp(training_set, test_set, cfg, STUDY);
 
 %% SECTION 8: AVERAGE CROSS-VALIDATION STEPS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -643,21 +635,21 @@ fprintf('Results are computed and averaged for participant %d. \n',STUDY.sbj);
 %__________________________________________________________________________
 
 if STUDY.cross == 0
-    savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{dcg_todo} '.mat'];
+    savename = [(cfg.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
+        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo} '.mat'];
 elseif STUDY.cross == 1
-    savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{STUDY.dcg_todo(1)}...
-        'toDCG' SLIST.dcg_labels{STUDY.dcg_todo(2)} '.mat'];
+    savename = [(cfg.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
+        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' cfg.dcg_labels{STUDY.dcg_todo(1)}...
+        'toDCG' cfg.dcg_labels{STUDY.dcg_todo(2)} '.mat'];
 elseif STUDY.cross == 2
-        savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{STUDY.dcg_todo(2)}...
-        'toDCG' SLIST.dcg_labels{STUDY.dcg_todo(1)} '.mat'];
+        savename = [(cfg.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
+        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' cfg.dcg_labels{STUDY.dcg_todo(2)}...
+        'toDCG' cfg.dcg_labels{STUDY.dcg_todo(1)} '.mat'];
 end
     
 save(savename,'STUDY','RESULTS'); % Save STUDY and RESULTS structures into a .mat file
 
-fprintf('Results are saved for participant %d in directory: %s. \n',STUDY.sbj,(SLIST.output_dir));
+fprintf('Results are saved for participant %d in directory: %s. \n',STUDY.sbj,(cfg.output_dir));
 
 %% SECTION 10: DISPLAY INDIVIDUAL RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Displays decoding results for each individual subject dataset.
@@ -665,7 +657,7 @@ fprintf('Results are saved for participant %d in directory: %s. \n',STUDY.sbj,(S
 
 if STUDY.display_on == 1
     
-    display_indiv_results_erp(STUDY,RESULTS);
+    display_indiv_results_erp(cfg, STUDY, RESULTS);
 
 end % display_on
 %__________________________________________________________________________ 

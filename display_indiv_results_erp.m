@@ -1,4 +1,4 @@
-function display_indiv_results_erp(STUDY, RESULTS)
+function display_indiv_results_erp(cfg, STUDY, RESULTS)
 %
 % This function gets input from decoding_erp.m and displays decoding results 
 % for a single subject. If permutation tests are run and display of 
@@ -31,11 +31,6 @@ function display_indiv_results_erp(STUDY, RESULTS)
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-%% SET GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
-
-global SBJTODO;
 
 %% DISPLAY MAIN RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -72,7 +67,7 @@ for na = 1:size(RESULTS.subj_acc,1)
     end
     set(gca,'XTickLabel',XTickLabels);
     
-    title(['SBJ' num2str(SBJTODO) ' ' STUDY.dcg_label ' - analysis '...
+    title(['SBJ' num2str(cfg.sbj_todo) ' ' STUDY.dcg_label ' - analysis '...
         num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
         
     clear temp_data;
@@ -111,7 +106,7 @@ if STUDY.perm_disp == 1
         end
         set(gca,'XTickLabel',XTickLabels);
 
-        title(['SBJ' num2str(SBJTODO) ' ' STUDY.dcg_label ' - permutation '...
+        title(['SBJ' num2str(cfg.sbj_todo) ' ' STUDY.dcg_label ' - permutation '...
             num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
 
         clear temp_data;
