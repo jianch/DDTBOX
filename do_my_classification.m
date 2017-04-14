@@ -1,4 +1,4 @@
-function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vectors_train, labels_train, vectors_test, labels_test, STUDY)
+function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vectors_train, labels_train, vectors_test, labels_test, cfg)
 %
 % Performs multivariate pattern classification/regression using input
 % vectors of training/test data and condition labels. Feature weights from
@@ -31,7 +31,7 @@ function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vect
 %
 %   labels_test     condition labels for the test dataset
 %
-%   STUDY           structure containing multivariate classification/regression settings
+%   cfg           structure containing multivariate classification/regression settings
 % 
 %
 % Outputs:
@@ -69,10 +69,10 @@ Labels = labels_train;
 
 %% training 
 %__________________________________________________________________________
-if sum(STUDY.analysis_mode == [1 3 4]) %  libsvm
-    model = svmtrain(Labels,Samples,STUDY.backend_flags.all_flags);
-elseif sum(STUDY.analysis_mode == [2]) %  liblinear
-   model = train(Labels,sparse(Samples),STUDY.backend_flags.all_flags);
+if sum(cfg.analysis_mode == [1 3 4]) %  libsvm
+    model = svmtrain(Labels,Samples,cfg.backend_flags.all_flags);
+elseif sum(cfg.analysis_mode == [2]) %  liblinear
+   model = train(Labels,sparse(Samples),cfg.backend_flags.all_flags);
 end
 %__________________________________________________________________________    
 
@@ -85,13 +85,13 @@ Labels = labels_test;
 %% prediction
 %__________________________________________________________________________
 
-if sum(STUDY.analysis_mode == [1 3]) % libsvm
+if sum(cfg.analysis_mode == [1 3]) % libsvm
     [predicted_label, accuracy, decision_values] = svmpredict(Labels, Samples, model); 
-elseif sum(STUDY.analysis_mode == [2]) % liblinear
+elseif sum(cfg.analysis_mode == [2]) % liblinear
     [predicted_label, accuracy, decision_values] = predict(Labels, sparse(Samples), model); 
 end
 
-if STUDY.analysis_mode == 1 % SVM classification with libsvm
+if cfg.analysis_mode == 1 % SVM classification with libsvm
     % calculating feature weights
     w = model.SVs' * model.sv_coef;
     b = -model.rho;
@@ -99,7 +99,7 @@ if STUDY.analysis_mode == 1 % SVM classification with libsvm
     feat_weights = zeros(size(w,1),3);
     feat_weights_corrected = zeros(size(w,1),3);
     
-    if STUDY.feat_weights_mode == 1 
+    if cfg.feat_weights_mode == 1 
         % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
@@ -114,14 +114,14 @@ if STUDY.analysis_mode == 1 % SVM classification with libsvm
     end
 
     % extracting accuracy for 2-classes 
-    if STUDY.nconds == 2
+    if cfg.nconds == 2
 
         acc = accuracy(1);
 
     % extracting accuracy for N-classes
-    elseif STUDY.nconds > 2
+    elseif cfg.nconds > 2
 
-        classes = 1:STUDY.nconds;
+        classes = 1:cfg.nconds;
         pairs = nchoosek(classes,2);
 
         for cl = classes
@@ -136,7 +136,7 @@ if STUDY.analysis_mode == 1 % SVM classification with libsvm
 
     end % if nclass
     
-elseif STUDY.analysis_mode == 2 % SVM classification with liblinear
+elseif cfg.analysis_mode == 2 % SVM classification with liblinear
     
     % calculating feature weights
     %w = model.SVs' * model.sv_coef;
@@ -146,7 +146,7 @@ elseif STUDY.analysis_mode == 2 % SVM classification with liblinear
     feat_weights = zeros(size(w,1),3);
     feat_weights_corrected = zeros(size(w,1),3);
     
-    if STUDY.feat_weights_mode == 1 
+    if cfg.feat_weights_mode == 1 
         % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
@@ -161,14 +161,14 @@ elseif STUDY.analysis_mode == 2 % SVM classification with liblinear
     end
 
     % extracting accuracy for 2-classes 
-    if STUDY.nconds == 2
+    if cfg.nconds == 2
 
         acc=accuracy(1);
     
     % extracting accuracy for N-classes
-    elseif STUDY.nconds > 2
+    elseif cfg.nconds > 2
 
-        classes = 1:STUDY.nconds;
+        classes = 1:cfg.nconds;
         pairs = nchoosek(classes,2);
 
         for cl = classes
@@ -183,7 +183,7 @@ elseif STUDY.analysis_mode == 2 % SVM classification with liblinear
 
     end % if nclass
        
-elseif STUDY.analysis_mode == 3 % SVR
+elseif cfg.analysis_mode == 3 % SVR
     
     % correlating the predicted label with the test labels
     c_sample = corrcoef(predicted_label,Labels);
@@ -203,7 +203,7 @@ elseif STUDY.analysis_mode == 3 % SVR
     feat_weights = zeros(size(w,1),3);  
     feat_weights_corrected = zeros(size(w,1),3);
     
-    if STUDY.feat_weights_mode == 1
+    if cfg.feat_weights_mode == 1
         % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
