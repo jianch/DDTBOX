@@ -97,11 +97,11 @@ ncond = size(cond_labels, 2);
 study_name = 'EXAMPLE';
 
 % Set which subjects datasets to decode
-sbj_todo = [1];
+sbjs_todo = [1:4];
 
 % Enter the discrimination group for classification. Two discrimination
 % groups can be entered when using cross-condition decoding.
-dcgs_for_analyses = [1];
+dcg_todo = [1];
 
 % Perform cross-condition decoding? 1 = yes / 0 = no
 cross = 0;
@@ -115,10 +115,10 @@ allchan = 1; % Are all possible channels analysed? 1=yes (default if spatial/spa
 relchan = []; % specify channels to be analysed (for temporal only)
 
 analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
-stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
+stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
 avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-window_width_ms = 40; % width of sliding window in ms
-step_width_ms = 40; % step size with which sliding window is moved through the trial
+window_width_ms = 50; % width of sliding window in ms
+step_width_ms = 50; % step size with which sliding window is moved through the trial
 
 pstats = 0.05; % critical p-value
 group_level_analysis = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
@@ -154,7 +154,7 @@ cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for 
 disp.on = 1; % display a results figure? 0=no / 1=yes
 permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
 disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
-plot_robust = 2; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
+plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
 plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
 
 % Feature weight analysis options
@@ -212,8 +212,8 @@ ANALYSIS.ndcg = ndcg;
 ANALYSIS.nclasses = nclasses;
 ANALYSIS.ncond = ncond;
 ANALYSIS.study_name = study_name;
-ANALYSIS.sbj_todo = sbj_todo;
-ANALYSIS.dcgs_for_analyses = dcgs_for_analyses;
+ANALYSIS.sbjs_todo = sbjs_todo;
+ANALYSIS.dcg_todo = dcg_todo;
 ANALYSIS.cross = cross;
 ANALYSIS.allchan = allchan;
 ANALYSIS.relchan = relchan;

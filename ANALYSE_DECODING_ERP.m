@@ -67,9 +67,7 @@ for s = 1:ANALYSIS.nsbj
     
     %% open subject data
     sbj = ANALYSIS.sbjs(s);
-    
-    eval(sbj_list);
-    
+        
     % open subject's decoding results       
     if size(ANALYSIS.dcg_todo, 2) == 1
         
@@ -115,27 +113,27 @@ for s = 1:ANALYSIS.nsbj
         if ANALYSIS.avmode == 1 || ANALYSIS.avmode == 1 % DF NOTE: Is the second IF statement supposed to specify a different value?
     
             fprintf('\n');
-            fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2),STUDY.window_width_ms);
+            fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2), cfg.window_width_ms);
             ANALYSIS.firststep = 1;
             ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
 
         end
     
         % shift everything back by step-width, as first bin gets label=0ms
-        ANALYSIS.firststepms = (ANALYSIS.firststep * STUDY.step_width_ms) - STUDY.step_width_ms;
-        ANALYSIS.laststepms = (ANALYSIS.laststep * STUDY.step_width_ms) - STUDY.step_width_ms;
+        ANALYSIS.firststepms = (ANALYSIS.firststep * cfg.step_width_ms) - cfg.step_width_ms;
+        ANALYSIS.laststepms = (ANALYSIS.laststep * cfg.step_width_ms) - cfg.step_width_ms;
 
         % create matrix for data indexing
         ANALYSIS.data(1,:) = 1:size(RESULTS.subj_acc,2); % for XTick
-        ANALYSIS.data(2,:) = 0:STUDY.step_width_ms:( (size(RESULTS.subj_acc,2) - 1) * STUDY.step_width_ms); % for XLabel
+        ANALYSIS.data(2,:) = 0:cfg.step_width_ms:( (size(RESULTS.subj_acc,2) - 1) * cfg.step_width_ms); % for XLabel
         ptz = find(ANALYSIS.data(2,:) == ANALYSIS.pointzero); % find data with PointZero
         ANALYSIS.data(3,ptz) = 1; clear ptz; % for line location in plot
 
         % copy parameters from the config file
-        ANALYSIS.step_width = STUDY.step_width;
-        ANALYSIS.window_width = STUDY.window_width;
-        ANALYSIS.sampling_rate = STUDY.sampling_rate;
-        ANALYSIS.feat_weights_mode = STUDY.feat_weights_mode;
+        ANALYSIS.step_width = cfg.step_width;
+        ANALYSIS.window_width = cfg.window_width;
+        ANALYSIS.sampling_rate = cfg.sampling_rate;
+        ANALYSIS.feat_weights_mode = cfg.feat_weights_mode;
         
         ANALYSIS.nchannels = ANALYSIS.nchannels;
                 
@@ -151,9 +149,9 @@ for s = 1:ANALYSIS.nsbj
         
         % Define chance level for statistical analyses based on the
         % analysis type
-        if STUDY.analysis_mode == 1 || STUDY.analysis_mode == 2
+        if cfg.analysis_mode == 1 || cfg.analysis_mode == 2
             ANALYSIS.chancelevel = ( 100 / size(ANALYSIS.dcg{ANALYSIS.dcg_todo(1)},2) );
-        elseif STUDY.analysis_mode == 3 || STUDY.analysis_mode == 4
+        elseif cfg.analysis_mode == 3 || cfg.analysis_mode == 4
             ANALYSIS.chancelevel = 0;
         end
         
@@ -204,7 +202,7 @@ for s = 1:ANALYSIS.nsbj
         end
     end % of if fw.do
     clear RESULTS;
-    clear STUDY;
+    clear cfg;
     
 end % of for n = 1:ANALYSIS.nsbj loop
 

@@ -124,7 +124,7 @@ ncond = size(cond_labels, 2);
 study_name = 'EXAMPLE';
 
 % Set which subjects datasets to decode
-sbj_todo = [1];
+sbj_todo = [1:4];
 
 % Enter the discrimination group for classification. Two discrimination
 % groups can be entered when using cross-condition decoding.
