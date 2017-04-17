@@ -6,22 +6,19 @@ function analyse_decoding_erp(ANALYSIS)
 %
 % Inputs:
 %
-%   study_name       Name corresponding to the study configuration script e.g. 'DEMO'
+%   ANALYSIS structure containing information about filepaths of decoding
+%   results files and group-level analysis parameters. Each member of the
+%   structure is explained in the DDTBOX wiki or in the example
+%   configuration script EXAMPLE_analyse_decoding_results
 %
-%   vconf            version of study configuration script, e.g., "1" for DEMO_config_v1
 %
-%   input_mode       0 = use hard-coded variables from first section / 1 = enter manually
-%
-%   sbjs_todo        subject datasets to analyse, e.g. [1 2 3 4 6 7 9 10 13]
-%
-%   dcg_todo         discrimination group to analyse, as specified in ANALYSIS.dcg_labels{dcg}
+% Optional Keyword Inputs:
 %
 %
 % Outputs:
-%  
-% Usage:            ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
-% Example:          ANALYSE_DECODING_ERP('DEMO', 1, 1, [1:10], 2)
+%  
+% Usage:            analyse_decoding_erp(ANALYSIS)
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors

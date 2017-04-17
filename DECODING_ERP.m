@@ -5,34 +5,18 @@ function decoding_erp(cfg)
 %
 % Inputs:
 %
-%   study_name          The name of the study and config file (e.g. 'DEMO')
+%   cfg structure containing subject dataset information and decoding analysis
+%   parameters. Information about each parameter is described in the
+%   project wiki and in the example configuration script 
+%   (e.g. EXAMPLE_run_decoding_analyses.m)
 %
-%   vconf               Version number of the study configuration script,
-%                       e.g. "1" for DEMO_config_v1.m
-%
-%   input_mode          0 = Use hard-coded variables from section 1
-%                       1 = enter manually
-%
-%   sbj                 Subject number to analyse
-%
-%   dcg_todo            Discrimination group to use, as specified in
-%                       SLIST.dcg_labels{dcg}. For SVR dcg_todo defines the
-%                       condition that the target variable comes from (to
-%                       be saved in SVR_matrix, rows = trials, columns =
-%                       variable names)
-%
-%   cross               Use cross-condition classification (0 = no / 1 = yes)
-%                       Allows training on data from one DCG and predicting
-%                       the left-out data from the respective condition in
-%                       the other DCG (if "1" is chosen, two DCGs must be
-%                       entered for dcg_todo, e.g. [1 2])
-%
+%   
 %		
 % Optional keyword inputs:
 %
 %
 %
-% Usage:           DECODING_ERP(DEMO, 1, 0, 3, [1 2], 1)
+% Usage:           decoding_erp(cfg)
 %
 %
 % Copyright (c) 2013-2016, Stefan Bode and contributors 

@@ -60,6 +60,7 @@ data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use
 % Settings for support vector regression
 regress_struct_name = 'SVR_matrix'; % DO NOT CHANGE NAME
 
+%__________________________________________________________________________
 
 
 %% EEG dataset information
@@ -70,31 +71,16 @@ channellocs = [bdir, 'locations/']; % Path of directory containing channel infor
 sampling_rate = 1000; % Data sampling rate in Hz
 pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
 
-
-
-%% Condition and discrimination group information
-%
-% Discrimination Groups (DCGs) are used to label and organise conditions to
-% be discriminated between using MVPA.
-%
-% Configurable settings are:
-%   SLIST.cond_labels{X}        Names of each condition. Conditon label {X}
-%                               corresponds to data in column X of the
-%                               single subject data arrays.
-%
-%   SLIST.dcg                   Indices of conditions to be discriminated
-%                               between for each DCG. For example, to
-%                               discriminate between conditions 3 and 4 for
-%                               DCG 1 we input: SLIST.dcg{1} = [3, 4];  
-%                               
-%   SLIST.dcg_labels            The name/label for each DCG. For example
-%                               'Faces vs. Chairs' or 
-%                               'Errors vs. Correct Responses'
-%
 %__________________________________________________________________________
 
+
+%% Condition and discrimination group (dcg) information
+
 % Label each condition
-% Example: SLIST.cond_labels{condition number} = 'Name of condition';
+% Usage: cond_labels{condition number} = 'Name of condition';
+% Example: cond_labels{1} = 'Correct Responses';
+% Condition label {X} corresponds to data in column X of the single subject
+% data arrays.
 cond_labels{1} = 'condition_A';
 cond_labels{2} = 'condition_B';
 cond_labels{3} = 'condition_C';
@@ -102,12 +88,14 @@ cond_labels{4} = 'condition_D';
         
 % Discrimination groups
 % Enter the condition numbers of the conditions to discriminate between
-% Example: SLIST.dcg{discrimination group number} = [condition number 1, condition number 2];
+% Usage: dcg{discrimination group number} = [condition 1, condition 2];
+% Example: dcg{1} = [1, 2]; to compare conditions 1 and 2 for dcg 1
 dcg{1} = [1, 3]; 
 dcg{2} = [2, 4]; 
               
 % Label each discrimination group
-% Example: SLIST.dcg_labels{Discrimination group number} = 'Name of discrimination group'
+% Usage: dcg_labels{Discrimination group number} = 'Name of discrimination group'
+% Example: dcg_labels{1} = 'Correct vs. Error Responses';
 dcg_labels{1} = 'A vs. C';
 dcg_labels{2} = 'B vs. D';
 
@@ -116,6 +104,8 @@ dcg_labels{2} = 'B vs. D';
 ndcg = size(dcg, 2);
 nclasses = size(dcg{1}, 2);      
 ncond = size(cond_labels, 2);
+
+%__________________________________________________________________________
 
 
 %% Select experiment, subject datasets and discrimination groups
@@ -133,6 +123,7 @@ dcgs_for_analyses = [1];
 % Perform cross-condition decoding? 1 = yes / 0 = no
 cross = 0;
 
+%__________________________________________________________________________
 
 %% Multivariate classification/regression parameters
 
@@ -153,6 +144,8 @@ feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
 % Single subject decoding results plotting
 display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
 perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
+
+%__________________________________________________________________________
 
 
 %% Copy all settings into the cfg structure
@@ -189,6 +182,8 @@ cfg.feat_weights_mode = feat_weights_mode;
 cfg.display_on = display_on;
 cfg.perm_disp = perm_disp;
 
+%__________________________________________________________________________
+
 
 %% Run the decoding analyses for specified subjects and dcgs
 
@@ -205,7 +200,7 @@ for dcg_todo = dcgs_for_analyses
         cfg.data_save_name = [bdir, (sbj_code{sbj}), '_data.mat'];
         cfg.regress_label_name = [bdir, sbj_code{sbj}, 'regress_sorted_data.mat']; % Filepath for regression labels file
 
-        % Run the decoding analyses!
+        % Run the decoding analyses
         decoding_erp(cfg);
 
     end % of for sbj
