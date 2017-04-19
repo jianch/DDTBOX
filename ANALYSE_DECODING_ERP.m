@@ -182,13 +182,17 @@ for s = 1:ANALYSIS.nsbj
         
         % Extract classifier and permutation test accuracies
         ANALYSIS.RES.all_subj_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
-        ANALYSIS.RES.all_subj_perm_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_perm_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
+        
+        if ANALYSIS.permstats == 2
             
-        % needed if one wants to test against distribution of randomly
-        % drawn permutation results (higher variance, stricter testing)
-        ANALYSIS.RES.all_subj_perm_acc_reps(s,na,ANALYSIS.firststep:ANALYSIS.laststep,:,:) = RESULTS.perm_prediction_accuracy{na}(ANALYSIS.firststep:ANALYSIS.laststep,:,:);
-            
-    end
+            ANALYSIS.RES.all_subj_perm_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_perm_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
+        
+            % needed if one wants to test against distribution of randomly
+            % drawn permutation results (higher variance, stricter testing)
+            ANALYSIS.RES.all_subj_perm_acc_reps(s,na,ANALYSIS.firststep:ANALYSIS.laststep,:,:) = RESULTS.perm_prediction_accuracy{na}(ANALYSIS.firststep:ANALYSIS.laststep,:,:);
+
+        end % of if ANALYSIS.permstats
+    end % of for na
     %______________________________________________________________________
     
     % Extract feature weights
