@@ -1,38 +1,22 @@
-function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
+function decoding_erp(cfg)
 %
 % Performs MVPA on a single subject dataset.
 %
 %
 % Inputs:
 %
-%   study_name          The name of the study and config file (e.g. 'DEMO')
+%   cfg structure containing subject dataset information and decoding analysis
+%   parameters. Information about each parameter is described in the
+%   project wiki and in the example configuration script 
+%   (e.g. EXAMPLE_run_decoding_analyses.m)
 %
-%   vconf               Version number of the study configuration script,
-%                       e.g. "1" for DEMO_config_v1.m
-%
-%   input_mode          0 = Use hard-coded variables from section 1
-%                       1 = enter manually
-%
-%   sbj                 Subject number to analyse
-%
-%   dcg_tod             Discrimination group to use, as specified in
-%                       SLIST.dcg_labels{dcg}. For SVR dcg_todo defines the
-%                       condition that the target variable comes from (to
-%                       be saved in SVR_matrix, rows = trials, columns =
-%                       variable names)
-%
-%   cross               Use cross-condition classification (0 = no / 1 = yes)
-%                       Allows training on data from one DCG and predicting
-%                       the left-out data from the respective condition in
-%                       the other DCG (if "1" is chosen, two DCGs must be
-%                       entered for dcg_todo, e.g. [1 2])
-%
+%   
 %		
 % Optional keyword inputs:
 %
 %
 %
-% Usage:           DECODING_ERP(DEMO, 1, 0, 3, [1 2], 1)
+% Usage:           decoding_erp(cfg)
 %
 %
 % Copyright (c) 2013-2016, Stefan Bode and contributors 
@@ -57,123 +41,84 @@ function DECODING_ERP(study_name, vconf, input_mode, sbj, dcg_todo, cross)
 %% SECTION 1: PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
-global SBJTODO;
-SBJTODO = sbj;
-STUDY.sbj = sbj;
-
-global DCGTODO;
-DCGTODO = dcg_todo;
-STUDY.dcg_todo = dcg_todo;
+cfg.sbj_todo = cfg.sbj;
+STUDY.sbj = cfg.sbj;
+STUDY.dcg_todo = cfg.dcg_todo;
 STUDY.regr_todo = [];
-STUDY.cross = cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
+STUDY.cross = cfg.cross; % cross-condition decoding: 0 = no; 1 = A=>B; 2 = B=>A;
 
 % get subject parameters
 % sbj_list = input('Enter subject list: ','s');
-STUDY.study_name = study_name;
-STUDY.vconf = vconf;
-STUDY.sbj_list = [study_name '_config_v' num2str(vconf)]; % use latest slist-function!
+STUDY.study_name = cfg.study_name;
 
-global SLIST;
-eval(STUDY.sbj_list); % Gets subject parameters from the configuration script
 %__________________________________________________________________________
 
 % get study parameters and save in STUDY structure
 %__________________________________________________________________________
 
-if input_mode == 0 % Hard-coded input
+% List of parameters for updating header 
+% TODO: Update header with all cfg
+% parameters.
+%     % Multivariate classification/regression parameters
+%     STUDY.analysis_mode = cfg.analysis_mode; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
+%     STUDY.stmode = cfg.stmode; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
+%     STUDY.avmode = cfg.avmode; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
+%     STUDY.window_width_ms = cfg.window_width_ms; % width of sliding window in ms
+%     STUDY.step_width_ms = cfg.step_width_ms; % step size with which sliding window is moved through the trial
+%     STUDY.zscore_convert = cfg.zscore_convert; % Convert data into z-scores before decoding? 0 = no / 1 = yes
+%     STUDY.perm_test = cfg.perm_test; % run the permutation-decoding? 0=no / 1=yes
+%     STUDY.cross_val_steps =  cfg.cross_val_steps; % How many cross-validation steps (if no runs available)?
+%     STUDY.n_rep_cross_val = cfg.n_rep_cross_val; % How many repetitions of full cross-validation with re-ordered data?
+%     STUDY.permut_rep = cfg.permut_rep; % How many repetitions of full cross-validation with permutation results?
+%     
+%     % Feature weights extraction
+%     STUDY.feat_weights_mode = cfg.feat_weights_mode; % Extract feature weights? 0=no / 1=yes
+% 
+%     % Single subject decoding results plotting
+%     STUDY.display_on = cfg.display_on; % Display individual subject results? 1=figure displayed / 0=no figure
+%     STUDY.perm_disp = cfg.perm_disp; % display the permutation results in figure? 0=no / 1=yes
 
-    % get study parameters (hardcoded)
-    STUDY.analysis_mode = 3; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
-    STUDY.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-    STUDY.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-        
-    STUDY.window_width_ms = 10; % width of sliding window in ms
-    STUDY.step_width_ms = 10; % step size with which sliding window is moved through the trial
-    
-    STUDY.perm_test = 1; % run the permutation-decoding? 0=no / 1=yes
-    STUDY.perm_disp = 1; % display the permutation results in figure? 0=no / 1=yes
-    STUDY.display_on = 1; % 1=figure displayed, 0=no figure
-    
-    STUDY.zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
-    STUDY.feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
-    STUDY.cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
-    STUDY.n_rep_cross_val = 10; % How many repetitions of full cross-validation with re-ordered data?
-    STUDY.permut_rep = 10; % How many repetitions of full cross-validation with permutation results?
-
-elseif input_mode == 1 % Prompt user for input
-
-    % get study parameters via input
-    STUDY.analysis_mode = input('Specifiy analysis method: "1" SVM with LIBSVM , "2" SVM with liblinear, "3" with LIBSVM: '); 
-    if STUDY.analysis_mode~=3
-        STUDY.avmode = input('Enter "1" for single-trial decoding or "2" for run-average decoding: ');
-    else
-        STUDY.avmode = 1; % need single trials for SVR
-    end
-    STUDY.stmode = input('Enter "1" for spatial, "2" for temporal, or "3" for spatio-temporal decoding: ');
-    
-    if STUDY.avmode == 1 % Options for single-trial decoding
-        STUDY.cross_val_steps = input('How many cross-validation steps do you wish to perform?');
-        STUDY.n_rep_cross_val = input('How many independent repetitions of the analysis do you wish to perform?');
-    end
-    
-    STUDY.window_width_ms = input('Enter decoding window width in ms: ');
-    STUDY.step_width_ms = input('Enter step width for moving the decoding window in ms: ');
-    STUDY.zscore_convert = input('Convert data to z-scores before decoding? "0" for no, "1" for yes: ');
-    STUDY.cross = input('Do you wish to perform cross-condition decoding? "0" for no, "1" for yes: ');
-    if STUDY.cross > 0
-        dcgs = input('Enter two discriminations groups for cross-decoding (e.g.[1 2]):');
-        STUDY.dcg_todo = dcgs;
-    end
-        STUDY.perm_test = input('Do you want to run a permutation test? (1=yes, 0=no) '); 
-    if STUDY.perm_test == 1
-        STUDY.permut_rep = input('How many repetitions of the permutation test do you wish to perform? ');
-        STUDY.perm_disp = input('Do you wish to plot the permutation test results? (1=yes, 0=no) '); 
-    end
-    STUDY.display_on = input('Do you wish to plot the individual decoding results? (1=yes, 0=no) ');
-
-end
-
-if STUDY.analysis_mode == 1 
-    STUDY.analysis_mode_label='SVM_LIBSVM';
-elseif STUDY.analysis_mode == 2 
-    STUDY.analysis_mode_label='SVM_LIBLIN';
-elseif STUDY.analysis_mode == 3
-    STUDY.analysis_mode_label='SVR_LIBSVM';
+if cfg.analysis_mode == 1 
+    cfg.analysis_mode_label = 'SVM_LIBSVM';
+elseif cfg.analysis_mode == 2 
+    cfg.analysis_mode_label = 'SVM_LIBLIN';
+elseif cfg.analysis_mode == 3
+    cfg.analysis_mode_label = 'SVR_LIBSVM';
 end
 
 %__________________________________________________________________________
 % Adjust window and step widths using the sampling rate
-STUDY.sampling_rate = SLIST.sampling_rate;
-STUDY.pointzero = SLIST.pointzero;
-STUDY.dcg_label=SLIST.dcg_labels{dcg_todo};
+cfg.sampling_rate = cfg.sampling_rate;
+cfg.pointzero = cfg.pointzero;
+cfg.dcg_label = cfg.dcg_labels{cfg.dcg_todo};
 
-STUDY.window_width = floor(STUDY.window_width_ms / ((1/STUDY.sampling_rate) * 1000));
-STUDY.step_width = floor(STUDY.step_width_ms / ((1/STUDY.sampling_rate) * 1000));
+cfg.window_width = floor(cfg.window_width_ms / ((1/cfg.sampling_rate) * 1000));
+cfg.step_width = floor(cfg.step_width_ms / ((1/cfg.sampling_rate) * 1000));
 
 % cross-validation defaults for single-trial decoding
-STUDY.n_all_analyses = STUDY.cross_val_steps * STUDY.n_rep_cross_val;
-STUDY.n_all_permutation = STUDY.cross_val_steps * STUDY.permut_rep;
+cfg.n_all_analyses = cfg.cross_val_steps * cfg.n_rep_cross_val;
+cfg.n_all_permutation = cfg.cross_val_steps * cfg.permut_rep;
 
-if STUDY.cross == 0 
-    fprintf('DCG %d will be analysed. \n',STUDY.dcg_todo);                
-elseif STUDY.cross > 0
-    fprintf('DCG %d and %d will be analysed for cross-condition classification. \n',STUDY.dcg_todo(1), STUDY.dcg_todo(2));
+if cfg.cross == 0 
+    fprintf('DCG %d will be analysed. \n',cfg.dcg_todo);                
+elseif cfg.cross > 0
+    fprintf('DCG %d and %d will be analysed for cross-condition classification. \n', cfg.dcg_todo(1), cfg.dcg_todo(2));
 end
 
 % For SVR dcg_todo defines condition that the target variable comes from 
 % (to be saved in SLIST.regress_struct_name(rows=trials; columns = varialbe values)
 % The data is always the same, so by default: dcg_todo = 1 
-if STUDY.analysis_mode == 3 
-    STUDY.regr_todo = dcg_todo;
-    STUDY.dcg_todo = 1;
+if cfg.analysis_mode == 3 
+    cfg.regr_todo = cfg.dcg_todo;
+    cfg.dcg_todo = 1;
 end
     
 fprintf('Cross-validation defaults for single-trial decoding:\n');
-fprintf('%d steps with %d cycles resulting in %d analyses.\n',STUDY.cross_val_steps,STUDY.n_rep_cross_val,STUDY.n_all_analyses);
+fprintf('%d steps with %d cycles resulting in %d analyses.\n',cfg.cross_val_steps,cfg.n_rep_cross_val,cfg.n_all_analyses);
 fprintf('Balanced number of examples will be used for all analyses by default.\n');
 
-if STUDY.perm_test == 1
-    fprintf('Random-label analysis will be based on %d analyses.\n',STUDY.n_all_permutation);
+if cfg.perm_test == 1
+    fprintf('Random-label analysis will be based on %d analyses.\n',cfg.n_all_permutation);
 end
 
 %__________________________________________________________________________
@@ -223,32 +168,32 @@ end
 % Support Vector Regression (continuous) with libsvm - '-s 3 -t 0 -c 0.1'
 % Support Vector Classification with liblinear - '-s 2 -c 1'
 
-if STUDY.analysis_mode == 1 % SVM classification with libsvm
-    STUDY.backend_flags.svm_type = 0;
-    STUDY.backend_flags.kernel_type = 0;
-    STUDY.backend_flags.cost = 1;
-    STUDY.backend_flags.extra_flags = []; % To input extra flag types
-elseif STUDY.analysis_mode == 2 % SVM with liblinear
-    STUDY.backend_flags.svm_type = 2;
-    STUDY.backend_flags.kernel_type = -1; % not valid for liblinear
-    STUDY.backend_flags.cost = 1;
-    STUDY.backend_flags.extra_flags = [];
-elseif STUDY.analysis_mode == 3 % SVR (regression)  with libsvm
-    STUDY.backend_flags.svm_type = 3;
-    STUDY.backend_flags.kernel_type = 0;
-    STUDY.backend_flags.cost = 0.1;
-    STUDY.backend_flags.extra_flags = []; 
+if cfg.analysis_mode == 1 % SVM classification with libsvm
+    cfg.backend_flags.svm_type = 0;
+    cfg.backend_flags.kernel_type = 0;
+    cfg.backend_flags.cost = 1;
+    cfg.backend_flags.extra_flags = []; % To input extra flag types
+elseif cfg.analysis_mode == 2 % SVM with liblinear
+    cfg.backend_flags.svm_type = 2;
+    cfg.backend_flags.kernel_type = -1; % not valid for liblinear
+    cfg.backend_flags.cost = 1;
+    cfg.backend_flags.extra_flags = [];
+elseif cfg.analysis_mode == 3 % SVR (regression)  with libsvm
+    cfg.backend_flags.svm_type = 3;
+    cfg.backend_flags.kernel_type = 0;
+    cfg.backend_flags.cost = 0.1;
+    cfg.backend_flags.extra_flags = []; 
 end
 
 % Merging all flags into a single string
-STUDY.backend_flags.all_flags = ['-s ' int2str(STUDY.backend_flags.svm_type) ' -c ' num2str(STUDY.backend_flags.cost)];
+cfg.backend_flags.all_flags = ['-s ' int2str(cfg.backend_flags.svm_type) ' -c ' num2str(cfg.backend_flags.cost)];
 
 % LIBSVM specific options
-if STUDY.backend_flags.kernel_type ~= -1
-	STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' -t ' int2str(STUDY.backend_flags.kernel_type)];
+if cfg.backend_flags.kernel_type ~= -1
+	cfg.backend_flags.all_flags = [cfg.backend_flags.all_flags ' -t ' int2str(cfg.backend_flags.kernel_type)];
 end
 
-STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' ' STUDY.backend_flags.extra_flags];
+cfg.backend_flags.all_flags = [cfg.backend_flags.all_flags ' ' cfg.backend_flags.extra_flags];
 
 
 %% SECTION 2: READ IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -256,22 +201,22 @@ STUDY.backend_flags.all_flags = [STUDY.backend_flags.all_flags ' ' STUDY.backend
 % *** converted into work_data{run,cond}(timepoints,channels,trials)
 
 fprintf('Reading in data. Please wait... \n');
-open_name = (SLIST.data_open_name);
+open_name = (cfg.data_open_name);
 load(open_name);
 fprintf('Data loading complete.\n');
 
 % read in regression labels if performing SVR
-if STUDY.analysis_mode == 3
+if cfg.analysis_mode == 3
     
-    STUDY.regress_open_name = SLIST.regress_label_name;
-    STUDY.regress_data = load(STUDY.regress_open_name);    
+    cfg.regress_open_name = cfg.regress_label_name;
+    cfg.regress_data = load(cfg.regress_open_name);    
 
     fprintf('Loaded regressand labels.\n');
 
 end
 
-work_data = eval(SLIST.data_struct_name); % Copies eeg_sorted_cond data into work_data
-STUDY.nchannels=SLIST.nchannels;
+work_data = eval(cfg.data_struct_name); % Copies eeg_sorted_cond data into work_data
+cfg.nchannels=cfg.nchannels;
 
 %__________________________________________________________________________
 % if data is stored in a structure and not a cell:
@@ -295,7 +240,7 @@ clear eeg_sorted_cond;
 %__________________________________________________________________________
 % if data dimensions are flipped (e.g, when taken directly from EEGlab):
 
-if size(work_data{1,1},1)==STUDY.nchannels && size(work_data{1,1},2)~=STUDY.nchannels  
+if size(work_data{1,1},1)==cfg.nchannels && size(work_data{1,1},2)~=cfg.nchannels  
     
     for r = 1:size(work_data,1)
         for c = 1:size(work_data,2)
@@ -309,15 +254,15 @@ if size(work_data{1,1},1)==STUDY.nchannels && size(work_data{1,1},2)~=STUDY.ncha
     end % r
     fprintf('Data was converted into the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');   
 
-elseif size(work_data{1,1},1)~=STUDY.nchannels && size(work_data{1,1},2)==STUDY.nchannels  
+elseif size(work_data{1,1},1)~=cfg.nchannels && size(work_data{1,1},2)==cfg.nchannels  
     
     fprintf('Data seems to be in the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');
     
-elseif size(work_data{1,1},1)==STUDY.nchannels && size(work_data{1,1},2)==STUDY.nchannels
+elseif size(work_data{1,1},1)==cfg.nchannels && size(work_data{1,1},2)==cfg.nchannels
     
     fprintf('Number of channels = number of time points? Check whether data is in the correct format.\n');
     
-elseif size(work_data{1,1},1)~=STUDY.nchannels && size(work_data{1,1},2)~=STUDY.nchannels 
+elseif size(work_data{1,1},1)~=cfg.nchannels && size(work_data{1,1},2)~=cfg.nchannels 
     
     fprintf('Data might not be in the required format: eeg_sorted_cond{run,cond}(timepoints,channels,trials). \n');
     
@@ -332,17 +277,17 @@ end;
 % (this section was modified in v29 to accomodate cross-condition decoding. A dimension was added to the data-matrix
 %__________________________________________________________________________
 
-if STUDY.analysis_mode ~= 3 % SVR does not require conditions
+if cfg.analysis_mode ~= 3 % SVR does not require conditions
           
     for r = 1:size(work_data,1) % for all runs
         
         % go through either one DCG (regular) or two DCGs (cross-condition decoding)
-        for d = 1:size(STUDY.dcg_todo,2)
+        for d = 1:size(cfg.dcg_todo,2)
             
-            for cond = 1:size(SLIST.dcg{STUDY.dcg_todo(d)},2) % for all conditions specified
+            for cond = 1:size(cfg.dcg{cfg.dcg_todo(d)},2) % for all conditions specified
 
-                fprintf('Run %d: Extracting condition %d as specified in DCG %d.\n',r,(SLIST.dcg{STUDY.dcg_todo(d)}(cond)),STUDY.dcg_todo(d));
-                temp(:,:,:) = work_data{r,(SLIST.dcg{STUDY.dcg_todo(d)}(cond))}(:,:,:);
+                fprintf('Run %d: Extracting condition %d as specified in DCG %d.\n',r,(cfg.dcg{cfg.dcg_todo(d)}(cond)),cfg.dcg_todo(d));
+                temp(:,:,:) = work_data{r,(cfg.dcg{cfg.dcg_todo(d)}(cond))}(:,:,:);
                 reduced_data{d,r,cond} = temp; 
 
                 clear temp;                    
@@ -351,11 +296,11 @@ if STUDY.analysis_mode ~= 3 % SVR does not require conditions
         end % d
     end % r 
 
-elseif STUDY.analysis_mode == 3 % put in by Dan 14/3/2014
+elseif cfg.analysis_mode == 3 % put in by Dan 14/3/2014
     reduced_data{1,:,:} = work_data{:,:}; 
 end % of if STUDY.analysis_mode ~= 4 statement
 
-STUDY.nconds = size(reduced_data,3); % Calculates the number of conditions
+cfg.nconds = size(reduced_data,3); % Calculates the number of conditions
 clear work_data;
 
 
@@ -384,11 +329,11 @@ for r = 1:size(reduced_data,2)
     end % d 
     
     % minimum per run (all DCGs)
-    STUDY.mintrs_min(r) = min(mintrs);
+    cfg.mintrs_min(r) = min(mintrs);
     
 end %r
 
-fprintf('Minimum number of trials per condition computed for participant %d \n',SBJTODO);
+fprintf('Minimum number of trials per condition computed for participant %d \n', cfg.sbj_todo);
 
 % select min trials in all conditions
 for r = 1:size(reduced_data,2)
@@ -399,7 +344,7 @@ for r = 1:size(reduced_data,2)
 
             % extract min number trials for this DCG and run
             temp_data = reduced_data{d,r,cond};
-            balanced_data{d,r,cond} = temp_data(:,:,1:(STUDY.mintrs_min(r)));
+            balanced_data{d,r,cond} = temp_data(:,:,1:(cfg.mintrs_min(r)));
             clear temp_data;
 
         end % cond          
@@ -419,7 +364,7 @@ clear reduced_data;
 % (In v29 a dimension was added to accomodate cross-condition decoding)
 %__________________________________________________________________________
 
-if STUDY.avmode == 1 % single-trials 
+if cfg.avmode == 1 % single-trials 
     
     for d = 1:size(balanced_data,1)
         for cond = 1:size(balanced_data,3)
@@ -438,7 +383,7 @@ if STUDY.avmode == 1 % single-trials
     end %d
     fprintf('Data from all runs (if more than one) have been pooled into one dataset.\n');    
     
-elseif STUDY.avmode == 2 % run averages
+elseif cfg.avmode == 2 % run averages
     
     for d = 1:size(balanced_data,1)
         for r = 1:size(balanced_data,2)
@@ -450,7 +395,7 @@ elseif STUDY.avmode == 2 % run averages
         end % r
     end %d
     fprintf('Run averages based across trials were computed for each condition.\n');
-end % of if STUDY.avmode == 1 statement
+end % of if cfg.avmode == 1 statement
 
 clear balanced_data;
 
@@ -470,21 +415,21 @@ clear balanced_data;
 
 % single-trial data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % all runs are pooled. Data is randomly drawn from all data
-if STUDY.avmode == 1
+if cfg.avmode == 1
     
     % take X% of data as test data with X-fold cross-validation
     % repeat X-times with different test data sets
     for con = 1:size(pooled_balanced_data,3)
         
-        ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / STUDY.cross_val_steps);
+        ntrs_set = floor(size(pooled_balanced_data{d,1,con}(:,:,:),3) / cfg.cross_val_steps);
         
-        for ncv = 1:STUDY.n_rep_cross_val
+        for ncv = 1:cfg.n_rep_cross_val
             
             % draw x times without replacement
-            random_set = randperm(ntrs_set * STUDY.cross_val_steps);
+            random_set = randperm(ntrs_set * cfg.cross_val_steps);
             x = 1;
             
-            for cv = 1:STUDY.cross_val_steps
+            for cv = 1:cfg.cross_val_steps
                 
                 % find the test-trials for current cross-validation step
                 test_trials = random_set(x:(x + (ntrs_set - 1)));
@@ -492,12 +437,12 @@ if STUDY.avmode == 1
                 for d = 1:size(pooled_balanced_data,1)
                     
                     % reduce data set to the trials * number of sets (after dividing in X% sets)
-                    temp_training_set = pooled_balanced_data{d,1,con}(:,:,1:(ntrs_set*STUDY.cross_val_steps));
+                    temp_training_set = pooled_balanced_data{d,1,con}(:,:,1:(ntrs_set*cfg.cross_val_steps));
                     
-                    if STUDY.analysis_mode == 3 % if SVR
+                    if cfg.analysis_mode == 3 % if SVR
                         % reduce data set to the trials * number of sets (after dividing in X% sets)
                         % use specifiied varaible condition only
-                        temp_training_labels = STUDY.regress_data.SVR_matrix( 1:(ntrs_set*STUDY.cross_val_steps) , STUDY.regr_todo);
+                        temp_training_labels = cfg.regress_data.SVR_matrix( 1:(ntrs_set*cfg.cross_val_steps) , cfg.regr_todo);
                     end % if
                     
                     % extract test-trials and delete them from training-trials
@@ -505,10 +450,10 @@ if STUDY.avmode == 1
                         
                         test_set{d,con,cv,ncv}(:,:,trl) = pooled_balanced_data{d,1,con}(:,:,test_trials(trl));
                         
-                        if STUDY.analysis_mode == 3 % if continuous SVR
+                        if cfg.analysis_mode == 3 % if continuous SVR
                             % take the value for the same trial as data chosen for the test data set
-                            STUDY.test_labels{d,con,cv,ncv}(trl,1) = temp_training_labels(test_trials(trl),1);
-                            STUDY.test_trials{d,con,cv,ncv}(trl,1) = test_trials(trl);
+                            cfg.test_labels{d,con,cv,ncv}(trl,1) = temp_training_labels(test_trials(trl),1);
+                            cfg.test_trials{d,con,cv,ncv}(trl,1) = test_trials(trl);
                         end % if
                         
                         % option 1: delete used trials each for trial
@@ -518,11 +463,11 @@ if STUDY.avmode == 1
                     
                     % CROSS_CONDITION SVM__________________________________
                     % extract training set
-                    if STUDY.cross == 0
+                    if cfg.cross == 0
                         
                         delete_test_trials=fliplr(sort(test_trials));
                         
-                    elseif STUDY.cross == 1 || STUDY.cross == 2
+                    elseif cfg.cross == 1 || cfg.cross == 2
                         
                         % if doing cross-classification, ensure that trials
                         % from one training set don't end up in the
@@ -551,7 +496,7 @@ if STUDY.avmode == 1
                             
                         end % if
                         
-                    end % STUDY.cross if
+                    end % cfg.cross if
                     %______________________________________________________
                     
                     % option 2: delete all used trials at once
@@ -559,10 +504,10 @@ if STUDY.avmode == 1
                     
                     training_set{d,con,cv,ncv} = temp_training_set;
                     
-                    if STUDY.analysis_mode == 3 % if continuous SVR
+                    if cfg.analysis_mode == 3 % if continuous SVR
                         % delete the same trials from regression labels as for data
                         temp_training_labels(delete_test_trials) = [];
-                        STUDY.training_labels{d,con,cv,ncv} = temp_training_labels;
+                        cfg.training_labels{d,con,cv,ncv} = temp_training_labels;
                     end
                     
                     clear delete_test_trials;
@@ -592,7 +537,7 @@ if STUDY.avmode == 1
     
 % run-average data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % test- and training-data correspond to run averages 
-elseif STUDY.avmode == 2 % run averages
+elseif cfg.avmode == 2 % run averages
     
     for d = 1:size(mean_balanced_data,1)
         
@@ -640,7 +585,7 @@ end % avmode
 % input('Do you wish to continue with decoding? Press any button!')
 
 fprintf('Starting with vector preparation... \n');
-[RESULTS] = prepare_my_vectors_erp(training_set, test_set, SLIST, STUDY);
+[RESULTS] = prepare_my_vectors_erp(training_set, test_set, cfg);
 
 %% SECTION 8: AVERAGE CROSS-VALIDATION STEPS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -653,7 +598,7 @@ for na = 1:size(RESULTS.prediction_accuracy,2)
     
     pa(:,:,:) = RESULTS.prediction_accuracy{na}(:,:,:);
     
-    if STUDY.perm_test == 1
+    if cfg.perm_test == 1
         perm_pa(:,:,:) = RESULTS.perm_prediction_accuracy{na}(:,:,:);
     end
                
@@ -662,44 +607,44 @@ for na = 1:size(RESULTS.prediction_accuracy,2)
     clear pa;
         
     % calculate average permutation test decoding accuracy
-    if STUDY.perm_test == 1
+    if cfg.perm_test == 1
         RESULTS.subj_perm_acc(na,:) = nanmean(nanmean(perm_pa,3),2);
         clear perm_pa;
     end
         
 end % na
 
-fprintf('Results are computed and averaged for participant %d. \n',STUDY.sbj);
+fprintf('Results are computed and averaged for participant %d. \n',cfg.sbj);
 
 %% SECTION 9: SAVE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Saves decoding results to a .mat file in the output directory. Some analysis
 % settings (e.g. window_width_ms) are included in the file name.
 %__________________________________________________________________________
 
-if STUDY.cross == 0
-    savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{dcg_todo} '.mat'];
-elseif STUDY.cross == 1
-    savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{STUDY.dcg_todo(1)}...
-        'toDCG' SLIST.dcg_labels{STUDY.dcg_todo(2)} '.mat'];
-elseif STUDY.cross == 2
-        savename = [(SLIST.output_dir) STUDY.study_name '_SBJ' num2str(STUDY.sbj) '_win' num2str(STUDY.window_width_ms) '_steps' num2str(STUDY.step_width_ms)...
-        '_av' num2str(STUDY.avmode) '_st' num2str(STUDY.stmode) '_' STUDY.analysis_mode_label '_DCG' SLIST.dcg_labels{STUDY.dcg_todo(2)}...
-        'toDCG' SLIST.dcg_labels{STUDY.dcg_todo(1)} '.mat'];
+if cfg.cross == 0
+    savename = [(cfg.output_dir) cfg.study_name '_SBJ' num2str(cfg.sbj) '_win' num2str(cfg.window_width_ms) '_steps' num2str(cfg.step_width_ms)...
+        '_av' num2str(cfg.avmode) '_st' num2str(cfg.stmode) '_' cfg.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo} '.mat'];
+elseif cfg.cross == 1
+    savename = [(cfg.output_dir) cfg.study_name '_SBJ' num2str(cfg.sbj) '_win' num2str(cfg.window_width_ms) '_steps' num2str(cfg.step_width_ms)...
+        '_av' num2str(cfg.avmode) '_st' num2str(cfg.stmode) '_' cfg.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo(1)}...
+        'toDCG' cfg.dcg_labels{cfg.dcg_todo(2)} '.mat'];
+elseif cfg.cross == 2
+        savename = [(cfg.output_dir) cfg.study_name '_SBJ' num2str(cfg.sbj) '_win' num2str(cfg.window_width_ms) '_steps' num2str(cfg.step_width_ms)...
+        '_av' num2str(cfg.avmode) '_st' num2str(cfg.stmode) '_' cfg.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo(2)}...
+        'toDCG' cfg.dcg_labels{cfg.dcg_todo(1)} '.mat'];
 end
     
-save(savename,'STUDY','RESULTS'); % Save STUDY and RESULTS structures into a .mat file
+save(savename,'cfg','RESULTS'); % Save cfg and RESULTS structures into a .mat file
 
-fprintf('Results are saved for participant %d in directory: %s. \n',STUDY.sbj,(SLIST.output_dir));
+fprintf('Results are saved for participant %d in directory: %s. \n',cfg.sbj,(cfg.output_dir));
 
 %% SECTION 10: DISPLAY INDIVIDUAL RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Displays decoding results for each individual subject dataset.
 %__________________________________________________________________________
 
-if STUDY.display_on == 1
+if cfg.display_on == 1
     
-    display_indiv_results_erp(STUDY,RESULTS);
+    display_indiv_results_erp(cfg, RESULTS);
 
 end % display_on
 %__________________________________________________________________________ 

@@ -1,4 +1,4 @@
-function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
+function analyse_decoding_erp(ANALYSIS)
 %
 % This is the master script for group-level analysis of EEG decoding
 % results.
@@ -6,21 +6,19 @@ function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo
 %
 % Inputs:
 %
-%   study_name       Name corresponding to the study configuration script e.g. 'DEMO'
+%   ANALYSIS structure containing information about filepaths of decoding
+%   results files and group-level analysis parameters. Each member of the
+%   structure is explained in the DDTBOX wiki or in the example
+%   configuration script EXAMPLE_analyse_decoding_results
 %
-%   vconf            version of study configuration script, e.g., "1" for DEMO_config_v1
 %
-%   input_mode       0 = use hard-coded variables from first section / 1 = enter manually
+% Optional Keyword Inputs:
 %
-%   sbjs_todo        subject datasets to analyse, e.g. [1 2 3 4 6 7 9 10 13]
-%
-%   dcg_todo         discrimination group to analyse, as specified in SLIST.dcg_labels{dcg}
 %
 % Outputs:
-%  
-% Usage:            analyse_decoding_erp(study_name, vconf, input_mode, sbjs_todo, dcg_todo)
 %
-% Example:          analyse_decoding_erp('DEMO', 1, 1, [1:10], 2)
+%  
+% Usage:            analyse_decoding_erp(ANALYSIS)
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors
@@ -44,190 +42,11 @@ function ANALYSE_DECODING_ERP(study_name, vconf, input_mode, sbjs_todo, dcg_todo
 %% GENERAL PARAMETERS AND GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
-global DCGTODO;
-DCGTODO = dcg_todo;
-
-sbj_list = [study_name '_config_v' num2str(vconf)]; % use latest slist-function!
-
 % define which subjects enter the second-level analysis
-ANALYSIS.nsbj = size(sbjs_todo,2);
-ANALYSIS.sbjs = sbjs_todo;
-ANALYSIS.dcg_todo = dcg_todo;
+ANALYSIS.nsbj = size(ANALYSIS.sbjs_todo,2);
+ANALYSIS.sbjs = ANALYSIS.sbjs_todo;
 
-%% specify details about analysis & plotting
-
-%__________________________________________________________________________
-if input_mode == 0 % Hard-coded input
-
-    % define all parameters of results to analyse & Plot
-    %______________________________________________________________________
-    ANALYSIS.allchan = 1; % Are all possible channels analysed? 1=yes (default if spatial/spatio-temporal) / 2=no
-    ANALYSIS.relchan = []; % specify channels to be analysed (for temporal only)
-    
-    ANALYSIS.analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
-    ANALYSIS.stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-    ANALYSIS.avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
-    ANALYSIS.window_width_ms = 40; % width of sliding window in ms
-    ANALYSIS.step_width_ms = 40; % step size with which sliding window is moved through the trial
-           
-    ANALYSIS.pstats = 0.05; % critical p-value
-    ANALYSIS.group_level_analysis = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
-    
-    % If using minimum statistic approach for group-level analyses:
-    ANALYSIS.P2 = 100000; % Number of second-level permutations to use
-    ANALYSIS.minstat_multcomp = 1; % Correct for multiple comparisons using the maximum statistic approach:
-    % 0 = no correction
-    % 1 = correction based on the maximum statistic (also applied to prevalence lower bound testing)
-    
-    % If using t test approach for group-level analyses:
-    ANALYSIS.permstats = 2; % Testing against: 1=theoretical chance level / 2=permutation test results
-    ANALYSIS.drawmode = 1; % Testing against: 1=average permutated distribution (default) / 2=random values drawn form permuted distribution (stricter)
-    ANALYSIS.groupstats_ttest_tail = 'right'; % Choose between two-tailed or one-tailed tests. 'both' = two-tailed / 'right' / 'left' = one-tailed testing for above/below chance accuracy
-    ANALYSIS.use_robust = 0; % Use Yuen's t, the robust version of the t test? 1 = Yes / 0 = No
-    ANALYSIS.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
-    
-    ANALYSIS.multcompstats = 0; % Correction for multiple comparisons: 
-    % 0 = no correction
-    % 1 = Bonferroni correction
-    % 2 = Holm-Bonferroni correction
-    % 3 = Strong FWER Control Permutation Test
-    % 4 = Cluster-Based Permutation Test
-    % 5 = KTMS Generalised FWER Control
-    % 6 = Benjamini-Hochberg FDR Control
-    % 7 = Benjamini-Krieger-Yekutieli FDR Control
-    % 8 = Benjamini-Yekutieli FDR Control
-    ANALYSIS.n_iterations = 1000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
-    ANALYSIS.ktms_u = 2; % u parameter of the KTMS GFWER control procedure
-    ANALYSIS.cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
-    
-    % Group-level classifier accuracy results plotting options
-    ANALYSIS.disp.on = 1; % display a results figure? 0=no / 1=yes
-    ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
-    ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
-    ANALYSIS.plot_robust = 2; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
-    ANALYSIS.plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
-    
-    % Feature weight analysis options
-    ANALYSIS.fw.do = 0; % analyse feature weights? 0=no / 1=yes
-    ANALYSIS.fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
-    ANALYSIS.use_robust_fw = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
-    ANALYSIS.trimming_fw = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
-    ANALYSIS.fw_ttest_tail = 'right';
-    ANALYSIS.fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
-    % 1 = Bonferroni correction
-    % 2 = Holm-Bonferroni correction
-    % 3 = Strong FWER Control Permutation Test
-    % 4 = Cluster-Based Permutation Test (Currently not available)
-    % 5 = KTMS Generalised FWER Control
-    % 6 = Benjamini-Hochberg FDR Control
-    % 7 = Benjamini-Krieger-Yekutieli FDR Control
-    % 8 = Benjamini-Yekutieli FDR Control
-    
-        % if feature weights are analysed, specify what is displayed
-        %__________________________________________________________________
-        
-        % 0=no / 1=yes
-        ANALYSIS.fw.display_matrix = 0; % feature weights matrix
-        
-        % maps and stats for averaged analysis time windows
-        ANALYSIS.fw.display_average_zmap = 0; % z-standardised average FWs
-        ANALYSIS.fw.display_average_uncorr_threshmap = 0; % thresholded map uncorrected t-test results
-        ANALYSIS.fw.display_average_corr_threshmap = 0; % thresholded map corrected t-test results (Bonferroni)
-        
-        % maps and stats for each analysis time window
-        ANALYSIS.fw.display_all_zmaps = 0; % z-standardised average FWs
-        ANALYSIS.fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
-        ANALYSIS.fw.display_all_corr_thresh_maps = 0; % thresholded map corrected t-test results (Bonferroni)
-%__________________________________________________________________________    
-
-elseif input_mode == 1 % Prompted manual input
-    
-    % specify analysis channels
-    ANALYSIS.allchan = input('Are all possible channels analysed? "0" for no; "1" for yes (default if spatial/spatio-temporal): ');
-    
-    if ANALYSIS.allchan ~= 1
-        
-        ANALYSIS.relchan = input('Enter the channels to be analysed (e.g. [1 4 5]): ');
-        
-    end
-    
-    % specify properties of the decoding analysis
-    ANALYSIS.analysis_mode = input('Specifiy analysis method: "1" SVM with LIBSVM , "2" SVM with liblinear, "3" with LIBSVM: '); 
-    ANALYSIS.stmode = input('Specify the s/t-analysis mode of the original analysis. "1" spatial, "2" temporal. "3" spatio-temporal: ');
-    ANALYSIS.avmode = input('Specify the average mode of the original analysis. "1" single-trial, "2" run-average: ');
-    ANALYSIS.window_width_ms = input('Specify the window width [ms] of the original analysis: ');
-    ANALYSIS.step_width_ms = input('Specify the step width [ms] of the original analysis: ');
-    
-    % specify stats
-    ANALYSIS.permstats = input('Testing against: "1" chance level; "2" permutation distribution: ');
-    
-    if ANALYSIS.permstats == 2
-        
-        ANALYSIS.drawmode = input('Testing against: "1" average permutated distribution (default); "2" random values drawn form permuted distribution (stricter): ');
-        ANALYSIS.permdisp = input('Do you wish to display chance-level test results in figure? "0" for no; "1" for yes: ');
-        
-    end
-    
-    ANALYSIS.pstats = input('Specify critical p-value for statistical testing (e.g. 0.05): ');
-    ANALYSIS.multcompstats = input(['\nSpecify if you wish to control for multiple comparisons: \n"0" for no correction \n'...
-        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
-        '"4" for Cluster-Based Permutation Testing \n"5" for KTMS Generalised FWER Control \n' ...
-        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
-        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
-    
-    if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
-        ANALYSIS.n_iterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
-    end
-    if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
-       ANALYSIS.ktms_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
-    end
-    if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
-       ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
-    end
-    
-    % specify display options
-    ANALYSIS.disp.on = input('Do you wish to display the results in figure(s)? "0" for no; "1" for yes: ');
-    ANALYSIS.disp.sign = input('Specify if you wish to highlight significant results in figure. "0" for no; "1" for yes: ');
-    
-    % analyse feature weights
-    ANALYSIS.fw.do = input('Do you wish to analyse the feature weights (only for spatial or spatio-temporal decoding)? "0" for no; "1" for yes: ');
-    
-    if ANALYSIS.fw.do == 1
-        ANALYSIS.fw.corrected = input('Use feature weights corrected using Haufe et al. (2014) method? "0" for no; "1" for yes: ');
-        ANALYSIS.fw.multcompstats = input(['\nSpecify which multiple comparisons correction method to use: \n' ...
-        '"1" for Bonferroni \n"2" for Holm-Bonferroni \n"3" for Strong FWER Control Permutation Testing \n' ...
-        '"4" for Cluster-Based Permutation Testing (Currently not available) \n"5" for KTMS Generalised FWER Control \n' ...
-        '"6" for Benjamini-Hochberg FDR Control \n"7" for Benjamini-Krieger-Yekutieli FDR Control \n' ...
-        '"8" for Benjamini-Yekutieli FDR Control \n Option: ']);
-    
-        if ANALYSIS.multcompstats == 3 || ANALYSIS.multcompstats == 4 || ANALYSIS.multcompstats == 5 % For permutation tests
-            ANALYSIS.n_iterations = input('Number of permutation iterations for multiple comparisons procedure (at least 1000 is recommended): ');    
-        end
-        if ANALYSIS.multcompstats == 5 % For KTMS Generalised FWER control
-           ANALYSIS.ktms_u = input('Enter the u parameter for the KTMS Generalised FWER control procedure: '); 
-        end
-        if ANALYSIS.multcompstats == 4 % For cluster-based permutation testing
-           fprintf('Cluster-based corrections are currently not available.\n')
-           % ANALYSIS.cluster_test_alpha = input('Enter the clustering threshold for detecting effects at individual time points (e.g. 0.05): '); 
-        end
-        
-        ANALYSIS.fw.display_average_zmap = input('Do you wish to display the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % z-standardised average FWs
-        ANALYSIS.fw.display_average_uncorr_threshmap = input(...
-            'Do you wish to display the statistical threshold map (uncorrected) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map uncorrected t-test results
-        ANALYSIS.fw.display_average_corr_threshmap = input(...
-            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level averaged, z-standardised feature weights as a heat map? "0" for no; "1" for yes: '); % thresholded map corrected t-test results (Bonferroni)
-        
-        % individual maps and stats
-        ANALYSIS.fw.display_all_zmaps = input('');
-        ANALYSIS.fw.display_all_uncorr_thresh_maps = input(...
-            'Do you wish to display the statistical threshold map (uncorrected) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
-        ANALYSIS.fw.display_all_corr_thresh_maps = input(...
-            'Do you wish to display the statistical threshold map (corrected for multiple comparisons) for the group-level z-standardised feature weights for each time-step as a heat map? "0" for no; "1" for yes: ');
-        
-    end
-    
-end % input
-
+% Determine file labels based on SVM backend used
 if ANALYSIS.analysis_mode == 1 
     ANALYSIS.analysis_mode_label='SVM_LIBSVM';
 elseif ANALYSIS.analysis_mode == 2 
@@ -236,10 +55,7 @@ elseif ANALYSIS.analysis_mode == 3
     ANALYSIS.analysis_mode_label='SVR_LIBSVM';
 end
     
-%__________________________________________________________________________
-
 fprintf('Group-level statistics will now be computed and displayed. \n'); 
-
 
 %% OPEN FILES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -247,34 +63,29 @@ fprintf('Group-level statistics will now be computed and displayed. \n');
 for s = 1:ANALYSIS.nsbj
     
     %% open subject data
-    global SBJTODO;
-    SBJTODO = s;
-    sbj = ANALYSIS.sbjs(SBJTODO);
-    
-    global SLIST;
-    eval(sbj_list);
-    
+    sbj = ANALYSIS.sbjs(s);
+        
     % open subject's decoding results       
-    if size(dcg_todo,2) == 1
+    if size(ANALYSIS.dcg_todo, 2) == 1
         
-        fprintf('Loading results for subject %d in DCG %s.\n',sbj,SLIST.dcg_labels{dcg_todo});
+        fprintf('Loading results for subject %d in DCG %s.\n',sbj,ANALYSIS.dcg_labels{ANALYSIS.dcg_todo});
         
-        open_name = [(SLIST.output_dir) study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
+        open_name = [(ANALYSIS.output_dir) ANALYSIS.study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
+            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
 
-    elseif size(dcg_todo,2) == 2
+    elseif size(ANALYSIS.dcg_todo,2) == 2
         
-        fprintf('Loading results for subject %d for cross decoding DCG %s => DCG %s.\n',sbj,SLIST.dcg_labels{dcg_todo(1)},SLIST.dcg_labels{dcg_todo(2)});
+        fprintf('Loading results for subject %d for cross decoding DCG %s => DCG %s.\n',sbj,ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(1)},ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(2)});
         
-        open_name=[(SLIST.output_dir) study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
-            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
-            'toDCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
+        open_name=[(ANALYSIS.output_dir) ANALYSIS.study_name '_SBJ' num2str(sbj) '_win' num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
+            '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label '_DCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(1)}...
+            'toDCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
     end   
    
     load(open_name);
     fprintf('Done.\n');
     
-    ANALYSIS.pointzero=SLIST.pointzero;
+    ANALYSIS.pointzero=ANALYSIS.pointzero;
         
     %% fill in parameters and extract results 
     %______________________________________________________________________
@@ -299,32 +110,32 @@ for s = 1:ANALYSIS.nsbj
         if ANALYSIS.avmode == 1 || ANALYSIS.avmode == 1 % DF NOTE: Is the second IF statement supposed to specify a different value?
     
             fprintf('\n');
-            fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2),STUDY.window_width_ms);
+            fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2), cfg.window_width_ms);
             ANALYSIS.firststep = 1;
             ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
 
         end
     
         % shift everything back by step-width, as first bin gets label=0ms
-        ANALYSIS.firststepms = (ANALYSIS.firststep * STUDY.step_width_ms) - STUDY.step_width_ms;
-        ANALYSIS.laststepms = (ANALYSIS.laststep * STUDY.step_width_ms) - STUDY.step_width_ms;
+        ANALYSIS.firststepms = (ANALYSIS.firststep * cfg.step_width_ms) - cfg.step_width_ms;
+        ANALYSIS.laststepms = (ANALYSIS.laststep * cfg.step_width_ms) - cfg.step_width_ms;
 
         % create matrix for data indexing
         ANALYSIS.data(1,:) = 1:size(RESULTS.subj_acc,2); % for XTick
-        ANALYSIS.data(2,:) = 0:STUDY.step_width_ms:( (size(RESULTS.subj_acc,2) - 1) * STUDY.step_width_ms); % for XLabel
+        ANALYSIS.data(2,:) = 0:cfg.step_width_ms:( (size(RESULTS.subj_acc,2) - 1) * cfg.step_width_ms); % for XLabel
         ptz = find(ANALYSIS.data(2,:) == ANALYSIS.pointzero); % find data with PointZero
         ANALYSIS.data(3,ptz) = 1; clear ptz; % for line location in plot
 
         % copy parameters from the config file
-        ANALYSIS.step_width = STUDY.step_width;
-        ANALYSIS.window_width = STUDY.window_width;
-        ANALYSIS.sampling_rate = STUDY.sampling_rate;
-        ANALYSIS.feat_weights_mode = STUDY.feat_weights_mode;
+        ANALYSIS.step_width = cfg.step_width;
+        ANALYSIS.window_width = cfg.window_width;
+        ANALYSIS.sampling_rate = cfg.sampling_rate;
+        ANALYSIS.feat_weights_mode = cfg.feat_weights_mode;
         
-        ANALYSIS.nchannels = SLIST.nchannels;
+        ANALYSIS.nchannels = ANALYSIS.nchannels;
                 
-        ANALYSIS.channellocs = SLIST.channellocs;
-        ANALYSIS.channel_names_file = SLIST.channel_names_file;     
+        ANALYSIS.channellocs = ANALYSIS.channellocs;
+        ANALYSIS.channel_names_file = ANALYSIS.channel_names_file;     
                 
         % extract Tick/Labels for x-axis
         for datastep = 1:ANALYSIS.laststep
@@ -335,9 +146,9 @@ for s = 1:ANALYSIS.nsbj
         
         % Define chance level for statistical analyses based on the
         % analysis type
-        if STUDY.analysis_mode == 1 || STUDY.analysis_mode == 2
-            ANALYSIS.chancelevel = ( 100 / size(SLIST.dcg{ANALYSIS.dcg_todo(1)},2) );
-        elseif STUDY.analysis_mode == 3 || STUDY.analysis_mode == 4
+        if cfg.analysis_mode == 1 || cfg.analysis_mode == 2
+            ANALYSIS.chancelevel = ( 100 / size(ANALYSIS.dcg{ANALYSIS.dcg_todo(1)},2) );
+        elseif cfg.analysis_mode == 3 || cfg.analysis_mode == 4
             ANALYSIS.chancelevel = 0;
         end
         
@@ -356,10 +167,10 @@ for s = 1:ANALYSIS.nsbj
         
         % get label for DCG
         if size(ANALYSIS.dcg_todo,2) == 1
-            ANALYSIS.DCG = SLIST.dcg_labels{ANALYSIS.dcg_todo};
+            ANALYSIS.DCG = ANALYSIS.dcg_labels{ANALYSIS.dcg_todo};
         elseif size(ANALYSIS.dcg_todo,2) == 2
-            ANALYSIS.DCG{1} = SLIST.dcg_labels{ANALYSIS.dcg_todo(1)};
-            ANALYSIS.DCG{2} = SLIST.dcg_labels{ANALYSIS.dcg_todo(2)};
+            ANALYSIS.DCG{1} = ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(1)};
+            ANALYSIS.DCG{2} = ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(2)};
         end
                 
     end % of if s == 1 statement
@@ -371,13 +182,17 @@ for s = 1:ANALYSIS.nsbj
         
         % Extract classifier and permutation test accuracies
         ANALYSIS.RES.all_subj_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
-        ANALYSIS.RES.all_subj_perm_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_perm_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
+        
+        if ANALYSIS.permstats == 2
             
-        % needed if one wants to test against distribution of randomly
-        % drawn permutation results (higher variance, stricter testing)
-        ANALYSIS.RES.all_subj_perm_acc_reps(s,na,ANALYSIS.firststep:ANALYSIS.laststep,:,:) = RESULTS.perm_prediction_accuracy{na}(ANALYSIS.firststep:ANALYSIS.laststep,:,:);
-            
-    end
+            ANALYSIS.RES.all_subj_perm_acc(s,na,ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_perm_acc(na,ANALYSIS.firststep:ANALYSIS.laststep);
+        
+            % needed if one wants to test against distribution of randomly
+            % drawn permutation results (higher variance, stricter testing)
+            ANALYSIS.RES.all_subj_perm_acc_reps(s,na,ANALYSIS.firststep:ANALYSIS.laststep,:,:) = RESULTS.perm_prediction_accuracy{na}(ANALYSIS.firststep:ANALYSIS.laststep,:,:);
+
+        end % of if ANALYSIS.permstats
+    end % of for na
     %______________________________________________________________________
     
     % Extract feature weights
@@ -388,7 +203,7 @@ for s = 1:ANALYSIS.nsbj
         end
     end % of if fw.do
     clear RESULTS;
-    clear STUDY;
+    clear cfg;
     
 end % of for n = 1:ANALYSIS.nsbj loop
 
@@ -488,15 +303,12 @@ elseif ANALYSIS.group_level_analysis == 2 % Group-level stats based on t tests
 end % of if ANALYSIS.group_level_analysis
 
 
-
-
-
 fprintf('All group statistics performed.\n');
 
 %% FEATURE WEIGHT ANALYSIS
 %__________________________________________________________________________
 
-if ANALYSIS.fw.do == 1
+if ANALYSIS.fw.do == 1 % If chosen to analyse feature weights
     
     [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS);
     
@@ -510,20 +322,20 @@ end
 %% SAVE RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
 
-if size(dcg_todo,2) == 1 % Standard decoding analyses
+if size(ANALYSIS.dcg_todo,2) == 1 % Standard decoding analyses
 
-    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
+    savename = [(ANALYSIS.output_dir) ANALYSIS.study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
         num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
         '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label...
-        '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
+        '_DCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo} '.mat'];
     
-elseif size(dcg_todo,2) == 2 % Cross-condition decoding analyses
+elseif size(ANALYSIS.dcg_todo,2) == 2 % Cross-condition decoding analyses
     
-    savename = [(SLIST.output_dir) study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
+    savename = [(ANALYSIS.output_dir) ANALYSIS.study_name '_GROUPRES_NSBJ' num2str(ANALYSIS.nsbj) '_win'...
         num2str(ANALYSIS.window_width_ms) '_steps' num2str(ANALYSIS.step_width_ms)...
         '_av' num2str(ANALYSIS.avmode) '_st' num2str(ANALYSIS.stmode) '_' ANALYSIS.analysis_mode_label...
-        '_DCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(1)}...
-        'toDCG' SLIST.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
+        '_DCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(1)}...
+        'toDCG' ANALYSIS.dcg_labels{ANALYSIS.dcg_todo(2)} '.mat'];
 
 end
 

@@ -1,4 +1,4 @@
-function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUDY)
+function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, cfg)
 %
 % This function gets input from decoding_erp.m and organises the data stored in 
 % training_set and test_set for classification. The data is cut out and handed 
@@ -11,9 +11,7 @@ function [RESULTS] =  prepare_my_vectors_erp(training_set, test_set, SLIST, STUD
 %
 %   test_set        data used to test classifier performance
 %
-%   SLIST           structure containing participant dataset information
-%
-%   STUDY           structure containing multivariate classification/regression settings
+%   cfg             structure containing analysis parameters information
 %
 % Outputs:
 %
@@ -45,25 +43,25 @@ allsteps = 1; % (1=all possible steps; 0=pre-defined number of steps)
 % defined_steps=6;
 
 % number of rounds: will be 1 if no permutation test;
-nr_rounds = 1 + STUDY.perm_test;
+nr_rounds = 1 + cfg.perm_test;
 
 
 %% ESTABLISH NUMBER OF ANALYSES / CLASSES
 % number analyses depends whether analysis is performed for each channel
 % separately or for spatial configuration
-if STUDY.stmode ~= 2 % Spatial or spatiotemporal decoding
+if cfg.stmode ~= 2 % Spatial or spatiotemporal decoding
     no_analyses = 1;
-elseif STUDY.stmode == 2 % Temporal decoding
+elseif cfg.stmode == 2 % Temporal decoding
     no_analyses = size(training_set{1,1,1,1},2);
 end
 
-nconds = STUDY.nconds;
+nconds = cfg.nconds;
 
 
 %% LOAD IN REGRESSION LABELS (for SVR)
-if STUDY.analysis_mode == 3
-    training_labels = STUDY.training_labels;
-    test_labels = STUDY.test_labels;
+if cfg.analysis_mode == 3
+    training_labels = cfg.training_labels;
+    test_labels = cfg.test_labels;
 end
 
 
@@ -74,12 +72,12 @@ RESULTS.feature_weights = [];
 RESULTS.perm_prediction_accuracy = [];
 
 % Set up matrix with repetition information 
-repetition_data_steps = repmat([1:size(test_set,3)],1,STUDY.permut_rep);
+repetition_data_steps = repmat([1:size(test_set,3)],1,cfg.permut_rep);
 
 crossval_repetitions(1,1) = size(test_set,4); % repetition of cross_validation cycle for real decoding
-if STUDY.avmode ~= 2 % repetition of cross_validation cycle for permutation test
-    crossval_repetitions(2,1) = STUDY.permut_rep; 
-elseif STUDY.avmode == 2
+if cfg.avmode ~= 2 % repetition of cross_validation cycle for permutation test
+    crossval_repetitions(2,1) = cfg.permut_rep; 
+elseif cfg.avmode == 2
    crossval_repetitions(2,1) = crossval_repetitions(1,1);
 end
 
@@ -91,7 +89,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
     trial_length = size(training_set{1,1,1,1},1); % use first one to determine trial length - all identical
         
     if allsteps == 1 % Analyse all steps
-        nsteps = floor((trial_length-(STUDY.window_width-STUDY.step_width))/STUDY.step_width);   
+        nsteps = floor((trial_length-(cfg.window_width-cfg.step_width))/cfg.step_width);   
     elseif allsteps == 0 % Analyse a predefined number of steps 
         nsteps = defined_steps;
     end
@@ -114,29 +112,29 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                         % get correct data position from matrix
                         ncv = repetition_data_steps(rep);
                         
-                        if STUDY.cross == 0 % regular: train on A, predict left-out from A
+                        if cfg.cross == 0 % regular: train on A, predict left-out from A
                         
                             % extract training and test data for current step for time window
-                            data_training = double(training_set{1,con,cv,ncv}( (1 + ( (s - 1) * STUDY.step_width)):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
-                            data_test = double(test_set{1,con,cv,ncv}((1 + ( (s - 1) * STUDY.step_width) ):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
+                            data_training = double(training_set{1,con,cv,ncv}( (1 + ( (s - 1) * cfg.step_width)):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
+                            data_test = double(test_set{1,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
                                                 
-                        elseif STUDY.cross == 1 % train on A, predict left-out from B
+                        elseif cfg.cross == 1 % train on A, predict left-out from B
                             
                          % extract training and test data for current step for time window
-                            data_training = double(training_set{1,con,cv,ncv}((1 + ( (s - 1) * STUDY.step_width) ):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
-                            data_test = double(test_set{2,con,cv,ncv}((1 + ( (s - 1) * STUDY.step_width) ):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
+                            data_training = double(training_set{1,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
+                            data_test = double(test_set{2,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
                         
-                         elseif STUDY.cross == 2 % train on B, predict left-out from A
+                         elseif cfg.cross == 2 % train on B, predict left-out from A
                             
                          % extract training and test data for current step for time window
-                            data_training = double(training_set{2,con,cv,ncv}((1+( (s-1)*STUDY.step_width) ):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
-                            data_test = double(test_set{1,con,cv,ncv}((1 + ( (s - 1) * STUDY.step_width) ):( (s * STUDY.window_width) - ( (s - 1) * (STUDY.window_width-STUDY.step_width) ) ),:,:));
+                            data_training = double(training_set{2,con,cv,ncv}((1+( (s-1)*cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
+                            data_test = double(test_set{1,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
                             
                         end
                         
                         % spatial decoding: vectors consist of average data within time-window
                         % calculate number of steps with given step width and window width one data point per channel
-                        if STUDY.stmode == 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        if cfg.stmode == 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          
                             % Training data vectors
                             mean_data_training = mean(data_training,1);
@@ -146,7 +144,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                             vectors_train = [vectors_train temp];     
                             
                             %________________________________________________________________________________
-                            if STUDY.analysis_mode == 3 % if SVR
+                            if cfg.analysis_mode == 3 % if SVR
                                     
                                 for trl = 1:size(temp,2)
                                     labels_train = [labels_train  training_labels{1,con,cv,ncv}(trl)];
@@ -184,7 +182,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                             vectors_test = [vectors_test temp];     
                             
                             %________________________________________________________________________________
-                            if STUDY.analysis_mode == 3 % if SVR
+                            if cfg.analysis_mode == 3 % if SVR
                                     
                                 for trl = 1:size(temp,2)
                                     labels_test = [labels_test  test_labels{1,con,cv,ncv}(trl)];
@@ -203,7 +201,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                         
                         % temporal decoding: vectors consist of single data-points within time
                         % window, one analysis per channel
-                        elseif STUDY.stmode == 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        elseif cfg.stmode == 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                             % Training data vectors
                             for exmpl = 1:size(data_training,3)     
@@ -211,7 +209,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 vectors_train = [vectors_train temp];
                                 
                                 %________________________________________________________________________________
-                                if STUDY.analysis_mode == 3 % if SVR
+                                if cfg.analysis_mode == 3 % if SVR
                                         
                                     labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
                                       
@@ -248,7 +246,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 vectors_test = [vectors_test temp];
                                 
                                 %________________________________________________________________________________
-                                if STUDY.analysis_mode == 3 % if SVR
+                                if cfg.analysis_mode == 3 % if SVR
                                         
                                     for ntrls = 1:size(temp,2)
                                         labels_test = [labels_test  test_labels{1,con,cv,ncv}(exmpl)];
@@ -267,7 +265,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
     
                         % spatio-temporal decoding: vectors consist of all data points within time
                         % window across channels
-                        elseif STUDY.stmode == 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+                        elseif cfg.stmode == 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
             
                             % channels used within each step / only one analysis!
                             
@@ -283,7 +281,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 clear temp;
                                 
                                 %________________________________________________________________________________
-                                if STUDY.analysis_mode == 3 % if SVR
+                                if cfg.analysis_mode == 3 % if SVR
                                         
                                     labels_train = [labels_train training_labels{1,con,cv,ncv}(exmpl)];
                                   
@@ -324,7 +322,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                 clear temp;
                                 
                                 %________________________________________________________________________________
-                                if STUDY.analysis_mode == 3 % if SVR
+                                if cfg.analysis_mode == 3 % if SVR
                                         
                                     labels_test = [labels_test test_labels{1,con,cv,ncv}(exmpl)];
                                       
@@ -345,8 +343,8 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                     %_________________________________________________________________________________
                     % Z-score the training and test sets (optional)
                                         
-                    if STUDY.zscore_convert == 1
-                        switch STUDY.stmode
+                    if cfg.zscore_convert == 1
+                        switch cfg.stmode
                             case 1 % spatial decoding
                                 % Organisation of vectors:
                                 % vectors_train(channel, epoch)
@@ -378,8 +376,8 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                                     size(data_test, 1), size(data_test, 2), size(vectors_test, 2)) );
                                 vectors_test = reshape(tmp, size(data_test, 1) * size(data_test,2), size(vectors_test, 2));
 
-                        end % of if STUDY.stmode
-                    end % of if STUDY.zscore_convert
+                        end % of if cfg.stmode
+                    end % of if cfg.zscore_convert
 
                     
                     % PASS ON TO CLASSIFIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -403,7 +401,7 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                     elseif main_analysis == 2
                         fprintf('Permutation test step %d of %d steps, cross-validation step %d in cycle %d: \n',s,nsteps,cv,rep);
                     end
-                    [acc,feat_weights, feat_weights_corrected] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,STUDY);
+                    [acc,feat_weights, feat_weights_corrected] = do_my_classification(vectors_train,labels_train,vectors_test,labels_test,cfg);
                 
                     if main_analysis == 1
                         RESULTS.prediction_accuracy{ch}(s,cv,rep) = acc;
@@ -436,4 +434,4 @@ end % (real decoding vs permutation test data)
 % optional: only when debugging script - the decoding script will save
 % all data in correct folder
 %
-% save('CRASH_SAVE.mat','STUDY','RESULTS')
+% save('CRASH_SAVE.mat','cfg','RESULTS')
