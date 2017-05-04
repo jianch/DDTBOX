@@ -1,8 +1,8 @@
 function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, varargin)
 %
-% This function implements the group-level statistical inference testing
-% based on the minimum statistic (described in detail in Allefeld et al.,
-% 2016). The testing procedure includes a test for global null (i.e. that
+% This function implements group-level statistical inference testing
+% based on the minimum statistic (described in Allefeld et al., 2016). 
+% The testing procedure includes a test for global null (i.e. that
 % no subjects show any effects, which is a fixed effects analysis) and also
 % estimates the prevalence of an effect as a proportion of the sample.
 %
@@ -13,6 +13,8 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % Code for the algorithm in this script is adapted from the prevalence-permutation
 % repository of Carsten Allefeld. The original code can be found at:
 % https://github.com/allefeld/prevalence-permutation
+% Each 'step' or equation (Eq) described in this function corresponds to an operation
+% described in Allefeld et al. (2016).
 %
 %
 % Inputs:
@@ -125,6 +127,7 @@ n_time_windows = size(observed_data, 1); % Number of time windows to analyse
 n_permutations_per_subject = size(permtest_data, 3); % Number of permutation sample analyses per subject
 P1 = n_permutations_per_subject + 1; % Number of first-level permutations + 1 extra for observed data
 P2 = n_second_level_permutations; % Number of second-level permutations to draw
+
 % Checking if the P2 value is larger than the possible number of unique
 % permutations
 if P2 > P1 ^ n_subjects 
@@ -142,12 +145,11 @@ end
 if P2 == P1 ^ n_subjects
     fprintf('\n\n enumerating all %d second-level permutations\n\n', P2)
 else
-    fprintf('\n\n randomly generating %d of %d possible second-level permutations\n\n', ...
-        P2, P1 ^ n_subjects)
+    fprintf('\n\n randomly generating %d of %d possible second-level permutations\n\n', P2, P1 ^ n_subjects)
 end
 
 
-%% Step 1
+%% Step 1:
 % Step 1: Compute the first-level estimates of classification accuracy for
 % the observed data and permutation samples.
 
@@ -156,7 +158,8 @@ classification_acc = observed_data; % Observed data accuracies
 % First permutation must be same as observed data
 classification_acc_perm(1:n_time_windows, 1:n_subjects, 1) = classification_acc;
 
-% Rest of permutation accuracies are randomly generated in this script.
+% Rest of permutation decoding accuracies are taken from permutation
+% decoding results
 classification_acc_perm(1:n_time_windows, 1:n_subjects, 2:P1) = permtest_data;
 
 
@@ -184,17 +187,21 @@ for j = 1:P2
         % into indices of first-level permutations (is)
         jc = j - 1;
         is = nan(n_subjects, 1); % Preallocate first-level permutation accuracies vector
+        
         for k = 1:n_subjects
             is(k) = rem(jc, P1) + 1;
             jc = floor(jc / P1);
-        end
+        end % of for k
+        
     else        % Monte Carlo
+        
         % randomly select permutations, except for first
         if j == 1
             is = ones(n_subjects, 1);
         else
             is = randi(P1, n_subjects, 1);
         end % of if j == 1
+        
     end % of if P2
     
     % translate indices of first-level permutations to indices into matrix classification_acc_perm
@@ -211,20 +218,18 @@ for j = 1:P2
     % Compare actual (observed) value with permutation value for each time window separately,
     % determines uncorrected p-values for global null hypothesis.
     uRank = uRank + (m >= m1);          % part of Eq. 24
+    
     % Compare actual (observed) value at each time window with maximum across time windows,
     % determines corrected p-values for global null hypothesis.
     cRank = cRank + (max(m) >= m1);     % Eq. 25 & part of Eq. 26
 
-
-    % compute results,
-    % based on permutations performed so far: j plays the role of P2
+    % compute results, based on permutations performed so far: j plays the role of P2
     % uncorrected p-values for global null hypothesis
     puGN = uRank / j;                               % part of Eq. 24
     % corrected p-values for global null hypothesis
     pcGN = cRank / j;                               % part of Eq. 26
     % significant time windows for global null hypothesis
     sigGN = (pcGN <= alpha_level);
-    
     
     % * Step 5a: compute p-values for given prevalence bound
     % (here specifically gamma0 = 0.5, i.e the majority null hypothesis)
@@ -237,6 +242,7 @@ for j = 1:P2
     % lower bound on corrected p-values for majority null hypothesis
     puMNMin = ((1 - 0.5) * 1/j .^ (1/n_subjects) + 0.5) .^ n_subjects;
     pcMNMin = 1/j + (1 - 1/j) .* puMNMin;
+    
     % * Step 5b: compute prevalence lower bounds for given alpha
     % uncorrected prevalence lower bounds
     gamma0u = (alpha_level .^ (1/n_subjects) - puGN .^ (1/n_subjects)) ./ (1 - puGN .^ (1/n_subjects)); % Eq. 20
