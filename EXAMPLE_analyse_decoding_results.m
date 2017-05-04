@@ -29,12 +29,26 @@ close all;
 
 %% Filepaths and locations of subject datasets
 
-% Base directory path (where single subject EEG datasets and channel locations information will be stored)
+% Enter the name of the study (for labeling saved decoding results files)
+study_name = 'EXAMPLE';
+
+% Base directory path (where single subject EEG datasets and channel locations information are stored)
 bdir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/';
 
 % Output directory (where decoding results have been saved)
 output_dir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Test/';
 
+%% Select subject datasets and discrimination groups
+
+% Set which subjects datasets to decode
+sbjs_todo = [1:4];
+
+% Enter the discrimination group for classification. Two discrimination
+% groups can be entered when using cross-condition decoding.
+dcg_todo = [1];
+
+% Perform cross-condition decoding? 1 = yes / 0 = no
+cross = 0;
 
 %% EEG dataset information
 
@@ -76,21 +90,6 @@ ndcg = size(dcg, 2);
 nclasses = size(dcg{1}, 2);      
 ncond = size(cond_labels, 2);
 
-
-%% Select experiment, subject datasets and discrimination groups
-
-% Enter the name of the study (for labeling saved decoding results files)
-study_name = 'EXAMPLE';
-
-% Set which subjects datasets to decode
-sbjs_todo = [1:4];
-
-% Enter the discrimination group for classification. Two discrimination
-% groups can be entered when using cross-condition decoding.
-dcg_todo = [1];
-
-% Perform cross-condition decoding? 1 = yes / 0 = no
-cross = 0;
 
 
 %% Group-level analysis and plotting parameters

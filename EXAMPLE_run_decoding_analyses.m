@@ -32,6 +32,9 @@ close all;
 
 %% Filepaths and locations of subject datasets
 
+% Enter the name of the study (for labeling saved decoding results files)
+study_name = 'EXAMPLE';
+
 % Base directory path (where single subject EEG datasets and channel locations information will be stored)
 bdir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/';
 
@@ -41,11 +44,11 @@ output_dir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECO
 % Filepaths of single subject datasets (relative to the base directory)
 sbj_code = {...
 
-    ['DATA/sbj1/SBJ1_full'];... %subject 1
-    ['DATA/sbj2/SBJ2_full'];... %subject 2 
-    ['DATA/sbj3/SBJ3_full'];... %subject 3
-    ['DATA/sbj4/SBJ4_full'];... %subject 4
-    ['DATA/sbj5/SBJ5_full'];... %subject 5
+    ['DATA/sbj1/SBJ1_full'];... % subject 1
+    ['DATA/sbj2/SBJ2_full'];... % subject 2 
+    ['DATA/sbj3/SBJ3_full'];... % subject 3
+    ['DATA/sbj4/SBJ4_full'];... % subject 4
+    ['DATA/sbj5/SBJ5_full'];... % subject 5
 
     };
     
@@ -54,7 +57,7 @@ sbj_code = {...
 nsbj = size(sbj_code, 1);
 
 
-% MATLAB workspace names for single subject data arrays and structures
+% MATLAB workspace name for single subject data arrays and structures
 data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace
     
 % Settings for support vector regression
@@ -107,11 +110,29 @@ ncond = size(cond_labels, 2);
 
 %__________________________________________________________________________
 
+%% Multivariate classification/regression parameters
 
-%% Select experiment, subject datasets and discrimination groups
+analysis_mode = 1; % ANALYSIS mode (1=SVC with LIBSVM / 2=SVC with liblinear / 3=SVR with LIBSVM)
+stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
+avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
+window_width_ms = 50; % width of sliding window in ms
+step_width_ms = 50; % step size with which sliding window is moved through the trial
+zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
+cross_val_steps = 2; % How many cross-validation steps (if no runs available)?
+n_rep_cross_val = 3; % How many repetitions of full cross-validation with re-ordered data?
+perm_test = 1; % Run decoding using permuted condition labels? 0=no / 1=yes
+permut_rep = 3; % How many repetitions of full cross-validation with permutation results?
 
-% Enter the name of the study (for labeling saved decoding results files)
-study_name = 'EXAMPLE';
+% Feature weights extraction
+feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
+
+% Single subject decoding results plotting
+display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
+perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
+
+%__________________________________________________________________________
+
+%% Select subject datasets and discrimination groups
 
 % Set which subjects datasets to decode
 sbj_todo = [1:4];
@@ -124,29 +145,6 @@ dcgs_for_analyses = [1];
 cross = 0;
 
 %__________________________________________________________________________
-
-%% Multivariate classification/regression parameters
-
-analysis_mode = 1; % ANALYSIS mode (1=SVM with LIBSVM / 2=SVM with liblinear / 3=SVR with LIBSVM)
-stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-window_width_ms = 50; % width of sliding window in ms
-step_width_ms = 50; % step size with which sliding window is moved through the trial
-zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
-perm_test = 1; % Run decoding using permuted condition labels? 0=no / 1=yes
-cross_val_steps = 2; % How many cross-validation steps (if no runs available)?
-n_rep_cross_val = 3; % How many repetitions of full cross-validation with re-ordered data?
-permut_rep = 3; % How many repetitions of full cross-validation with permutation results?
-
-% Feature weights extraction
-feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
-
-% Single subject decoding results plotting
-display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
-perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
-
-%__________________________________________________________________________
-
 
 %% Copy all settings into the cfg structure
 cfg.bdir = bdir;
