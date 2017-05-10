@@ -147,7 +147,7 @@ fw.do = 0; % analyse feature weights? 0=no / 1=yes
 fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
 use_robust_fw = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
 trimming_fw = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
-fw_ttest_tail = 'right';
+fw_ttest_tail = 'right'; % T test tail for feature weights analyses. Should be set to 'right' for all standard analyses of FWs
 fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
 % 1 = Bonferroni correction
 % 2 = Holm-Bonferroni correction
