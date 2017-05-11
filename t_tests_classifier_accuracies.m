@@ -225,7 +225,7 @@ case 4 % Cluster-Based Permutation Test
         ANALYSIS.RES.cluster_sig{na} = MCC_Results.cluster_sig;
         ANALYSIS.RES.cluster_p{na} = MCC_Results.cluster_p;
         fprintf('The adjusted critical cluster mass for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_cluster_mass(na));
-        fprintf('%i statistically significant clusters were found for analysis %i \n', Results.RES.n_sig_clusters, na);
+        fprintf('%i statistically significant clusters were found for analysis %i \n', ANALYSIS.RES.n_sig_clusters, na);
 
     end % of for na loop
     clear real_decoding_scores
