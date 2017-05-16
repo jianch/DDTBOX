@@ -521,7 +521,7 @@ if ANALYSIS.fw.display_average_zmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',chaninfo); % or: [MIN MAX]
+        chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',chaninfo, 'colormap', 'jet'); % or: [MIN MAX]
     
     hold on;
     title('Z-standardised absolute feature weights averaged across time-steps','FontSize',10,'FontWeight','b');
@@ -540,7 +540,7 @@ if ANALYSIS.fw.display_average_uncorr_threshmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo);
+        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo, 'colormap', 'jet');
     
     hold on;
     title('Feature weights uncorrected threshold-map (averaged across time-steps)','FontSize',10,'FontWeight','b');
@@ -559,7 +559,7 @@ if ANALYSIS.fw.display_average_corr_threshmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo);
+        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo, 'colormap', 'jet');
     
     hold on;
     title('Feature weights corrected threshold-map (averaged across time-steps)','FontSize',10,'FontWeight','b');
@@ -581,7 +581,7 @@ if ANALYSIS.fw.display_all_zmaps == 1
         
         figure;
         topoplot_decoding(to_plot,...
-            chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',chaninfo); % or: [MIN MAX]
+            chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',chaninfo, 'colormap', 'jet'); % or: [MIN MAX]
         
         hold on;
         title(['Z-standardised absolute feature weights time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
@@ -604,7 +604,7 @@ if ANALYSIS.fw.display_all_uncorr_thresh_maps == 1
     
         figure;
         topoplot_decoding(to_plot,...
-        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo);
+        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo, 'colormap', 'jet');
     
         hold on;
         title(['Feature weights uncorrected threshold-map for time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
@@ -627,7 +627,7 @@ if ANALYSIS.fw.display_all_corr_thresh_maps == 1
     
         figure;
         topoplot_decoding(to_plot,...
-        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo);
+        chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',chaninfo, 'colormap', 'jet');
     
         hold on;
         title(['Feature weights corrected threshold-map for time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
