@@ -177,6 +177,9 @@
 % NOTE: 15/05/17 The topoplot function name has been renamed to topoplot_decoding.m
 % for inclusion in DDTBOX, so that it does not interfere with any versions 
 % of topoplot used in EEGLAB.
+%
+% At L1067 the warning message regarding plotting p-values was also
+% removed by DF.
 
 % Topoplot Version 2.1
 % Early development history:
@@ -1064,7 +1067,6 @@ if ~strcmpi(STYLE,'blank') % if draw interpolated scalp map
   %
   %%%%%%%%%%%%%%%%%%%%%%%% Plot grid only %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
-  disp('Warning: When plotting pvalues in totoplot, use option ''conv'' to minimize extrapolation effects');
   if strcmpi(STYLE,'grid')                     % plot grid only
 
     %
