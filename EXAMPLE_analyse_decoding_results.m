@@ -145,9 +145,10 @@ plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
 % Feature weight analysis options
 fw.do = 0; % analyse feature weights? 0=no / 1=yes
 fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
-use_robust_fw = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
-trimming_fw = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
-fw_ttest_tail = 'right'; % T test tail for feature weights analyses. Should be set to 'right' for all standard analyses of FWs
+fw.pstats = 0.05; % critical p-value for feature weights analyses
+fw.use_robust = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
+fw.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
+fw.ttest_tail = 'right'; % T test tail for feature weights analyses. Should be set to 'right' for all standard analyses of FWs
 fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
 % 1 = Bonferroni correction
 % 2 = Holm-Bonferroni correction
@@ -157,6 +158,8 @@ fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
 % 6 = Benjamini-Hochberg FDR Control
 % 7 = Benjamini-Krieger-Yekutieli FDR Control
 % 8 = Benjamini-Yekutieli FDR Control
+fw.n_iterations = 5000; % Number of permutation or bootstrap iterations for resampling-based feature weights multiple comparisons correction procedures
+fw.ktms_u = 0; % u parameter of the KTMS GFWER control procedure (when applying this correction for feature weights analyses)
 
 % if feature weights are analysed, specify what is displayed
 %__________________________________________________________________
@@ -227,10 +230,13 @@ ANALYSIS.plot_robust = plot_robust;
 ANALYSIS.plot_robust_trimming = plot_robust_trimming;
 ANALYSIS.fw.do = fw.do;
 ANALYSIS.fw.corrected = fw.corrected;
-ANALYSIS.use_robust_fw = use_robust_fw;
-ANALYSIS.trimming_fw = trimming_fw;
-ANALYSIS.fw_ttest_tail = fw_ttest_tail;
+ANALYSIS.fw.pstats = fw.pstats;
+ANALYSIS.fw.use_robust = fw.use_robust;
+ANALYSIS.fw.trimming = fw.trimming;
+ANALYSIS.fw.ttest_tail = fw.ttest_tail;
 ANALYSIS.fw.multcompstats = fw.multcompstats;
+ANALYSIS.fw.n_iterations = fw.n_iterations;
+ANALYSIS.fw.ktms_u = fw.ktms_u;
 ANALYSIS.fw.display_matrix = fw.display_matrix;
 ANALYSIS.fw.display_average_zmap = fw.display_average_zmap;
 ANALYSIS.fw.display_average_uncorr_threshmap = fw.display_average_uncorr_threshmap;
