@@ -152,19 +152,19 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
             temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
             temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
-            fprintf('\n\nArithmetic mean used for plotting group average accuracy\n\n');
+            fprintf('\n\nArithmetic mean used for plotting group average accuracy\nError bars represent standard errors\n\n');
         
         elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
         
             temp_data(1,:) = ANALYSIS.RES.trimmean_subj_acc(ana,:);
             temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
-            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
+            fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\nError bars represent standard errors\n\n', ANALYSIS.plot_robust_trimming);
 
         elseif ANALYSIS.plot_robust == 2 % If plotting medians
             
             temp_data(1,:) = ANALYSIS.RES.median_subj_acc(ana,:);
             temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
-            fprintf('\n\nMedian used for plotting group average accuracy\n\n');
+            fprintf('\n\nMedian used for plotting group average accuracy\nError bars represent standard errors\n\n');
 
         end % of if ANALYSIS.plot_robust
             
