@@ -97,8 +97,8 @@ dcg{2} = [2, 4];
 % Enter the array entry containing condition labels for each discrimination
 % group number. The SVR_labels array contains multiple cells, each
 % containing a list of SVR condition labels.
-% Usage: svr_condition_labels{dcg} = [cell number in SVR_labels];
-% Example: svr_condition_labels{1} = [2]; to use array cell 2 labels for dcg 1
+% Usage: svr_cond_labels{dcg} = [cell number in SVR_labels];
+% Example: svr_cond_labels{1} = [2]; to use array cell 2 labels for dcg 1
 svr_cond_labels{1} = [1];
               
 % Label each discrimination group
