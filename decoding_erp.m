@@ -109,8 +109,7 @@ end
 % (to be saved in SLIST.regress_struct_name(rows=trials; columns = varialbe values)
 % The data is always the same, so by default: dcg_todo = 1 
 if cfg.analysis_mode == 3 
-    cfg.regr_todo = cfg.dcg_todo;
-    cfg.dcg_todo = 1;
+    cfg.regr_todo = cfg.svr_cond_labels{cfg.dcg_todo};
 end
     
 fprintf('Cross-validation defaults for single-trial decoding:\n');
@@ -442,8 +441,24 @@ if cfg.avmode == 1
                     if cfg.analysis_mode == 3 % if SVR
                         % reduce data set to the trials * number of sets (after dividing in X% sets)
                         % use specifiied varaible condition only
-                        temp_training_labels = cfg.regress_data.SVR_matrix( 1:(ntrs_set*cfg.cross_val_steps) , cfg.regr_todo);
-                    end % if
+                                                
+                        if isfield(cfg.regress_data, 'SVR_labels') % Check whether SVR_labels was loaded from regression labels file
+                            temp_training_labels = cfg.regress_data.SVR_labels{cfg.regr_todo}(1:(ntrs_set*cfg.cross_val_steps));
+                        else % If using old SVR labels matrices DDTBOX will automatically convert to an array
+                            
+                            fprintf('\n WARNING: SVR labels are stored as a matrix. Coverting to cell array SVR_labels.\n Each cell number corresponds to a column in the SVR labels matrix.\n\n'); 
+                            
+                            % Convert matrix into array and remove NaN
+                            % values for each cell (may arise when there are uneven
+                            % exemplar numbers across label sets).
+                            for svr_label_entry = 1:size(cfg.regress_data.SVR_matrix, 2)
+                                cfg.regress_data.SVR_labels{svr_label_entry} = cfg.regress_data.SVR_matrix(:, svr_label_entry);
+                                cfg.regress_data.SVR_labels{svr_label_entry}(isnan(cfg.regress_data.SVR_labels{svr_label_entry}(:))) = []; % Remove NaN values                                
+                            end % of for svr_label_entry
+                            
+                            temp_training_labels = cfg.regress_data.SVR_labels{cfg.regr_todo}(1:(ntrs_set*cfg.cross_val_steps));
+                        end % of if isfield
+                    end % if cfg.analysis_mode
                     
                     % extract test-trials and delete them from training-trials
                     for trl = 1:size(test_trials,2)

@@ -60,9 +60,6 @@ nsbj = size(sbj_code, 1);
 % MATLAB workspace name for single subject data arrays and structures
 data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace
     
-% Settings for support vector regression
-regress_struct_name = 'SVR_matrix'; % DO NOT CHANGE NAME
-
 %__________________________________________________________________________
 
 
@@ -95,6 +92,14 @@ cond_labels{4} = 'condition_D';
 % Example: dcg{1} = [1, 2]; to compare conditions 1 and 2 for dcg 1
 dcg{1} = [1, 3]; 
 dcg{2} = [2, 4]; 
+
+% Support Vector Regression (SVR) condition labels
+% Enter the array entry containing condition labels for each discrimination
+% group number. The SVR_labels array contains multiple cells, each
+% containing a list of SVR condition labels.
+% Usage: svr_condition_labels{dcg} = [cell number in SVR_labels];
+% Example: svr_condition_labels{1} = [2]; to use array cell 2 labels for dcg 1
+svr_cond_labels{1} = [1];
               
 % Label each discrimination group
 % Usage: dcg_labels{Discrimination group number} = 'Name of discrimination group'
@@ -152,7 +157,6 @@ cfg.output_dir = output_dir;
 cfg.sbj_code = sbj_code;
 cfg.nsbj = nsbj;
 cfg.data_struct_name = data_struct_name;
-cfg.regress_struct_name = regress_struct_name;
 cfg.nchannels = nchannels;
 cfg.channel_names_file = channel_names_file;
 cfg.channellocs = channellocs;
@@ -161,6 +165,7 @@ cfg.pointzero = pointzero;
 cfg.cond_labels = cond_labels;
 cfg.dcg = dcg;
 cfg.dcg_labels = dcg_labels;
+cfg.svr_cond_labels = svr_cond_labels;
 cfg.ndcg = ndcg;
 cfg.nclasses = nclasses;
 cfg.ncond = ncond;
