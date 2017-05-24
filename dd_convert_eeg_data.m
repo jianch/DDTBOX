@@ -48,6 +48,11 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %                  DDTBOX-compatible epoched dataset. Enter as a vector of
 %                  channel/component numbers, or 'All' to use all
 %                  channels/components. Default is 'All'.
+%
+%   timepoints     Select timepoints (in ms relative to event onset) to
+%                  include in the DDTBOX-compatible epoched dataset. Enter 
+%                  a vector of two numbers [epoch_start, epoch_end], or
+%                  'All' to include the entire epoch. Default is 'All'
 % 
 %
 % Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:64) 
@@ -75,7 +80,8 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 options = struct(...
     'eeg_toolbox', 'EEGLAB',...
     'data_type', 'EEG',...
-    'channels', 'All');
+    'channels', 'All',...
+    'timepoints', 'All');
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -103,11 +109,19 @@ clear inp_name
 eeg_toolbox = options.eeg_toolbox;
 data_type = options.data_type;
 channels = options.channels;
+timepoints = options.timepoints;
 clear options;
 
 
-%% Determine data type to use
+%% Load and trim the epoched data
+
 if strcmp(data_type, 'EEG') == 1 % If using EEG data
+    
+    % First check if data has been epoched (contains multiple epochs)
+    if size(EEG.data, 3) == 1
+        error([mfilename ' only accepts epoched data. Please epoch your data before running this function']);
+    end % of if size
+    
     
     if ischar(channels) & strcmp(channels, 'All') == 1 % If selecting all channels
         epoched_data = EEG.data(:, :, :);
@@ -138,12 +152,23 @@ else % If data type not correctly specified
     error('Data type for DDTBOX not correctly specified. Please input either "EEG" or "ICAACT"');
 end % of if strcmp data_type
 
+if ~strcmp(timepoints, 'All') % If user has selected custom time range
+    % Trim to specified epoch start/end timepoints
+    % Find epoch start and end samples (closest timepoints to selected epoch
+    % start/end value)
+    [~, epoch_start_index] = min(abs(EEG.times - timepoints(1)));
+    [~, epoch_end_index] = min(abs(EEG.times - timepoints(2)));
+    fprintf(['\n' mfilename ': Adjusted epoch start/end times are %4.1f to %4.1f ms\n'], EEG.times(epoch_start_index), EEG.times(epoch_end_index));
+    % Trim to selected epoch start/end lengths
+    epoched_data = epoched_data(:, epoch_start_index:epoch_end_index, :);
+end % of if ~strcmp
+
 % Flip first and second dimensions of dataset to conform to DDTBOX format
 epoched_data = permute(epoched_data, [2, 1, 3]);
 
 % Check if save filepath exists, create directory if doesn't exist
 if ~exist(save_directory, 'dir')
-    fprintf(['\n\n Specified save directory does not exist.\n Creating the directory ' save_directory '...\n\n']);
+    fprintf(['\n' mfilename ': Specified save directory does not exist.\n Creating the directory ' save_directory '...\n']);
     mkdir(save_directory);
 end % of if ~exist
 
@@ -160,7 +185,7 @@ eeg_sorted_cond = cell(1, n_conds);
 
 
 % Notify user that we are extracting epoched data
-fprintf(['\n\n Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n\n']);
+fprintf(['\n' mfilename ': Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n']);
 
 
 %% Extract epochs for each condition
@@ -203,6 +228,11 @@ if strcmp(eeg_toolbox, 'EEGLAB') == 1 % If using EEGLAB
                                  eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
 
                              end % of if EEG.reject.rejmanual
+                             
+                         else % If artefact detection has not been performed
+                             
+                             eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                         
                          end % of if ~isempty EEG.reject.rejmanual
                     end % of if bin_index 
                 end % of for event_code_no
@@ -247,6 +277,11 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
                                  eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
 
                              end % of if EEG.reject.rejmanual
+                             
+                          else % If artefact detection has not been performed
+                             
+                             eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                         
                          end % of if ~isempty EEG.reject.rejmanual
                     end % of if bin_index 
                 end % of for event_code_no
@@ -256,7 +291,7 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
     
 else % EEG toolbox name incorrectly specified
     
-    error('EEG toolbox name not correctly specified. Please input either "EEGLAB" or "ERPLAB"');
+    error(['\n' mfilename ':EEG toolbox name not correctly specified. Please input either "EEGLAB" or "ERPLAB"']);
 
 end % of if strcmp eeg_toolbox
 
