@@ -1,4 +1,4 @@
-function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename, eeg_toolbox, data_type)
+function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename, varargin)
 % dd_convert_epoched_eeg_data.m
 %
 % This function extracts EEG data epoched in EEGLAB or
@@ -7,10 +7,9 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %
 %   eeg_sorted_cond{run, condition}(timept, channel, epoch)
 %
-% Epoching and artefact rejection must be completed prior to running this
-% function, either in EEGLAB or ERPLAB. If using EEGLAB, make sure to
-% remove epochs containing artefacts from your data first, by going to
-% Tools -> Reject data epochs -> Reject marked epochs
+% Epoching and artefact rejection should be completed prior to running this
+% function, either in EEGLAB or ERPLAB. This function will automatically
+% exclude any epochs marked for rejection in EEGLAB or ERPLAB.
 %
 % WARNING: This script is a beta version and has not been thoroughly
 % tested across versions of EEGLab/ERPLab and on different EEG data types.
@@ -35,18 +34,23 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %   save_filename       Name of the .mat file containing DDTBOX-compatible
 %                       epoched EEG data.
 %
-%   eeg_toolbox         Name of the toolbox used for epoching EEG data.
-%                       This function accepts either 'EEGLAB' or 'ERPLAB'.
-% 
-%   data_type           Select whether to extract EEG data or independent component activations.
-%                       This function accepts either 'EEG' or 'ICAACT'
-%
 % Optional keyword inputs:
 %
+%   eeg_toolbox    Name of the toolbox used for epoching EEG data.
+%                  This function accepts either 'EEGLAB' or 'ERPLAB'.
+%                  Default is 'EEGLAB'
 % 
-% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'EEGLAB', 'ICAACT')
+%   data_type      Select whether to extract EEG data or independent component activations.
+%                  This function accepts either 'EEG' or 'ICAACT'. 
+%                  Default is 'EEG'
 %
+%   channels       Select channels/IC components to include in the
+%                  DDTBOX-compatible epoched dataset. Enter as a vector of
+%                  channel/component numbers, or 'All' to use all
+%                  channels/components. Default is 'All'.
 % 
+%
+% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:64) 
 %
 %
 % Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
@@ -66,27 +70,84 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+%% Handling variadic inputs
+% Define defaults at the beginning
+options = struct(...
+    'eeg_toolbox', 'EEGLAB',...
+    'data_type', 'EEG',...
+    'channels', 'All');
+
+% Read the acceptable names
+option_names = fieldnames(options);
+
+% Count arguments
+n_args = length(varargin);
+if round(n_args/2) ~= n_args/2
+   error([mfilename ' needs property name/property value pairs'])
+end % of if round
+
+for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+   inp_name = lower(pair{1}); % make case insensitive
+
+   % Overwrite default options
+   if any(strcmp(inp_name,option_names))
+      options.(inp_name) = pair{2};
+   else
+      error('%s is not a recognized parameter name', inp_name)
+   end % of if any
+end % of for pair
+clear pair
+clear inp_name
+
+% Renaming variables for use below:
+eeg_toolbox = options.eeg_toolbox;
+data_type = options.data_type;
+channels = options.channels;
+clear options;
 
 
-% Determine data type to use
+%% Determine data type to use
 if strcmp(data_type, 'EEG') == 1 % If using EEG data
-    epoched_data = EEG.data;
+    
+    if ischar(channels) & strcmp(channels, 'All') == 1 % If selecting all channels
+        epoched_data = EEG.data(:, :, :);
+    else % If only selecting a subset of channels
+        try
+        epoched_data = EEG.data(channels, :, :);
+        catch % If channels not specified properly
+            error('Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset');
+        end % of try/catch
+    end % of if ischar
+    
     n_epochs_total = size(epoched_data, 3);
 elseif strcmp(data_type, 'ICAACT') == 1 % If using independent component activations
-    epoched_data = EEG.icaact;
+    
+    if ischar(channels) & strcmp(channels, 'All') == 1 % If selecting all channels
+        epoched_data = EEG.icaact(:, :, :);
+    else % If only selecting a subset of channels
+        try
+        epoched_data = EEG.icaact(channels, :, :);
+        catch % If channels not specified properly
+            error('Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset');
+        end % of try/catch
+    end % of if ischar
+    
     n_epochs_total = size(epoched_data, 3);
+
 else % If data type not correctly specified
     error('Data type for DDTBOX not correctly specified. Please input either "EEG" or "ICAACT"');
 end % of if strcmp data_type
 
+% Flip first and second dimensions of dataset to conform to DDTBOX format
+epoched_data = permute(epoched_data, [2, 1, 3]);
 
 % Check if save filepath exists, create directory if doesn't exist
 if ~exist(save_directory, 'dir')
-    fprintf(['\n\n Specified save directory does not exist.\n Creating the directory' save_directory '...\n\n']);
+    fprintf(['\n\n Specified save directory does not exist.\n Creating the directory ' save_directory '...\n\n']);
     mkdir(save_directory);
 end % of if ~exist
 
-% Check number of conditions and number of event codes in each condition
+%% Check number of conditions and number of event codes in each condition
 n_conds = length(events_by_cond);
 
 n_eventcodes_by_cond = nan(1, n_conds); % Preallocate
@@ -98,6 +159,11 @@ end % of for cond_no
 eeg_sorted_cond = cell(1, n_conds);
 
 
+% Notify user that we are extracting epoched data
+fprintf(['\n\n Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n\n']);
+
+
+%% Extract epochs for each condition
 % Different methods of extracting epochs are used depending on whether data
 % was epoched in EEGLAB or ERPLAB
 if strcmp(eeg_toolbox, 'EEGLAB') == 1 % If using EEGLAB
@@ -125,7 +191,7 @@ if strcmp(eeg_toolbox, 'EEGLAB') == 1 % If using EEGLAB
                     
                     % Check whether bin index matches a specified event
                     % code corresponding to a condition in DDTBOX analyses
-                    if bin_index == events_by_cond{condition_no}(event_code_no)
+                    if bin_indices(bin_index) == events_by_cond{condition_no}(event_code_no)
                         
                          % Check if artefact rejection has been conducted, and
                          % if the epoch has been marked for rejection
@@ -169,7 +235,7 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
                     
                     % Check whether bin index matches a specified event
                     % code corresponding to a condition in DDTBOX analyses
-                    if bin_index == events_by_cond{condition_no}(event_code_no)
+                    if bin_indices(bin_index) == events_by_cond{condition_no}(event_code_no)
                         
                          % Check if artefact rejection has been conducted, and
                          % if the epoch has been marked for rejection
@@ -195,11 +261,11 @@ else % EEG toolbox name incorrectly specified
 end % of if strcmp eeg_toolbox
 
 
-% Save resulting DDTBOX-compatible epoched EEG data file
+%% Save resulting DDTBOX-compatible epoched EEG data file
 try
-    save([save_directory, save_filename], 'eeg_sorted_cond');
-catch % If user has forgotten forward slash
-    save([save_directory, '/', save_filename], 'eeg_sorted_cond');
-end
+    save([save_directory, '/', save_filename], 'eeg_sorted_cond', '-v7.3');
+catch % If user has added their own forward slash to end of directory path
+    save([save_directory, save_filename], 'eeg_sorted_cond', '-v7.3');
+end % of try/catch
 
 
