@@ -129,7 +129,7 @@ if strcmp(data_type, 'EEG') == 1 % If using EEG data
         try
         epoched_data = EEG.data(channels, :, :);
         catch % If channels not specified properly
-            error('Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset');
+            error([mfilename ': Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset']);
         end % of try/catch
     end % of if ischar
     
@@ -142,14 +142,14 @@ elseif strcmp(data_type, 'ICAACT') == 1 % If using independent component activat
         try
         epoched_data = EEG.icaact(channels, :, :);
         catch % If channels not specified properly
-            error('Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset');
+            error([mfilename ': Channels or IC components not specified correctly. Check that the selected channels/components are present in your dataset']);
         end % of try/catch
     end % of if ischar
     
     n_epochs_total = size(epoched_data, 3);
 
 else % If data type not correctly specified
-    error('Data type for DDTBOX not correctly specified. Please input either "EEG" or "ICAACT"');
+    error([mfilename ': Data type for DDTBOX not correctly specified. Please input either "EEG" or "ICAACT"']);
 end % of if strcmp data_type
 
 if ~strcmp(timepoints, 'All') % If user has selected custom time range
@@ -291,7 +291,7 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
     
 else % EEG toolbox name incorrectly specified
     
-    error(['\n' mfilename ':EEG toolbox name not correctly specified. Please input either "EEGLAB" or "ERPLAB"']);
+    error([mfilename ': EEG toolbox name not correctly specified. Please input either "EEGLAB" or "ERPLAB"']);
 
 end % of if strcmp eeg_toolbox
 
