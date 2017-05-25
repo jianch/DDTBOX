@@ -11,6 +11,9 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 % exclude any epochs marked for rejection in EEGLAB or ERPLAB 
 % (using information in EEG.reject.rejmanual).
 %
+% This function also creates a structure called dataset_info which contains
+% some information about the epoched EEG data.
+%
 % WARNING: This function is in beta and has not been thoroughly
 % tested across versions of EEGLAB/ERPLAB and on different EEG data types.
 % Wherever possible, always check whether this script is properly
@@ -181,6 +184,7 @@ elseif strcmp(data_type, 'ICAACT') == 1 % If using independent component activat
         end % of try/catch
     end % of if ischar
     
+    % Calculate total number of epochs in EEGLAB/ERPLAB dataset
     n_epochs_total = size(epoched_data, 3);
     
 else % If data type not correctly specified
@@ -214,6 +218,7 @@ if ~exist(save_directory, 'dir')
 end % of if ~exist
 
 
+
 %% Check number of conditions/runs and number of event codes in each condition
 n_conds = size(events_by_cond, 2);
 n_runs = size(events_by_cond, 1);
@@ -233,9 +238,16 @@ if create_svr_labels
     SVR_labels = cell(n_runs, n_conds);
 end % of if create_svr_labels
 
+%% Copy dataset information to dataset_information structure
+dataset_info.channel_indices = channels;
+dataset_info.epoch_startend_ms = [EEG.times(epoch_start_index), EEG.times(epoch_end_index)];
+dataset_info.sampling_rate_hz = EEG.srate;
+dataset_info.times = EEG.times(epoch_start_index:epoch_end_index);
+dataset_info.n_conds = n_conds;
+dataset_info.n_runs_per_cond = n_runs;
+
 % Notify user that we are extracting epoched data
 fprintf(['\n' mfilename ': Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n']);
-
 
 %% Extract epochs for each condition
 % Different methods of extracting epochs are used depending on whether data
@@ -379,14 +391,14 @@ end % of if strcmp eeg_toolbox
 
 %% Save resulting DDTBOX-compatible epoched EEG data file
 try
-    save([save_directory, '/', save_filename], 'eeg_sorted_cond', '-v7.3');
+    save([save_directory, '/', save_filename], 'eeg_sorted_cond', 'dataset_info', '-v7.3');
     
     if create_svr_labels % If SVR labels were created
         save([save_directory, '/', save_filename, '_regress_sorted_data'], 'SVR_labels', '-v7.3');
     end % of if ~isempty
     
 catch % If user has added their own forward slash to end of directory path
-    save([save_directory, save_filename], 'eeg_sorted_cond', '-v7.3');
+    save([save_directory, save_filename], 'eeg_sorted_cond', 'dataset_info', '-v7.3');
     
     if create_svr_labels % If SVR labels were created
         save([save_directory, save_filename, '_regress_sorted_data'], 'SVR_labels', '-v7.3');
