@@ -1,32 +1,32 @@
 function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename, varargin)
-% dd_convert_epoched_eeg_data.m
 %
 % This function extracts EEG data epoched in EEGLAB or
-% ERPLAB for use in DDTBOX, and saves the DDTBOX-compatible EEG data in the
+% ERPLAB for use with DDTBOX, and saves the DDTBOX-compatible epoched data in the
 % following array:
 %
 %   eeg_sorted_cond{run, condition}(timept, channel, epoch)
 %
-% Epoching and artefact rejection should be completed prior to running this
+% Epoching and artefact detection/rejection should be completed prior to running this
 % function, either in EEGLAB or ERPLAB. This function will automatically
-% exclude any epochs marked for rejection in EEGLAB or ERPLAB.
+% exclude any epochs marked for rejection in EEGLAB or ERPLAB 
+% (using information in the matrix EEG.reject.rejmanual).
 %
-% WARNING: This script is a beta version and has not been thoroughly
-% tested across versions of EEGLab/ERPLab and on different EEG data types.
+% WARNING: This script is in beta and has not been thoroughly
+% tested across versions of EEGLAB/ERPLAB and on different EEG data types.
 % Wherever possible, always check whether this script is properly
 % extracting the correct epochs by manually extracting epoched data from 
-% the EEG structure in EEGLab. The code in this function should give you an
-% idea of how to do this.
+% the EEG structure in EEGLab.
 %
 %
 % Inputs:
 %   
-%   EEG     Structure containing EEG data and epoch information, created
+%   EEG     Structure containing EEG data and epoch information, created in
 %           EEGLAB.
 %
 %   events_by_cond      Array containing event codes (if using EEGLAB) or bin
 %                       indices (if using ERPLAB) for epochs in each
-%                       condition for MVPA.
+%                       condition/run used for MVPA. Organised as follows:
+%                       events_by_cond{run, condition}([event_code_1, event_code_2)
 %
 %   save_directory       Filepath for saving the resulting DDTBOX-compatible
 %                       .mat file containing epoched EEG data.
@@ -49,13 +49,14 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %                  channel/component numbers, or 'All' to use all
 %                  channels/components. Default is 'All'.
 %
-%   timepoints     Select timepoints (in ms relative to event onset) to
-%                  include in the DDTBOX-compatible epoched dataset. Enter 
+%   timepoints     Select the start and end timepoints (in ms relative to event onset) 
+%                  for epochs in the DDTBOX-compatible dataset. Enter
 %                  a vector of two numbers [epoch_start, epoch_end], or
-%                  'All' to include the entire epoch. Default is 'All'
+%                  'All' to include the entire epoch as defined in EEGLAB/ERPLAB.
+%                  Default is 'All'
 % 
 %
-% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:64) 
+% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:10, 'timepoints', [-100, 500]) 
 %
 %
 % Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
@@ -74,6 +75,7 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 %% Handling variadic inputs
 % Define defaults at the beginning
@@ -172,16 +174,19 @@ if ~exist(save_directory, 'dir')
     mkdir(save_directory);
 end % of if ~exist
 
-%% Check number of conditions and number of event codes in each condition
-n_conds = length(events_by_cond);
+%% Check number of conditions/runs and number of event codes in each condition
+n_conds = size(events_by_cond, 2);
+n_runs = size(events_by_cond, 1);
+n_eventcodes_by_cond = nan(n_runs, n_conds); % Preallocate
 
-n_eventcodes_by_cond = nan(1, n_conds); % Preallocate
-for cond_no = 1:n_conds
-    n_eventcodes_by_cond(cond_no) = length(events_by_cond{cond_no});
-end % of for cond_no
+for run_no = 1:n_runs
+    for cond_no = 1:n_conds
+        n_eventcodes_by_cond(run_no, cond_no) = length(events_by_cond{run_no, cond_no});
+    end % of for cond_no
+end % of for run_no
 
 % Create empty eeg_sorted_cond cell array
-eeg_sorted_cond = cell(1, n_conds);
+eeg_sorted_cond = cell(n_runs, n_conds);
 
 
 % Notify user that we are extracting epoched data
@@ -210,41 +215,36 @@ if strcmp(eeg_toolbox, 'EEGLAB') == 1 % If using EEGLAB
         
         for bin_index = 1:length(bin_indices) % For each bin index in the epoch
         
-            % Cycle through each condition and look for matching event codes
-            for condition_no = 1:n_conds
-                for event_code_no = 1:n_eventcodes_by_cond(condition_no)
-                    
-                    % Check whether bin index matches a specified event
-                    % code corresponding to a condition in DDTBOX analyses
-                    if bin_indices(bin_index) == events_by_cond{condition_no}(event_code_no)
-                        
-                         % Check if artefact rejection has been conducted, and
-                         % if the epoch has been marked for rejection
-                         % using artefact detection routines
-                         if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
-                             if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
+            % Cycle through each condition/run combination and look for matching event codes
+            for run_no = 1:n_runs
+                for condition_no = 1:n_conds
+                    for event_code_no = 1:n_eventcodes_by_cond(run_no, condition_no)
 
-                                 % Copy the epoch into the eeg_sorted_cond cell array
-                                 eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                        % Check whether bin index matches a specified event
+                        % code corresponding to a condition in DDTBOX analyses
+                        if bin_indices(bin_index) == events_by_cond{run_no, condition_no}(event_code_no)
 
-                             end % of if EEG.reject.rejmanual
-                             
-                         else % If artefact detection has not been performed
-                             
-                             eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
-                         
-                         end % of if ~isempty EEG.reject.rejmanual
-                    end % of if bin_index 
-                end % of for event_code_no
-            end % of for condition_no 
+                             % Check if artefact rejection has been conducted, and
+                             % if the epoch has been marked for rejection
+                             % using artefact detection routines
+                             if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
+                                 if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
+
+                                     % Copy the epoch into the eeg_sorted_cond cell array
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+
+                                 end % of if EEG.reject.rejmanual
+
+                             else % If artefact detection has not been performed
+
+                                 eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+
+                             end % of if ~isempty EEG.reject.rejmanual
+                        end % of if bin_index 
+                    end % of for event_code_no
+                end % of for condition_no 
+            end % of for run_no
         end % of for bin_index
-    
-    
-    % Note: EEGLAB uses EEG.reject.rejmanual like ERPLAB so we can do
-    % automatic checking like in ERPLAB to automatically detect and exclude
-    % bad epochs.
-    
-    
     end % of for epoch_no
     
     
@@ -259,33 +259,35 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
         
         for bin_index = 1:length(bin_indices) % For each bin index in the epoch
         
-            % Cycle through each condition and look for matching event codes
-            for condition_no = 1:n_conds
-                for event_code_no = 1:n_eventcodes_by_cond(condition_no)
-                    
-                    % Check whether bin index matches a specified event
-                    % code corresponding to a condition in DDTBOX analyses
-                    if bin_indices(bin_index) == events_by_cond{condition_no}(event_code_no)
-                        
-                         % Check if artefact rejection has been conducted, and
-                         % if the epoch has been marked for rejection
-                         % using artefact detection routines
-                         if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
-                             if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
+            % Cycle through each condition/run and look for matching event codes
+            for run_no = 1:n_runs
+                for condition_no = 1:n_conds
+                    for event_code_no = 1:n_eventcodes_by_cond(run_no, condition_no)
 
-                                 % Copy the epoch into the eeg_sorted_cond cell array
-                                 eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                        % Check whether bin index matches a specified event
+                        % code corresponding to a condition in DDTBOX analyses
+                        if bin_indices(bin_index) == events_by_cond{run_no, condition_no}(event_code_no)
 
-                             end % of if EEG.reject.rejmanual
-                             
-                          else % If artefact detection has not been performed
-                             
-                             eeg_sorted_cond{1, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
-                         
-                         end % of if ~isempty EEG.reject.rejmanual
-                    end % of if bin_index 
-                end % of for event_code_no
-            end % of for condition_no 
+                             % Check if artefact rejection has been conducted, and
+                             % if the epoch has been marked for rejection
+                             % using artefact detection routines
+                             if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
+                                 if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
+
+                                     % Copy the epoch into the eeg_sorted_cond cell array
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+
+                                 end % of if EEG.reject.rejmanual
+
+                              else % If artefact detection has not been performed
+
+                                 eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+
+                             end % of if ~isempty EEG.reject.rejmanual
+                        end % of if bin_index 
+                    end % of for event_code_no
+                end % of for condition_no 
+            end % of for run_no
         end % of for bin_index
     end % of for epoch_no
     
