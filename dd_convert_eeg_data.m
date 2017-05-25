@@ -4,14 +4,14 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 % ERPLAB for use with DDTBOX, and saves the DDTBOX-compatible epoched data in the
 % following array:
 %
-%   eeg_sorted_cond{run, condition}(timept, channel, epoch)
+%   eeg_sorted_cond{run, condition}(timepoint, channel, epoch)
 %
-% Epoching and artefact detection/rejection should be completed prior to running this
+% Epoching and artefact detection should be completed prior to running this
 % function, either in EEGLAB or ERPLAB. This function will automatically
 % exclude any epochs marked for rejection in EEGLAB or ERPLAB 
-% (using information in the matrix EEG.reject.rejmanual).
+% (using information in EEG.reject.rejmanual).
 %
-% WARNING: This script is in beta and has not been thoroughly
+% WARNING: This function is in beta and has not been thoroughly
 % tested across versions of EEGLAB/ERPLAB and on different EEG data types.
 % Wherever possible, always check whether this script is properly
 % extracting the correct epochs by manually extracting epoched data from 
@@ -54,9 +54,20 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %                  a vector of two numbers [epoch_start, epoch_end], or
 %                  'All' to include the entire epoch as defined in EEGLAB/ERPLAB.
 %                  Default is 'All'
+%
+%   svr_labels_vector    A vector of condition labels for each epoch, used for
+%                        support vector regression (SVR) analyses. SVR labels
+%                        will be stored in the same format as the epoched data:
+%                        SVR_labels{run, condition}(epoch)
+%                        Each entry in the svr_labels vector must correspond to 
+%                        the same epoch number in the EEG.epoch structure. If nothing
+%                        is entered then this function will not create SVR labels.
+%                        These labels will be saved in a separate .mat file with
+%                        "_regress_sorted_data" appended to the name of the epoched 
+%                        dataset file name.
 % 
 %
-% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1.mat', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:10, 'timepoints', [-100, 500]) 
+% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:10, 'timepoints', [-100, 500], 'svr_labels_vector', svr_labels_vector) 
 %
 %
 % Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
@@ -83,7 +94,8 @@ options = struct(...
     'eeg_toolbox', 'EEGLAB',...
     'data_type', 'EEG',...
     'channels', 'All',...
-    'timepoints', 'All');
+    'timepoints', 'All', ...
+    'svr_labels_vector', []);
 
 % Read the acceptable names
 option_names = fieldnames(options);
@@ -112,18 +124,38 @@ eeg_toolbox = options.eeg_toolbox;
 data_type = options.data_type;
 channels = options.channels;
 timepoints = options.timepoints;
+svr_labels_vector = options.svr_labels_vector;
 clear options;
 
 
 %% Load and trim the epoched data
 
+% Check whether user has chosen to create SVR labels
+if ~isempty(svr_labels_vector)
+    create_svr_labels = 1;
+else
+    create_svr_labels = 0;
+end % of ~isempty svr_labels_vector
+
+% Check if svr labels is a vector
+if create_svr_labels
+    if ndims(svr_labels_vector) > 2;
+        error([mfilename ': svr_labels_vector has too many dimensions. svr_labels_vector must be input as a vector'])
+    end % of if ndims
+
+    if size(svr_labels_vector, 1) > 1 && size(svr_labels_vector, 2) > 1
+        error([mfilename ': svr_labels_vector was input as a matrix. svr_labels_vector must be input as a vector'])
+    end % of if size
+end % of if create_svr_labels
+
+
+% Arranging the epoched data
 if strcmp(data_type, 'EEG') == 1 % If using EEG data
     
     % First check if data has been epoched (contains multiple epochs)
     if size(EEG.data, 3) == 1
         error([mfilename ' only accepts epoched data. Please epoch your data before running this function']);
     end % of if size
-    
     
     if ischar(channels) & strcmp(channels, 'All') == 1 % If selecting all channels
         epoched_data = EEG.data(:, :, :);
@@ -136,6 +168,7 @@ if strcmp(data_type, 'EEG') == 1 % If using EEG data
     end % of if ischar
     
     n_epochs_total = size(epoched_data, 3);
+    
 elseif strcmp(data_type, 'ICAACT') == 1 % If using independent component activations
     
     if ischar(channels) & strcmp(channels, 'All') == 1 % If selecting all channels
@@ -149,7 +182,7 @@ elseif strcmp(data_type, 'ICAACT') == 1 % If using independent component activat
     end % of if ischar
     
     n_epochs_total = size(epoched_data, 3);
-
+    
 else % If data type not correctly specified
     error([mfilename ': Data type for DDTBOX not correctly specified. Please input either "EEG" or "ICAACT"']);
 end % of if strcmp data_type
@@ -168,11 +201,18 @@ end % of if ~strcmp
 % Flip first and second dimensions of dataset to conform to DDTBOX format
 epoched_data = permute(epoched_data, [2, 1, 3]);
 
+
+% Check if the length of the SVR labels vector matches the number of epochs
+if create_svr_labels && length(svr_labels_vector) ~= n_epochs_total
+    error([mfilename ': Length of svr_labels_vector vector does not match the number of epochs in the dataset']);
+end % of if create_svr_labels
+
 % Check if save filepath exists, create directory if doesn't exist
 if ~exist(save_directory, 'dir')
     fprintf(['\n' mfilename ': Specified save directory does not exist.\n Creating the directory ' save_directory '...\n']);
     mkdir(save_directory);
 end % of if ~exist
+
 
 %% Check number of conditions/runs and number of event codes in each condition
 n_conds = size(events_by_cond, 2);
@@ -188,6 +228,10 @@ end % of for run_no
 % Create empty eeg_sorted_cond cell array
 eeg_sorted_cond = cell(n_runs, n_conds);
 
+% Create set of SVR labels
+if create_svr_labels
+    SVR_labels = cell(n_runs, n_conds);
+end % of if create_svr_labels
 
 % Notify user that we are extracting epoched data
 fprintf(['\n' mfilename ': Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n']);
@@ -230,14 +274,32 @@ if strcmp(eeg_toolbox, 'EEGLAB') == 1 % If using EEGLAB
                              if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
                                  if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
 
-                                     % Copy the epoch into the eeg_sorted_cond cell array
-                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                     % Check whether this is the first
+                                     % entry for this condition/run
+                                     if isempty(eeg_sorted_cond{run_no, condition_no});
+                                         eeg_sorted_cond{run_no, condition_no}(:,:,1) = epoched_data(:,:,epoch_no);
+                                     else
+                                         % Copy the epoch into the eeg_sorted_cond cell array
+                                         eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                     end % of if isempty
+                                     if create_svr_labels % If creating SVR labels
+                                         SVR_labels{run_no, condition_no}(end + 1, 1) = svr_labels_vector(epoch_no);
+                                     end % of if create_svr_labels
 
                                  end % of if EEG.reject.rejmanual
 
                              else % If artefact detection has not been performed
 
-                                 eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                 if isempty(eeg_sorted_cond{run_no, condition_no});
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,1) = epoched_data(:,:,epoch_no);
+                                 else
+                                     % Copy the epoch into the eeg_sorted_cond cell array
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                 end % of if isempty
+                                 
+                                 if create_svr_labels % If creating SVR labels
+                                     SVR_labels{run_no, condition_no}(end + 1, 1) = svr_labels_vector(epoch_no);
+                                 end % of if create_svr_labels
 
                              end % of if ~isempty EEG.reject.rejmanual
                         end % of if bin_index 
@@ -274,15 +336,32 @@ elseif strcmp(eeg_toolbox, 'ERPLAB') == 1 % If using ERPLab
                              if ~isempty(EEG.reject.rejmanual); % If artefact detection has been conducted
                                  if EEG.reject.rejmanual(1, epoch_no) == 0 % If not marked for rejection
 
-                                     % Copy the epoch into the eeg_sorted_cond cell array
-                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
-
+                                     if isempty(eeg_sorted_cond{run_no, condition_no});
+                                         eeg_sorted_cond{run_no, condition_no}(:,:,1) = epoched_data(:,:,epoch_no);
+                                     else
+                                         % Copy the epoch into the eeg_sorted_cond cell array
+                                         eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                     end % of if isempty
+                                     
+                                 if create_svr_labels % If creating SVR labels
+                                     SVR_labels{run_no, condition_no}(end + 1, 1) = svr_labels_vector(epoch_no);
+                                 end % of if create_svr_labels
+                                 
                                  end % of if EEG.reject.rejmanual
 
                               else % If artefact detection has not been performed
 
-                                 eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
-
+                                  if isempty(eeg_sorted_cond{run_no, condition_no});
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,1) = epoched_data(:,:,epoch_no);
+                                 else
+                                     % Copy the epoch into the eeg_sorted_cond cell array
+                                     eeg_sorted_cond{run_no, condition_no}(:,:,end + 1) = epoched_data(:,:,epoch_no);
+                                 end % of if isempty
+                                     
+                                 if create_svr_labels % If creating SVR labels
+                                     SVR_labels{run_no, condition_no}(end + 1, 1) = svr_labels_vector(epoch_no);
+                                 end % of if create_svr_labels
+                                 
                              end % of if ~isempty EEG.reject.rejmanual
                         end % of if bin_index 
                     end % of for event_code_no
@@ -301,8 +380,18 @@ end % of if strcmp eeg_toolbox
 %% Save resulting DDTBOX-compatible epoched EEG data file
 try
     save([save_directory, '/', save_filename], 'eeg_sorted_cond', '-v7.3');
+    
+    if create_svr_labels % If SVR labels were created
+        save([save_directory, '/', save_filename, '_regress_sorted_data'], 'SVR_labels', '-v7.3');
+    end % of if ~isempty
+    
 catch % If user has added their own forward slash to end of directory path
     save([save_directory, save_filename], 'eeg_sorted_cond', '-v7.3');
+    
+    if create_svr_labels % If SVR labels were created
+        save([save_directory, save_filename, '_regress_sorted_data'], 'SVR_labels', '-v7.3');
+    end % of if ~isempty
+    
 end % of try/catch
 
 
