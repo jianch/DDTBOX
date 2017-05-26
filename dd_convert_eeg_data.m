@@ -70,7 +70,7 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %                        dataset file name.
 % 
 %
-% Example:  dd_convert_eeg_data(EEG, 'DDTBOX-Data/ID1/', 'ID1', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:10, 'timepoints', [-100, 500], 'svr_labels_vector', svr_labels_vector) 
+% Example:  dd_convert_eeg_data(EEG, events_by_cond, 'DDTBOX-Data/ID1/', 'ID1', 'eeg_toolbox', 'EEGLAB', 'data_type', 'ICAACT', 'channels', 1:10, 'timepoints', [-100, 500], 'svr_labels_vector', svr_labels_vector) 
 %
 %
 % Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
