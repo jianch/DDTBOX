@@ -6,6 +6,14 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %
 %   eeg_sorted_cond{run, condition}(timepoint, channel, epoch)
 %
+% This function also can create SVR condition labels corresponding to each
+% epoch in the dataset, save in the format:
+%
+%   SVR_labels{run, condition}(epoch, 1)
+%
+% If SVR labels have been defined then data/labels will be pooled
+% across runs to produce one cell entry for each column.
+%
 % Epoching and artefact detection should be completed prior to running this
 % function, either in EEGLAB or ERPLAB. This function will automatically
 % exclude any epochs marked for rejection in EEGLAB or ERPLAB 
@@ -61,7 +69,7 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %   svr_labels_vector    A vector of condition labels for each epoch, used for
 %                        support vector regression (SVR) analyses. SVR labels
 %                        will be stored in the same format as the epoched data:
-%                        SVR_labels{run, condition}(epoch)
+%                        SVR_labels{run, condition}(epoch, 1)
 %                        Each entry in the svr_labels vector must correspond to 
 %                        the same epoch number in the EEG.epoch structure. If nothing
 %                        is entered then this function will not create SVR labels.
@@ -238,13 +246,7 @@ if create_svr_labels
     SVR_labels = cell(n_runs, n_conds);
 end % of if create_svr_labels
 
-%% Copy dataset information to dataset_information structure
-dataset_info.channel_indices = channels;
-dataset_info.epoch_startend_ms = [EEG.times(epoch_start_index), EEG.times(epoch_end_index)];
-dataset_info.sampling_rate_hz = EEG.srate;
-dataset_info.times = EEG.times(epoch_start_index:epoch_end_index);
-dataset_info.n_conds = n_conds;
-dataset_info.n_runs_per_cond = n_runs;
+
 
 % Notify user that we are extracting epoched data
 fprintf(['\n' mfilename ': Extracting epoched EEG data and saving in a DDTBOX-compatible format...\n']);
@@ -389,6 +391,48 @@ else % EEG toolbox name incorrectly specified
 end % of if strcmp eeg_toolbox
 
 
+%% If SVR labels were defined, then pool data across runs for eeg data SVR labels arrays
+
+if create_svr_labels == 1 && n_runs > 1 % If creating SVR labels and more than one block/run defined
+    
+    % Clear/preallocate
+    temp_data = cell(1, n_conds);
+    temp_labels = cell(1, n_conds);
+    
+    for cond_no = 1:n_conds
+        for run_no = 1:n_runs
+            
+            n_epochs_in_run = size(eeg_sorted_cond{run_no, cond_no}, 3);
+            
+            if isempty(temp_data{1, cond_no}) % If no epochs have been added to the current condition cell
+                temp_data{1, cond_no}(:, :, 1 : n_epochs_in_run) = eeg_sorted_cond{run_no, cond_no}(:,:,:);
+                temp_labels{1, cond_no}(1 : n_epochs_in_run, 1)  = SVR_labels{run_no, cond_no};
+            
+            else
+                
+                temp_data{1, cond_no}(:,:,end + 1 : end + n_epochs_in_run) = eeg_sorted_cond{run_no, cond_no}(:,:,:);
+                temp_labels{1, cond_no}(end + 1 : end + n_epochs_in_run, 1)  = SVR_labels{run_no, cond_no};
+            
+            end % of if isempty
+        end % of for run_no   
+    end % of for cond_no
+    
+    eeg_sorted_cond = temp_data;
+    SVR_labels = temp_labels;
+    fprintf(['\n' mfilename ': EEG data and SVR labels were pooled across runs. \nNew number of runs = 1 \n']);
+    n_runs = 1;
+    
+end % of if create_svr_labels && n_runs
+
+
+%% Copy dataset information to dataset_information structure
+dataset_info.channel_indices = channels;
+dataset_info.epoch_startend_ms = [EEG.times(epoch_start_index), EEG.times(epoch_end_index)];
+dataset_info.sampling_rate_hz = EEG.srate;
+dataset_info.times = EEG.times(epoch_start_index:epoch_end_index);
+dataset_info.n_conds = n_conds;
+dataset_info.n_runs_per_cond = n_runs;
+
 %% Save resulting DDTBOX-compatible epoched EEG data file
 try
     save([save_directory, '/', save_filename], 'eeg_sorted_cond', 'dataset_info', '-v7.3');
@@ -405,5 +449,3 @@ catch % If user has added their own forward slash to end of directory path
     end % of if ~isempty
     
 end % of try/catch
-
-
