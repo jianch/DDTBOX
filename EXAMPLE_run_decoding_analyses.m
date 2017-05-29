@@ -66,8 +66,6 @@ data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use
 %% EEG dataset information
 
 nchannels = 64; % number of channels
-channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
-channellocs = [bdir, 'locations/']; % Path of directory containing channel information file
 sampling_rate = 1000; % Data sampling rate in Hz
 pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
 
