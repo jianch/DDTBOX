@@ -221,6 +221,10 @@ if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.plot_robust_trimming, 1);
     ANALYSIS.RES.trimmean_subj_acc(:,:) = trimmed_M'; clear trimmed_M;
     
+    % Also calculate median so user can plot this later
+    median_M(:,:) = median(ANALYSIS.RES.all_subj_acc, 1);
+    ANALYSIS.RES.median_subj_acc(:,:) = median_M'; clear median_M;
+    
 elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
     
     median_M(:,:) = median(ANALYSIS.RES.all_subj_acc, 1);
