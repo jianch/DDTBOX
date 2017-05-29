@@ -36,10 +36,19 @@ function [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS)
 %__________________________________________________________________________
 
 % Prompt user to input time-steps used in feature weights analysis
-fprintf('\n');
-FW_ANALYSIS.fw_analyse = input('Enter the time-steps for statistical testing of feature weights (e.g. [4 6 7 10]): ');
-FW_ANALYSIS.fw_disp = input('Enter the consecutive time steps for which a feature weight matrix should be displayed (e.g. [4:12]): ');
+if isempty(ANALYSIS.fw.steps_for_testing)
+    fprintf('\n');
+    FW_ANALYSIS.steps_for_testing = input('Enter the time-steps for statistical testing of feature weights (e.g. [4 6 7 10]): ');
+else % If user has already specified
+    FW_ANALYSIS.steps_for_testing = ANALYSIS.fw.steps_for_testing;
+end % of if isempty
 
+if isempty(ANALYSIS.fw.disp_steps)
+    fprintf('\n');
+    FW_ANALYSIS.disp_steps = input('Enter the consecutive time steps for which a feature weight matrix should be displayed (e.g. [4:12]): ');
+else % If user has already specified
+    FW_ANALYSIS.disp_steps = ANALYSIS.fw.disp_steps;
+end % of if isempty
 
 %% load in channel information %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %__________________________________________________________________________
@@ -192,13 +201,13 @@ FW_ANALYSIS.AVERAGE_Z = mean_fw_all_z;
 fprintf('Z-transformed absolute feature weights averaged across participants. \n')
 
 % analysis time windows for matrix display
-FW_ANALYSIS.AVERAGE_Z_DISP = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.fw_disp(1):FW_ANALYSIS.fw_disp(end),:);
+FW_ANALYSIS.AVERAGE_Z_DISP = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.disp_steps(1):FW_ANALYSIS.disp_steps(end),:);
 
 fprintf('Z-transformed absolute feature weights selected from specified analysis time-steps for display. \n')
 
 % analysis time windows for heat map displays
-for stat_step = 1:size(FW_ANALYSIS.fw_analyse,2)
-    FW_ANALYSIS.AVERAGE_Z_HEATS(stat_step,:) = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.fw_disp(stat_step),:);
+for stat_step = 1:size(FW_ANALYSIS.steps_for_testing,2)
+    FW_ANALYSIS.AVERAGE_Z_HEATS(stat_step,:) = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.disp_steps(stat_step),:);
 end
 
 fprintf('Z-transformed absolute averaged feature weights selected from specified analysis time-steps for statstical tests. \n')
@@ -207,10 +216,10 @@ fprintf('Z-transformed absolute averaged feature weights selected from specified
 %__________________________________________________________________________
 
 sum_fw = [];
-for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
     % Extract absolute and Z-scored feature weights at each analysis step
-    temp_fw_select(:,:) = FW_ANALYSIS.ALL_ABS(:,FW_ANALYSIS.fw_analyse(steps),:);
-    temp_fw_select_z(:,:) = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:);
+    temp_fw_select(:,:) = FW_ANALYSIS.ALL_ABS(:,FW_ANALYSIS.steps_for_testing(steps),:);
+    temp_fw_select_z(:,:) = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.steps_for_testing(steps),:);
     
     % Preallocate the feature weight sum matrices for the first step
     if steps == 1
@@ -226,8 +235,8 @@ for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
     
 end
 % Average absolute and Z-scored feature weights
-FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS = sum_fw ./ size(FW_ANALYSIS.fw_analyse,2);
-FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z = sum_fw_z ./ size(FW_ANALYSIS.fw_analyse,2);
+FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS = sum_fw ./ size(FW_ANALYSIS.steps_for_testing,2);
+FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z = sum_fw_z ./ size(FW_ANALYSIS.steps_for_testing,2);
 
 FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS_MEAN = mean(FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS,1);
 FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z_MEAN = mean(FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z,1);
@@ -246,11 +255,11 @@ for p_corr = 1:2 % run for corrected/uncorrected
     if p_corr == 1 % Uncorrected for multiple comparisons
         p_crit = ANALYSIS.pstats; % Uncorrected alpha level
 
-        for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+        for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
             
             for channel = 1:size(FW_ANALYSIS.ALL_Z,3)
                 
-                temp_z = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),channel);
+                temp_z = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.steps_for_testing(steps),channel);
 
                 % Run a one-sample t-test on Z-scored feature weights
                 
@@ -274,7 +283,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
             % Copy t-test results into FW_ANALYSIS structure
             FW_ANALYSIS.p_matrix_z_uncorr{steps} = p_matrix_z; 
-            FW_ANALYSIS.p_matrix_z_uncorr_label = FW_ANALYSIS.fw_analyse;
+            FW_ANALYSIS.p_matrix_z_uncorr_label = FW_ANALYSIS.steps_for_testing;
             FW_ANALYSIS.h_matrix_z_uncorr{steps} = h_matrix_z;
             clear p_matrix_z; clear h_matrix_z;
         
@@ -285,7 +294,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
             switch ANALYSIS.fw.multcompstats % Selects a multiple comparisons correction             
                 case 1 % Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
                         [FW_MCC_Results] = multcomp_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.fw.pstats);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
@@ -293,7 +302,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
             
                 case 2 % Holm-Bonferroni correction
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
                         [FW_MCC_Results] = multcomp_holm_bonferroni(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.fw.pstats);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
@@ -301,8 +310,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 3 % strong FWER control permutation test
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
-                        real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
+                        real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.steps_for_testing(steps),:); % Results matrix (subjects x channels)
                         real_decoding_fw = squeeze(real_decoding_fw); % Remove extra dimension defined by step number
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
                         [FW_MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.fw.pstats, 'iterations', ANALYSIS.fw.n_iterations, 'use_yuen', ANALYSIS.fw.use_robust, 'percent', ANALYSIS.fw.trimming, 'tail', ANALYSIS.fw.ttest_tail);
@@ -318,7 +327,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     % posititons).
                     fprintf('Cluster-based correction not currently available... No correction was performed');
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label;
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; 
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_ANALYSIS.h_matrix_z_uncorr{steps};
                     end % steps
@@ -330,8 +339,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 case 5 % Generalised FWER control procedure
                     
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
-                        real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.fw_analyse(steps),:); % Results matrix (subjects x channels)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
+                        real_decoding_fw = FW_ANALYSIS.ALL_Z(:,FW_ANALYSIS.steps_for_testing(steps),:); % Results matrix (subjects x channels)
                         real_decoding_fw = squeeze(real_decoding_fw); % Remove extra dimension defined by step number
                         fw_chance_level = zeros(size(real_decoding_fw, 1), size(real_decoding_fw, 2)); % Matrix of chance level values (zeros)
                         [FW_MCC_Results] = multcomp_ktms(real_decoding_fw, fw_chance_level, 'alpha', ANALYSIS.fw.pstats, 'iterations', ANALYSIS.fw.n_iterations, 'ktms_u', ANALYSIS.fw.ktms_u, 'use_yuen', ANALYSIS.fw.use_robust, 'percent', ANALYSIS.fw.trimming, 'tail', ANALYSIS.fw.ttest_tail);
@@ -343,7 +352,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 6 % Benjamini-Hochberg false discovery rate control
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
                         [FW_MCC_Results] = multcomp_fdr_bh(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.fw.pstats); 
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
@@ -351,7 +360,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 7 % Benjamini-Krieger-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
                         FW_MCC_Results = multcomp_fdr_bky(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.fw.pstats);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
@@ -359,7 +368,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                       
                 case 8 % Benjamini-Yekutieli false discovery rate control
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
-                    for steps = 1:size(FW_ANALYSIS.fw_analyse,2)
+                    for steps = 1:size(FW_ANALYSIS.steps_for_testing,2)
                         FW_ANALYSIS.p_matrix_z_corr{steps} = FW_ANALYSIS.p_matrix_z_uncorr{steps}; % Copy same p-values as uncorrected
                         FW_MCC_Results = multcomp_fdr_by(FW_ANALYSIS.p_matrix_z_uncorr{steps}, 'alpha', ANALYSIS.fw.pstats);
                         FW_ANALYSIS.h_matrix_z_corr{steps} = FW_MCC_Results.corrected_h;
@@ -400,7 +409,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
 
         % Copy t-test results into FW_ANALYSIS structure
         FW_ANALYSIS.p_matrix_z_averagestep_uncorr = p_matrix_z; 
-        FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label = FW_ANALYSIS.fw_analyse;
+        FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label = FW_ANALYSIS.steps_for_testing;
         FW_ANALYSIS.h_matrix_z_averagestep_uncorr = h_matrix_z;
         clear p_matrix_z; clear h_matrix_z;
         

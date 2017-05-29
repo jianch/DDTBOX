@@ -112,8 +112,10 @@ for s = 1:ANALYSIS.nsbj
             fprintf('\n');
             fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2), cfg.window_width_ms);
             ANALYSIS.firststep = 1;
-            ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
-
+            
+            if isempty(ANALYSIS.laststep) % If last time step has not been defined by user
+                ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
+            end % of if isempty
         end
     
         % shift everything back by step-width, as first bin gets label=0ms

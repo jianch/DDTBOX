@@ -71,7 +71,7 @@ if ANALYSIS.fw.display_matrix == 1
     ylabel('Channel','FontSize',12,'FontWeight','b');
     
     set(gca,'Xtick',[1:size(FW_ANALYSIS.AVERAGE_Z_DISP,1)]);
-    set(gca,'XTickLabel',(FW_ANALYSIS.fw_disp));
+    set(gca,'XTickLabel',(FW_ANALYSIS.disp_steps));
     xlabel('Analysis time-step','FontSize',12,'FontWeight','b');
     
     title('Z-standardised absolute feature weights','FontSize',14,'FontWeight','b');
@@ -151,7 +151,7 @@ if ANALYSIS.fw.display_all_zmaps == 1
             FW_ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet'); % or: [MIN MAX]
         
         hold on;
-        title(['Z-standardised absolute feature weights time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
+        title(['Z-standardised absolute feature weights time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
     
         clear to_plot;
         
@@ -174,7 +174,7 @@ if ANALYSIS.fw.display_all_uncorr_thresh_maps == 1
         FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
     
         hold on;
-        title(['Feature weights uncorrected threshold-map for time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
+        title(['Feature weights uncorrected threshold-map for time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
     
         clear to_plot;
         
@@ -197,7 +197,7 @@ if ANALYSIS.fw.display_all_corr_thresh_maps == 1
         FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
     
         hold on;
-        title(['Feature weights corrected threshold-map for time-step ' num2str(FW_ANALYSIS.fw_analyse(steps))],'FontSize',10,'FontWeight','b');
+        title(['Feature weights corrected threshold-map for time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
     
         clear to_plot;
         

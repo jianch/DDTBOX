@@ -1,8 +1,8 @@
 function display_group_results_erp(ANALYSIS)
 %
 % This script is will plot results of group-level analyses.  
-
-%% This function is called by analyse_decoding_erp.
+%
+% This function is called by analyse_decoding_erp.
 %
 %
 % Inputs:
@@ -26,10 +26,6 @@ function display_group_results_erp(ANALYSIS)
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-%% SET GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
 
 
 %% PLOTTING PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,7 +98,7 @@ PLOT.xlabel.Text = 'Time-steps [ms]';
 if ANALYSIS.analysis_mode ~= 3
     PLOT.ylabel.Text = 'Classification Accuracy [%]';
 elseif ANALYSIS.analysis_mode == 3
-    PLOT.ylabel.Text = 'Fisher-Z correlation coeff';
+    PLOT.ylabel.Text = 'Fisher-transformed correlation coeff';
 end
 
 PLOT.PointZero.Color = 'r';
