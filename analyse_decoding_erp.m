@@ -356,7 +356,12 @@ fprintf('All results saved in %s. \n',savename);
 if ANALYSIS.disp.on == 1
     
     fprintf('Results will be plotted. \n');
-    display_group_results_erp(ANALYSIS);
+    
+    % Automatically use the default plotting settings
+    PLOT = dd_set_plotting_defaults(ANALYSIS);
+    
+    % Display group decoding performance results
+    display_group_results_erp(ANALYSIS, PLOT);
     
 elseif ANALYSIS.disp.on ~= 1
     

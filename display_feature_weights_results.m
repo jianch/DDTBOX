@@ -39,7 +39,15 @@ function display_feature_weights_results(ANALYSIS, FW_ANALYSIS)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% DISPLAY - MATRIX OF ALL STEPS: Z-STANDARDISED ABSOLUTE FEAUTRE WEIGHTS (FOR DISPLAY)
+% Checking if some settings have been defined
+
+% Colormap for feature weights heat maps
+if isempty(ANALYSIS.fw.colormap)
+    ANALYSIS.fw.colormap = 'jet';
+end % of if isempty
+
+
+%% DISPLAY - MATRIX OF ALL STEPS: Z-STANDARDISED ABSOLUTE FEATURE WEIGHTS (FOR DISPLAY)
 %__________________________________________________________________________
 %
 % This matrix is plotted from
@@ -56,7 +64,7 @@ if ANALYSIS.fw.display_matrix == 1
     
     end
     
-    % channels plotted as rows, time-windows as colums
+    % channels plotted as rows, time-windows as columns
     resorted_data = [];
     resorted_data(:,:) = FW_ANALYSIS.AVERAGE_Z_DISP(:,:);
     resorted_data = resorted_data';
@@ -66,20 +74,20 @@ if ANALYSIS.fw.display_matrix == 1
     imagesc(resorted_data(:,:));
     hold on;
     
-    set(gca,'Ytick',[1:size(FW_ANALYSIS.AVERAGE_Z_DISP,2)]);
+    set(gca,'Ytick',[1:size(FW_ANALYSIS.AVERAGE_Z_DISP, 2)]);
     set(gca,'YTickLabel',(channel_labels));
-    ylabel('Channel','FontSize',12,'FontWeight','b');
+    ylabel('Channel', 'FontSize', 12, 'FontWeight', 'b');
     
     set(gca,'Xtick',[1:size(FW_ANALYSIS.AVERAGE_Z_DISP,1)]);
     set(gca,'XTickLabel',(FW_ANALYSIS.disp_steps));
-    xlabel('Analysis time-step','FontSize',12,'FontWeight','b');
+    xlabel('Analysis time-step', 'FontSize', 12, 'FontWeight', 'b');
     
-    title('Z-standardised absolute feature weights','FontSize',14,'FontWeight','b');
+    title('Z-standardised absolute feature weights', 'FontSize', 14, 'FontWeight', 'b');
 
-end % ANALYSIS.fw.display_matrix
+end % of if ANALYSIS.fw.display_matrix
 
 
-%% DISPLAY - AVERAGE HEAT MAP FOR RELEVANT STEPS: Z-STANDARDISED ABSOLUTE FEAUTRE WEIGHTS (FOR STATS)
+%% DISPLAY - AVERAGE HEAT MAP FOR RELEVANT STEPS: Z-STANDARDISED ABSOLUTE FEATURE WEIGHTS (FOR STATS)
 %__________________________________________________________________________
 
 if ANALYSIS.fw.display_average_zmap == 1
@@ -88,14 +96,14 @@ if ANALYSIS.fw.display_average_zmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        FW_ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet'); % or: [MIN MAX]
+        FW_ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap); % or: [MIN MAX]
     
     hold on;
     title('Z-standardised absolute feature weights averaged across time-steps','FontSize',10,'FontWeight','b');
     
     clear to_plot;
     
-end
+end % of if ANALYSIS.fw.display_average_zmap
 
 
 %% DISPLAY - AVERAGE HEAT MAP FOR RELEVANT STEPS: THRESHOLD MAP FOR P UNCORRECTED (FOR STATS)
@@ -107,14 +115,14 @@ if ANALYSIS.fw.display_average_uncorr_threshmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
+        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap);
     
     hold on;
     title('Feature weights uncorrected threshold-map (averaged across time-steps)','FontSize',10,'FontWeight','b');
     
     clear to_plot;
     
-end
+end % of if ANALYSIS.fw.display_average_uncorr_threshmap
 
 
 %% DISPLAY - AVERAGE HEAT MAP FOR RELEVANT STEPS: THRESHOLD MAP FOR P CORRECTED (FOR STATS)
@@ -126,14 +134,14 @@ if ANALYSIS.fw.display_average_corr_threshmap == 1
     
     figure;
     topoplot_decoding(to_plot,...
-        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
+        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap);
     
     hold on;
     title('Feature weights corrected threshold-map (averaged across time-steps)','FontSize',10,'FontWeight','b');
     
     clear to_plot;
     
-end
+end % of if ANALYSIS.fw.display_average_corr_threshmap
 
 
 %% DISPLAY - HEAT MAP FOR EACH RELEVANT STEP: Z-STANDARDISED ABSOLUTE FEATURE WEIGHTS (FOR STATS)
@@ -148,16 +156,16 @@ if ANALYSIS.fw.display_all_zmaps == 1
         
         figure;
         topoplot_decoding(to_plot,...
-            FW_ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet'); % or: [MIN MAX]
+            FW_ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap); % or: [MIN MAX]
         
         hold on;
-        title(['Z-standardised absolute feature weights time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
+        title(['Z-standardised absolute feature weights time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))], 'FontSize', 10, 'FontWeight', 'b');
     
         clear to_plot;
         
     end % step
     
-end
+end % of if ANALYSIS.fw.display_all_zmaps
 
 
 %% DISPLAY - HEAT MAP FOR EACH RELEVANT STEP: THRESHOLD MAPS FOR P UNCORRECTED (FOR STATS)
@@ -171,7 +179,7 @@ if ANALYSIS.fw.display_all_uncorr_thresh_maps == 1
     
         figure;
         topoplot_decoding(to_plot,...
-        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
+        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap);
     
         hold on;
         title(['Feature weights uncorrected threshold-map for time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
@@ -180,7 +188,7 @@ if ANALYSIS.fw.display_all_uncorr_thresh_maps == 1
         
     end % step
     
-end
+end % of if ANALYSIS.fw.display_all_uncorr_thresh_maps
 
 
 %% DISPLAY - HEAT MAP FOR EACH RELEVANT STEP: THRESHOLD MAPS FOR P CORRECTED (FOR STATS)
@@ -194,7 +202,7 @@ if ANALYSIS.fw.display_all_corr_thresh_maps == 1
     
         figure;
         topoplot_decoding(to_plot,...
-        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', 'jet');
+        FW_ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo',FW_ANALYSIS.chaninfo, 'colormap', ANALYSIS.fw.colormap);
     
         hold on;
         title(['Feature weights corrected threshold-map for time-step ' num2str(FW_ANALYSIS.steps_for_testing(steps))],'FontSize',10,'FontWeight','b');
@@ -203,6 +211,6 @@ if ANALYSIS.fw.display_all_corr_thresh_maps == 1
         
     end % step
     
-end
+end % of if ANALYSIS.fw.display_all_corr_thresh_maps
 
 %__________________________________________________________________________

@@ -165,8 +165,9 @@ fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
 fw.n_iterations = 5000; % Number of permutation or bootstrap iterations for resampling-based feature weights multiple comparisons correction procedures
 fw.ktms_u = 0; % u parameter of the KTMS GFWER control procedure (when applying this correction for feature weights analyses)
 
-% if feature weights are analysed, specify what is displayed
 %__________________________________________________________________
+
+% Display settings for feature weights results 
 
 % 0=no / 1=yes
 fw.display_matrix = 0; % feature weights matrix
@@ -181,8 +182,6 @@ fw.display_average_corr_threshmap = 0; % thresholded map t-test results correcte
 fw.display_all_zmaps = 0; % z-standardised average FWs
 fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
 fw.display_all_corr_thresh_maps = 0; % thresholded map t-test results corrected for multiple comparisons
-
-
 
 
 
