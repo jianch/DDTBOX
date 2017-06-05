@@ -140,6 +140,7 @@ cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for 
 disp.on = 1; % display a results figure? 0=no / 1=yes
 permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
 disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
+disp.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding scalp maps
 plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
 plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
 
@@ -183,6 +184,8 @@ fw.display_all_zmaps = 0; % z-standardised average FWs
 fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
 fw.display_all_corr_thresh_maps = 0; % thresholded map t-test results corrected for multiple comparisons
 
+% Extra plotting options:
+fw.colormap = 'jet'; % Colormap for plotting of scalp feature weights maps
 
 
 %% Copy all settings into a structure
@@ -230,6 +233,7 @@ ANALYSIS.cluster_test_alpha = cluster_test_alpha;
 ANALYSIS.disp.on = disp.on;
 ANALYSIS.permdisp = permdisp;
 ANALYSIS.disp.sign = disp.sign;
+ANALYSIS.disp.temporal_decoding_colormap = disp.temporal_decoding_colormap;
 ANALYSIS.plot_robust = plot_robust;
 ANALYSIS.plot_robust_trimming = plot_robust_trimming;
 ANALYSIS.fw.do = fw.do;
@@ -244,6 +248,7 @@ ANALYSIS.fw.n_iterations = fw.n_iterations;
 ANALYSIS.fw.ktms_u = fw.ktms_u;
 ANALYSIS.fw.display_matrix = fw.display_matrix;
 ANALYSIS.fw.disp_steps = fw.disp_steps;
+ANALYSIS.fw.colormap = fw.colormap;
 ANALYSIS.fw.display_average_zmap = fw.display_average_zmap;
 ANALYSIS.fw.display_average_uncorr_threshmap = fw.display_average_uncorr_threshmap;
 ANALYSIS.fw.display_average_corr_threshmap = fw.display_average_corr_threshmap;

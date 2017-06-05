@@ -186,4 +186,92 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
         
     end % channel
     
+    
+elseif ANALYSIS.stmode == 2 % If using temporal decoding
+    
+    % Load channel information (locations and labels)
+    channel_file = [ANALYSIS.channellocs ANALYSIS.channel_names_file];
+    load(channel_file);
+    % Copy to FW_ANALYSIS structure
+    ANALYSIS.chaninfo = chaninfo;
+    ANALYSIS.chanlocs = chanlocs;
+    
+    % Estimate of location for actual decoding results (depends on plotting preferences)
+    
+    clear temp_data;
+    clear temp_perm_data;
+    
+    if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+        temp_data = ANALYSIS.RES.mean_subj_acc(:,1);
+        fprintf('\n\nArithmetic mean used for plotting group average accuracy\n\n');
+
+    elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+        temp_data = ANALYSIS.RES.trimmean_subj_acc(:, 1);
+        fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
+
+    elseif ANALYSIS.plot_robust == 2 % If plotting medians
+
+        temp_data = ANALYSIS.RES.median_subj_acc(:, 1);
+        fprintf('\n\nMedian used for plotting group average accuracy\nError bars represent standard errors\n\n');
+
+    end % of if ANALYSIS.plot_robust
+    
+    % Estimate of location for permutation decoding results (depends on plotting preferences)
+    if ANALYSIS.permstats == 1
+        
+        temp_perm_data(1:size(ANALYSIS.RES.mean_subj_acc, 1)) = ANALYSIS.chancelevel;
+        
+    elseif ANALYSIS.permstats == 2
+
+        if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+
+            temp_perm_data = ANALYSIS.RES.mean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+            temp_perm_data = ANALYSIS.RES.trimmean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 2 % If plotting medians
+            
+            temp_perm_data = ANALYSIS.RES.median_subj_perm_acc(:, 1);
+            
+        end % of if ANALYSIS.plot_robust
+    end % of if ANALYSIS.permstats
+
+    
+    
+    % Plot estimate of group decoding accuracy (mean/median/trimmed mean)
+    figure;
+    topoplot_decoding(temp_data,...
+        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+        
+            
+    % Plot estimate of group decoding accuracy relative to chance or permutation
+    % decoding accuracy (actual - chance | actual - permutation)
+    figure;
+    topoplot_decoding(temp_data - temp_perm_data,...
+        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Decoding Results Minus Chance, N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+        
+            
+    % Plot estimate of group decoding accuracy thresholded by statistical
+    % significance (corrected for multiple comparisons)
+    sig_mask = ANALYSIS.RES.h; % Mask based on statistical significance
+    
+    figure;
+    topoplot_decoding(temp_data .* sig_mask,...
+        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Masked by stat. sig., N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+            
+    % Scale X Axis to limits of unthresholded dataset
+    caxis([min(temp_data), max(temp_data)]);
+    
 end % analysis mode

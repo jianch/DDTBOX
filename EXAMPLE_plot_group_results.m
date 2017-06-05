@@ -53,6 +53,7 @@ ANALYSIS.plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic 
 % Note: You can plot the mean even if the data were originally plotted with
 % the median or trimmed mean. If you originally plotted the trimmed mean,
 % then you can also plot the median in this script.
+ANALYSIS.disp.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding results scalp maps
 
 % figure position on the screen
 PLOT.FigPos = [100 100 800 400];
