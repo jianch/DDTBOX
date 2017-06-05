@@ -135,175 +135,361 @@ case 1 % Bonferroni Correction
 
     fprintf('\n\nPerforming corrections for multiple comparisons (Bonferroni)\n\n');
 
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [MCC_Results] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
         
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.bonferroni_adjusted_alpha(na) = MCC_Results.corrected_alpha;
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
-    end % of for na
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            [MCC_Results] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bonferroni_adjusted_alpha(na) = MCC_Results.corrected_alpha;
+            fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bonferroni_adjusted_alpha(na));
+        end % of for na
+  
+    elseif ANALYSIS.stmode == 2 % If using temporal decoding
+        
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc, 2)
+            [MCC_Results] = multcomp_bonferroni(ANALYSIS.RES.p_ttest(:,step), 'alpha', ANALYSIS.pstats); % Bonferroni correction
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bonferroni_adjusted_alpha(step) = MCC_Results.corrected_alpha;
+            fprintf('The adjusted critical alpha for step %i is %1.6f \n', step, ANALYSIS.RES.bonferroni_adjusted_alpha(step));
+        end % of for step
+        
+    end % of if ANALYSIS.stmode
 
 case 2 % Holm-Bonferroni Correction
     
     fprintf('\n\nPerforming corrections for multiple comparisons (Holm-Bonferroni)\n\n');
 
-    % Here a family of tests is defined as all steps within a given analysis
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [MCC_Results] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction  
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
+
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            [MCC_Results] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction  
+
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.holm_adjusted_alpha(na) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
+        end % of for na
+   
+    elseif ANALYSIS.stmode == 2 % If using temporal decoding
+
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2) % analysis
+            [MCC_Results] = multcomp_holm_bonferroni(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats); % Holm-Bonferroni correction  
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.holm_adjusted_alpha(step) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for step %i is %1.6f   \n', step, ANALYSIS.RES.holm_adjusted_alpha(step));
+        end % of for step
         
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.holm_adjusted_alpha(na) = MCC_Results.critical_alpha;
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f   \n', na, ANALYSIS.RES.holm_adjusted_alpha(na));
-    end % of for na
+    end % of if ANALYSIS.stmode
     
 case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
     fprintf('\n\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
     
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-    
-        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
-            perm_decoding_scores(:, 1, :) = ANALYSIS.chancelevel;
-        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
-                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
-            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
-                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end % of if ANALYSIS.drawmode
-        end % of if ANALYSIS.permstats
-        
-        % Convert to two-dimensional matrix for multcomp correction algorithm
-        tmp = squeeze(real_decoding_scores);
-        real_decoding_scores = tmp;
-        tmp = squeeze(perm_decoding_scores);
-        perm_decoding_scores = tmp;
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
 
-        [MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
-        
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.p_ttest(na,:) = MCC_Results.corrected_p;
-        ANALYSIS.RES.critical_t(na) = MCC_Results.critical_t;
-        fprintf('The adjusted critical t value for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_t(na));
-    end % of for na loop
-    
-    clear real_decoding_scores
-    clear perm_decoding_scores
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+                perm_decoding_scores(:, 1, :) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+                end % of if ANALYSIS.drawmode
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.p_ttest(na,:) = MCC_Results.corrected_p;
+            ANALYSIS.RES.critical_t(na) = MCC_Results.critical_t;
+            fprintf('The adjusted critical t value for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_t(na));
+        end % of for na loop
+    
+        clear real_decoding_scores
+        clear perm_decoding_scores
+        
+    elseif ANALYSIS.stmode == 2 % Temporal decoding
+        
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
+
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), size(real_decoding_scores, 2), 1);
+                perm_decoding_scores(:, :, 1) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, :, step);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, :, step);
+                end % of if ANALYSIS.drawmode
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_blair_karniski_permtest(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.p_ttest(:, step) = MCC_Results.corrected_p;
+            ANALYSIS.RES.critical_t(step) = MCC_Results.critical_t;
+            fprintf('The adjusted critical t value for step %i is %3.3f \n', step, ANALYSIS.RES.critical_t(step));
+        end % of for step
+    
+        clear real_decoding_scores
+        clear perm_decoding_scores
+   
+    end % of if ANALYSIS.stmode
+   
 case 4 % Cluster-Based Permutation Test
  
     fprintf('\n\nPerforming corrections for multiple comparisons (cluster-based permutation test)\n\n');
     
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-    
-        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
-            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
-        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
-                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
-            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
-                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end % of if ANALYSIS.drawmode    
-        end % of if ANALYSIS.permstats
-        
-        % Convert to two-dimensional matrix for multcomp correction algorithm
-        tmp = squeeze(real_decoding_scores);
-        real_decoding_scores = tmp;
-        tmp = squeeze(perm_decoding_scores);
-        perm_decoding_scores = tmp;
-        
-        [MCC_Results] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.critical_cluster_mass(na) = MCC_Results.critical_cluster_mass;
-        ANALYSIS.RES.n_sig_clusters(na) = MCC_Results.n_sig_clusters;
-        ANALYSIS.RES.cluster_masses{na} = MCC_Results.cluster_masses;
-        ANALYSIS.RES.cluster_sig{na} = MCC_Results.cluster_sig;
-        ANALYSIS.RES.cluster_p{na} = MCC_Results.cluster_p;
-        fprintf('The adjusted critical cluster mass for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_cluster_mass(na));
-        fprintf('%i statistically significant clusters were found for analysis %i \n', ANALYSIS.RES.n_sig_clusters, na);
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
 
-    end % of for na loop
-    clear real_decoding_scores
-    clear perm_decoding_scores    
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+                perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+                end % of if ANALYSIS.drawmode    
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.critical_cluster_mass(na) = MCC_Results.critical_cluster_mass;
+            ANALYSIS.RES.n_sig_clusters(na) = MCC_Results.n_sig_clusters;
+            ANALYSIS.RES.cluster_masses{na} = MCC_Results.cluster_masses;
+            ANALYSIS.RES.cluster_sig{na} = MCC_Results.cluster_sig;
+            ANALYSIS.RES.cluster_p{na} = MCC_Results.cluster_p;
+            fprintf('The adjusted critical cluster mass for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_cluster_mass(na));
+            fprintf('%i statistically significant clusters were found for analysis %i \n', ANALYSIS.RES.n_sig_clusters, na);
+
+        end % of for na loop
+        clear real_decoding_scores
+        clear perm_decoding_scores    
+
+    elseif ANALYSIS.stmode == 2 % Temporal Decoding
+        
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
+
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), size(real_decoding_scores, 2), 1);
+                perm_decoding_scores(:, :, 1) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, :, step);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, :, step);
+                end % of if ANALYSIS.drawmode    
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_cluster_permtest(real_decoding_scores, perm_decoding_scores,  'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'clusteringalpha', ANALYSIS.cluster_test_alpha, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.critical_cluster_mass(step) = MCC_Results.critical_cluster_mass;
+            ANALYSIS.RES.n_sig_clusters(step) = MCC_Results.n_sig_clusters;
+            ANALYSIS.RES.cluster_masses{step} = MCC_Results.cluster_masses;
+            ANALYSIS.RES.cluster_sig{step} = MCC_Results.cluster_sig;
+            ANALYSIS.RES.cluster_p{step} = MCC_Results.cluster_p;
+            fprintf('The adjusted critical cluster mass for step %i is %3.3f \n', step, ANALYSIS.RES.critical_cluster_mass(step));
+            fprintf('%i statistically significant clusters were found for step %i \n', ANALYSIS.RES.n_sig_clusters, step);
+
+        end % of for step
+        clear real_decoding_scores
+        clear perm_decoding_scores    
+
+    end % of if ANALYSIS.stmode
+        
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
     
     fprintf('\n\nPerforming corrections for multiple comparisons (KTMS generalised FWER control)\n\n');
 
-    % Adapted from permutation test script
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
 
-        if ANALYSIS.permstats == 1 % If testing against theoretical chance level
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
-            perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
-        elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
-            real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
-            if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
-                perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
-            elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
-                perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
-            end % of if ANALYSIS.drawmode
-        end % of if ANALYSIS.permstats
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1)
+            
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), 1, size(real_decoding_scores, 3));
+                perm_decoding_scores(:, 1,:) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, na, :);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, na, :);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, na, :);
+                end % of if ANALYSIS.drawmode
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.t_values(na, :) = MCC_Results.t_values;
+            ANALYSIS.RES.critical_t(na) = MCC_Results.critical_t;
+            ANALYSIS.RES.ktms_u(na) = MCC_Results.ktms_u;
+            fprintf('The adjusted critical t for analysis %i is %3.3f with u parameter of %i \n', na, ANALYSIS.RES.critical_t(na), ANALYSIS.RES.ktms_u(na)); 
+        end % of for na loop
+        clear real_decoding_scores
+        clear perm_decoding_scores
+
+    elseif ANALYSIS.stmode == 2 % Temporal decoding
         
-        % Convert to two-dimensional matrix for multcomp correction algorithm
-        tmp = squeeze(real_decoding_scores);
-        real_decoding_scores = tmp;
-        tmp = squeeze(perm_decoding_scores);
-        perm_decoding_scores = tmp;
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
 
-        [MCC_Results] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+            if ANALYSIS.permstats == 1 % If testing against theoretical chance level
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                perm_decoding_scores = zeros(size(real_decoding_scores, 1), size(real_decoding_scores, 2), 1);
+                perm_decoding_scores(:, :, 1) = ANALYSIS.chancelevel;
+            elseif ANALYSIS.permstats == 2 % If testing against permutation decoding results
+                real_decoding_scores = ANALYSIS.RES.all_subj_acc(:, :, step);
+                if ANALYSIS.drawmode == 1 % If testing against average permuted distribution
+                    perm_decoding_scores = ANALYSIS.RES.all_subj_perm_acc(:, :, step);
+                elseif ANALYSIS.drawmode == 2 % If testing against one randomly drawn value
+                    perm_decoding_scores = ANALYSIS.RES.draw_subj_perm_acc(:, :, step);
+                end % of if ANALYSIS.drawmode
+            end % of if ANALYSIS.permstats
+
+            % Convert to two-dimensional matrix for multcomp correction algorithm
+            tmp = squeeze(real_decoding_scores);
+            real_decoding_scores = tmp;
+            tmp = squeeze(perm_decoding_scores);
+            perm_decoding_scores = tmp;
+
+            [MCC_Results] = multcomp_ktms(real_decoding_scores, perm_decoding_scores, 'alpha', ANALYSIS.pstats, 'iterations', ANALYSIS.n_iterations, 'ktms_u', ANALYSIS.ktms_u, 'use_yuen', ANALYSIS.use_robust, 'percent', ANALYSIS.trimming, 'tail', ANALYSIS.groupstats_ttest_tail);
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.t_values(:, step) = MCC_Results.t_values;
+            ANALYSIS.RES.critical_t(step) = MCC_Results.critical_t;
+            ANALYSIS.RES.ktms_u(step) = MCC_Results.ktms_u;
+            fprintf('The adjusted critical t for step %i is %3.3f with u parameter of %i \n', na, ANALYSIS.RES.critical_t(step), ANALYSIS.RES.ktms_u(step)); 
+        end % of for step
+        clear real_decoding_scores
+        clear perm_decoding_scores
+
+    end % of if ANALYSIS.stmode
         
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.t_values(na, :) = MCC_Results.t_values;
-        ANALYSIS.RES.critical_t(na) = MCC_Results.critical_t;
-        ANALYSIS.RES.ktms_u(na) = MCC_Results.ktms_u;
-        fprintf('The adjusted critical t for analysis %i is %3.3f with u parameter of %i \n', na, ANALYSIS.RES.critical_t(na), ANALYSIS.RES.ktms_u(na)); 
-    end % of for na loop
-    clear real_decoding_scores
-    clear perm_decoding_scores
-
 case 6 % Benjamini-Hochberg FDR Control
 
     fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Hochberg)\n\n');
     
-    % Here a family of tests is defined as all steps within a given analysis
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [ANALYSIS.RES.h_ttest(na, :), ANALYSIS.RES.bh_crit_alpha(na)] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
-        fprintf('\n\nThe adjusted critical alpha for analysis %i is %1.6f \n\n', na, ANALYSIS.RES.bh_crit_alpha(na));
-    end % of for na loop
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
+    
+        % Here a family of tests is defined as all steps within a given analysis
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bky_crit_alpha(na) = MCC_Results.critical_alpha;
+            fprintf('\n\nThe adjusted critical alpha for analysis %i is %1.6f \n\n', na, MCC_Results.critical_alpha(na));
+        end % of for na loop
 
+    elseif ANALYSIS.stmode == 2 % Temporal decoding
+    
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
+            [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats);
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bky_crit_alpha(step) = MCC_Results.critical_alpha;
+            fprintf('\n\nThe adjusted critical alpha for step %i is %1.6f \n\n', step, MCC_Results.critical_alpha(step));
+        end % of for step
+    
+    end % of if ANALYSIS.stmode
+    
 case 7 % Benjamini-Krieger-Yekutieli FDR Control
     
     fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n\n');
 
-    % Here a family of tests is defined as all steps within a given analysis
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [MCC_Results] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
-        
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.bky_crit_alpha(na) = MCC_Results.critical_alpha;
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bky_crit_alpha(na));
-    end % of for na loop
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
+    
+        % Here a family of tests is defined as all steps within a given analysis
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            [MCC_Results] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
 
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bky_crit_alpha(na) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.bky_crit_alpha(na));
+        end % of for na loop
+
+    elseif ANALYSIS.stmode == 2
+        
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
+            [MCC_Results] = multcomp_fdr_bky(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats);
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.bky_crit_alpha(step) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for step %i is %1.6f \n', step, ANALYSIS.RES.bky_crit_alpha(step));
+        end % of for step
+        
+    end % of if ANALYSIS.stmode
+    
 case 8 % Benjamini-Yekutieli FDR Control
     
     fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Yekutieli)\n\n');
 
-    % Here a family of tests is defined as all steps within a given analysis
-    for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
-        [MCC_Results] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
-        
-        ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-        ANALYSIS.RES.by_crit_alpha(na) = MCC_Results.critical_alpha;
-        fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.by_crit_alpha(na));
-    end % of for na loop
+    if ANALYSIS.stmode == 1 | ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
+    
+        % Here a family of tests is defined as all steps within a given analysis
+        for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+            [MCC_Results] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
 
+            ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
+            ANALYSIS.RES.by_crit_alpha(na) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for analysis %i is %1.6f \n', na, ANALYSIS.RES.by_crit_alpha(na));
+        end % of for na loop
+
+    elseif ANALYSIS.stmode == 2 % Temporal decoding
+        
+        for step = 1:size(ANALYSIS.RES.mean_subj_acc,2)
+            [MCC_Results] = multcomp_fdr_by(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats);
+
+            ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
+            ANALYSIS.RES.by_crit_alpha(step) = MCC_Results.critical_alpha;
+            fprintf('The adjusted critical alpha for step %i is %1.6f \n', step, ANALYSIS.RES.by_crit_alpha(step));
+        end % of for step
+        
+    end % of if ANALYSIS.stmode
+    
 % If some other option is chosen then do not correct for multiple comparisons, but notify user
 otherwise
     fprintf('\n\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values\n\n');
