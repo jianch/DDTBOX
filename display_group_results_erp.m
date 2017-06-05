@@ -260,18 +260,15 @@ elseif ANALYSIS.stmode == 2 % If using temporal decoding
                 'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
         
             
-    % Plot estimate of group decoding accuracy thresholded by statistical
-    % significance (corrected for multiple comparisons)
+    % Plot statistically significant channels
     sig_mask = ANALYSIS.RES.h; % Mask based on statistical significance
     
     figure;
-    topoplot_decoding(temp_data .* sig_mask,...
+    topoplot_decoding(sig_mask,...
         ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
     hold on;
     title([PLOT.TitleString, ANALYSIS.DCG, ' Masked by stat. sig., N=',  num2str(ANALYSIS.nsbj)],...
                 'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
             
-    % Scale X Axis to limits of unthresholded dataset
-    caxis([min(temp_data), max(temp_data)]);
     
 end % analysis mode
