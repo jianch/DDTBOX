@@ -56,7 +56,7 @@ nchannels = 64; % number of channels
 channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
 channellocs = [bdir, 'locations/']; % Path of directory containing channel information file
 sampling_rate = 1000; % Data sampling rate in Hz
-pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
+pointzero = 100; % Corresponds to the time of the event/trigger code relative to the start of the epoch (in ms)
 
 
 %% Condition and discrimination group (dcg) information
@@ -104,7 +104,8 @@ stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
 avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) 
 window_width_ms = 50; % width of sliding window in ms
 step_width_ms = 50; % step size with which sliding window is moved through the trial
-
+laststep = []; % Last step within the epoch to analyse. If left blank then this will be
+%                prompted at the command line while running analyses.
 pstats = 0.05; % critical p-value
 group_level_analysis = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
 
@@ -139,12 +140,16 @@ cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for 
 disp.on = 1; % display a results figure? 0=no / 1=yes
 permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
 disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
+disp.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding scalp maps
 plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
 plot_robust_trimming = 20; % Percent to trim if using the trimmed mean
 
 % Feature weight analysis options
 fw.do = 0; % analyse feature weights? 0=no / 1=yes
 fw.corrected = 1; % Use feature weights corrected using Haufe et al. (2014) method? 0=no / 1=yes
+fw.steps_for_testing = []; % Time steps at which to perform statistical analyses on feature weights.
+%                            Input [] (empty vector) to manually input to the command line 
+%                            during FW analyses.
 fw.pstats = 0.05; % critical p-value for feature weights analyses
 fw.use_robust = 0; % Use Yuen's t, the robust version of the t test for feature weights? 1 = Yes / 0 = No
 fw.trimming = 20; % If using Yuen's t, select the trimming percentage for the trimmed mean (20% recommended)
@@ -161,11 +166,13 @@ fw.multcompstats = 1; % Feature weights correction for multiple comparisons:
 fw.n_iterations = 5000; % Number of permutation or bootstrap iterations for resampling-based feature weights multiple comparisons correction procedures
 fw.ktms_u = 0; % u parameter of the KTMS GFWER control procedure (when applying this correction for feature weights analyses)
 
-% if feature weights are analysed, specify what is displayed
 %__________________________________________________________________
+
+% Display settings for feature weights results 
 
 % 0=no / 1=yes
 fw.display_matrix = 0; % feature weights matrix
+fw.disp_steps = []; % Consecutive time steps for which the feature weights matrix should be displayed
 
 % maps and stats for averaged analysis time windows
 fw.display_average_zmap = 0; % z-standardised average FWs
@@ -177,14 +184,13 @@ fw.display_all_zmaps = 0; % z-standardised average FWs
 fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
 fw.display_all_corr_thresh_maps = 0; % thresholded map t-test results corrected for multiple comparisons
 
+% Extra plotting options:
+fw.colormap = 'jet'; % Colormap for plotting of scalp feature weights maps
 
 
 %% Copy all settings into a structure
 % This structure is passed as a single input argument to
 % analyse_decoding_erp
-
-% DF TODO: Move this section into a separate script, however kept in this
-% script for now to assist debugging.
 
 ANALYSIS.bdir = bdir;
 ANALYSIS.output_dir = output_dir;
@@ -210,6 +216,7 @@ ANALYSIS.stmode = stmode;
 ANALYSIS.avmode = avmode;
 ANALYSIS.window_width_ms = window_width_ms;
 ANALYSIS.step_width_ms = step_width_ms;
+ANALYSIS.laststep = laststep;
 ANALYSIS.pstats = pstats;
 ANALYSIS.group_level_analysis = group_level_analysis;
 ANALYSIS.P2 = P2;
@@ -226,10 +233,12 @@ ANALYSIS.cluster_test_alpha = cluster_test_alpha;
 ANALYSIS.disp.on = disp.on;
 ANALYSIS.permdisp = permdisp;
 ANALYSIS.disp.sign = disp.sign;
+ANALYSIS.disp.temporal_decoding_colormap = disp.temporal_decoding_colormap;
 ANALYSIS.plot_robust = plot_robust;
 ANALYSIS.plot_robust_trimming = plot_robust_trimming;
 ANALYSIS.fw.do = fw.do;
 ANALYSIS.fw.corrected = fw.corrected;
+ANALYSIS.fw.steps_for_testing = fw.steps_for_testing;
 ANALYSIS.fw.pstats = fw.pstats;
 ANALYSIS.fw.use_robust = fw.use_robust;
 ANALYSIS.fw.trimming = fw.trimming;
@@ -238,6 +247,8 @@ ANALYSIS.fw.multcompstats = fw.multcompstats;
 ANALYSIS.fw.n_iterations = fw.n_iterations;
 ANALYSIS.fw.ktms_u = fw.ktms_u;
 ANALYSIS.fw.display_matrix = fw.display_matrix;
+ANALYSIS.fw.disp_steps = fw.disp_steps;
+ANALYSIS.fw.colormap = fw.colormap;
 ANALYSIS.fw.display_average_zmap = fw.display_average_zmap;
 ANALYSIS.fw.display_average_uncorr_threshmap = fw.display_average_uncorr_threshmap;
 ANALYSIS.fw.display_average_corr_threshmap = fw.display_average_corr_threshmap;

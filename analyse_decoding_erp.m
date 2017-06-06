@@ -112,8 +112,10 @@ for s = 1:ANALYSIS.nsbj
             fprintf('\n');
             fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n',size(RESULTS.subj_acc,2), cfg.window_width_ms);
             ANALYSIS.firststep = 1;
-            ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
-
+            
+            if isempty(ANALYSIS.laststep) % If last time step has not been defined by user
+                ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
+            end % of if isempty
         end
     
         % shift everything back by step-width, as first bin gets label=0ms
@@ -220,6 +222,10 @@ if ANALYSIS.plot_robust == 1 % If plotting trimmed mean for group-level stats
     % Calculate and store the trimmed mean of subject accuracies
     trimmed_M(:,:) = trimmean(ANALYSIS.RES.all_subj_acc, ANALYSIS.plot_robust_trimming, 1);
     ANALYSIS.RES.trimmean_subj_acc(:,:) = trimmed_M'; clear trimmed_M;
+    
+    % Also calculate median so user can plot this later
+    median_M(:,:) = median(ANALYSIS.RES.all_subj_acc, 1);
+    ANALYSIS.RES.median_subj_acc(:,:) = median_M'; clear median_M;
     
 elseif ANALYSIS.plot_robust == 2 % If plotting median for group-level stats
     
@@ -350,7 +356,12 @@ fprintf('All results saved in %s. \n',savename);
 if ANALYSIS.disp.on == 1
     
     fprintf('Results will be plotted. \n');
-    display_group_results_erp(ANALYSIS);
+    
+    % Automatically use the default plotting settings
+    PLOT = dd_set_plotting_defaults(ANALYSIS);
+    
+    % Display group decoding performance results
+    display_group_results_erp(ANALYSIS, PLOT);
     
 elseif ANALYSIS.disp.on ~= 1
     

@@ -1,10 +1,10 @@
-function display_indiv_results_erp(cfg, RESULTS)
+function display_indiv_results_erp(cfg, RESULTS, PLOT)
 %
 % This function gets input from decoding_erp.m and displays decoding results 
 % for a single subject. If permutation tests are run and display of 
 % permutation results is on, then these results are displayed for comparison.
 %
-% This function is called by decoding_erp.
+% This function is called by decoding_erp and custom plotting scripts.
 % 
 % Inputs:
 %
@@ -13,6 +13,9 @@ function display_indiv_results_erp(cfg, RESULTS)
 %
 %   RESULTS     structure containing decoding results for an individual
 %               subject datset.
+%
+%   PLOT        structure containing settings specific to plotting single
+%               subject results.
 %
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors
@@ -32,86 +35,119 @@ function display_indiv_results_erp(cfg, RESULTS)
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%% DISPLAY MAIN RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
+
+%% DISPLAY RESULTS
 
 % determine the x-axis scaling
-% point_zero=floor( ( size(RESULTS.subj_acc,2)/(size(RESULTS.subj_acc,2)*cfg.step_width * (1000 / SLIST.sampling_rate)) ) * (SLIST.pointzero) );
 nsteps = size(RESULTS.subj_acc,2);
 
-for na = 1:size(RESULTS.subj_acc,1)
+if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
 
-    figname = ['fig' num2str(na)]; 
-    figname = figure('Position',[100 100 800 400]);
-    temp_data(1,:) = RESULTS.subj_acc(na,:);
-    plot(temp_data,'-ks','LineWidth',2,'MarkerEdgeColor','k','MarkerFaceColor','w','MarkerSize',5);
+    figure('Position', PLOT.FigPos);
+    
+    % Plot actual decoding results
+    temp_data(1,:) = RESULTS.subj_acc(1,:);
+    plot(temp_data, PLOT.Res.Line ,'LineWidth', PLOT.Res.LineWidth, ...
+        'MarkerEdgeColor',PLOT.Res.MarkerEdgeColor, ...
+        'MarkerFaceColor', PLOT.Res.MarkerFaceColor, ...
+        'MarkerSize', PLOT.Res.MarkerSize);
     hold on;
 
-    xlabel('time-steps [ms]','FontSize',12,'FontWeight','b');
-    
-    if cfg.analysis_mode ~= 3
-        ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
-    elseif cfg.analysis_mode == 3
-        ylabel('Fisher-Z correlation coeff','FontSize',12,'FontWeight','b');
+    % Plot permutation decoding results
+    if cfg.perm_disp == 1
+
+        temp_perm_data(1,:) = RESULTS.subj_perm_acc(1,:);
+        plot(temp_perm_data, PLOT.PermRes.Line, 'LineWidth', PLOT.PermRes.LineWidth, ...
+            'MarkerEdgeColor', PLOT.PermRes.MarkerEdgeColor, ...
+            'MarkerFaceColor', PLOT.PermRes.MarkerFaceColor, ...
+            'MarkerSize', PLOT.PermRes.MarkerSize);
+
+    end % of if cfg.perm_disp
+
+    % X axis label
+    xlabel('Time-steps [ms]', 'FontSize', PLOT.xlabel.FontSize, 'FontWeight', PLOT.xlabel.FontWeight);
+
+    % Y axis label
+    if cfg.analysis_mode ~= 3 % If performing SVM classification
+        ylabel('Classification Accuracy [%]' ,'FontSize', PLOT.ylabel.FontSize, 'FontWeight', PLOT.ylabel.FontWeight);
+    elseif cfg.analysis_mode == 3 % If performing SVR
+        ylabel('Fisher Z-transformed correlation coeff', 'FontSize', PLOT.ylabel.FontSize, 'FontWeight', PLOT.ylabel.FontWeight);
     end; 
 
+    % X axis tick labels
     XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * cfg.step_width_ms ) - cfg.step_width_ms) - cfg.pointzero; 
-    point_zero = find(XTickLabels(1,:) == 0);
     
+    % Determine point of event onset relative to start of epoch (in steps)
+    plotting_point_zero = (cfg.pointzero / cfg.step_width_ms) + 1;
+     
+    % Mark event onset
     if cfg.analysis_mode ~= 3
-        line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
-        set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
+        line([plotting_point_zero, plotting_point_zero], [100 30],'Color', PLOT.PointZero.Color, 'LineWidth', PLOT.PointZero.LineWidth);
+
+        % Set locations of X and Y axis tickmarks
+        set(gca,'Ytick', [0:5:100], 'Xtick', [1:1:nsteps]);
     elseif cfg.analysis_mode == 3
-        line([point_zero point_zero], [1 -1],'Color','r','LineWidth',3);
-        set(gca,'Ytick',[-1:0.2:1],'Xtick',[1:1:nsteps]);
-    end
-    set(gca,'XTickLabel',XTickLabels);
-    
+        line([plotting_point_zero, plotting_point_zero], [1 -1],'Color','r','LineWidth',3);
+
+        % Set locations of X and Y axis tickmarks
+        set(gca,'Ytick', [-1:0.2:1], 'Xtick', [1:1:nsteps]);
+    end % of if cfg.analysis_mode
+
+    set(gca,'XTickLabel', XTickLabels);
+
+    % Title of plot
     title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label ' - analysis '...
-        num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
-        
-    clear temp_data;
+        num2str(1) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
 
-end % na
+    % Legend
+    if cfg.perm_disp == 1 % If plotting permutation results
 
-%% DISPLAY PERMUTATION RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
+        legend('Decoding Results', 'Permutation Decoding Results');
 
-if cfg.perm_disp == 1
+    elseif cfg.perm_disp == 0 % Not plotting permutation results
 
-    % determine the x-axis scaling
-    % point_zero=floor( ( size(RESULTS.subj_perm_acc,2)/(size(RESULTS.subj_perm_acc,2) * cfg.step_width * (1000 / SLIST.sampling_rate)) ) * (SLIST.pointzero) );
-    nsteps = size(RESULTS.subj_perm_acc,2);
+        legend('Decoding Results');
+
+    end % of if cfg.perm.disp
+
+elseif cfg.stmode == 2 % Temporal decoding
+
+    % Load channel information (locations and labels)
+    channel_file = [PLOT.channellocs PLOT.channel_names_file];
+    load(channel_file);
+    % Copy to FW_ANALYSIS structure
+    PLOT.chaninfo = chaninfo;
+    PLOT.chanlocs = chanlocs;
+
+    % Plot decoding results
+    temp_data(:, 1) = RESULTS.subj_acc(:, 1);
     
-    for na = 1:size(RESULTS.subj_perm_acc,1)
+    figure;
+    topoplot_decoding(temp_data,...
+        PLOT.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', PLOT.chaninfo, 'colormap', PLOT.temporal_decoding_colormap);
+    hold on;
+    
+    % Title of plot
+    title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label],'FontSize',14,'FontWeight','b');
+            
+            
+    % Plot permutation decoding results
+    if cfg.perm_disp == 1 % If displaying permutation decoding results
 
-        figname = ['fig' num2str(na+1)]; 
-        figname = figure('Position',[100 100 800 400]);
-        temp_data(1,:) = RESULTS.subj_perm_acc(na,:);
-        plot(temp_data,'-ks','LineWidth',2,'MarkerEdgeColor','k','MarkerFaceColor','w','MarkerSize',5);
+        temp_perm_data(:, 1) = RESULTS.subj_perm_acc(:, 1);
+        
+        figure;
+        topoplot_decoding(temp_perm_data,...
+            PLOT.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', PLOT.chaninfo, 'colormap', PLOT.temporal_decoding_colormap);
         hold on;
 
-        if cfg.analysis_mode ~= 3
-            ylabel('Decoding Accuracy [%]','FontSize',12,'FontWeight','b');
-        elseif cfg.analysis_mode == 3
-            ylabel('Fisher-Z correlation coeff','FontSize',12,'FontWeight','b');
-        end; 
+        % Title of plot
+        title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label ' Permutation Decoding Results'],'FontSize',14,'FontWeight','b');
 
-        if cfg.analysis_mode ~= 3
-            line([point_zero point_zero], [100 30],'Color','r','LineWidth',3);
-            set(gca,'Ytick',[0:5:100],'Xtick',[1:1:nsteps]);
-        elseif cfg.analysis_mode == 3
-            line([point_zero point_zero], [1 -1],'Color','r','LineWidth',3);
-            set(gca,'Ytick',[-1:0.2:1],'Xtick',[1:1:nsteps]);
-        end
-        set(gca,'XTickLabel',XTickLabels);
+    end % of if cfg.perm_disp
 
-        title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label ' - permutation '...
-            num2str(na) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
+    
+end % of if cfg.stmode
 
-        clear temp_data;
-
-    end % na
-
-end % perm_disp
-%__________________________________________________________________________
+clear temp_data;
+clear temp_perm_data;

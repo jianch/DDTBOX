@@ -1,14 +1,18 @@
-function display_group_results_erp(ANALYSIS)
+function display_group_results_erp(ANALYSIS, PLOT)
 %
 % This script is will plot results of group-level analyses.  
-
-%% This function is called by analyse_decoding_erp.
+%
+% This function is called by analyse_decoding_erp.
 %
 %
 % Inputs:
 %
 %   ANALYSIS        structure containing analysis settings and data
 % 
+%   PLOT            structure containing decoding performance plotting
+%                   settings. For a list of settings see the documentation
+%                   or see the function dd_set_plotting_defaults
+%
 %
 % Copyright (c) 2013-2016 Stefan Bode and contributors
 % 
@@ -27,114 +31,13 @@ function display_group_results_erp(ANALYSIS)
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-%% SET GLOBAL VARIABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
-
-
-%% PLOTTING PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
-
-% figure position__________________________________________________________
-PLOT.FigPos = [100 100 800 400];
-
-% define x/y-axis__________________________________________________________
-
-% Y-axis depends on analysis mode
-if ANALYSIS.analysis_mode ~= 3
-    PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
-    PLOT.Y_max = 70; % Y axis upper bound (in % accuracy)
-    PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
-elseif ANALYSIS.analysis_mode == 3
-    PLOT.Y_min = -0.5; % Y axis lower bound (Fisher-Z corr coeff)
-    PLOT.Y_max = 0.5; % Y axis upper bound (Fisher-Z corr coeff)
-    PLOT.Ysteps = 0.1; % Interval between Y axis labels/tick marks
-end
-
-PLOT.X_min = 1; % X axis lower bound (first time point)
-PLOT.X_max = ANALYSIS.xaxis_scale(2,end);
-PLOT.Xsteps = ANALYSIS.step_width_ms;
-
-PLOT.Ytick = [PLOT.Y_min:PLOT.Ysteps:PLOT.Y_max];
-PLOT.Xtick = [ANALYSIS.xaxis_scale(1,1) : ANALYSIS.xaxis_scale(1,end)];
-
-PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero; 
-
-% define properties of significance markers________________________________
-PLOT.Sign.LineColor = 'y';
-if ANALYSIS.analysis_mode ~= 3
-    PLOT.Sign.LinePos = [PLOT.Y_min+0.5 PLOT.Y_max-0.5];
-elseif ANALYSIS.analysis_mode == 3
-    PLOT.Sign.LinePos = [PLOT.Y_min PLOT.Y_max];
-end
-PLOT.Sign.LineWidth = 10;
-
-% define properties of main plot___________________________________________
-PLOT.Res.Line = '-ks';
-PLOT.Res.LineWidth = 2;
-PLOT.Res.MarkerEdgeColor = 'k';
-PLOT.Res.MarkerFaceColor = 'w';
-PLOT.Res.MarkerSize = 5;
-
-PLOT.Res.Error = 'k';
-PLOT.Res.ErrorLine = 'none';
-PLOT.Res.ErrorLineWidth = 0.5;
-
-% define properties of permutation / chance plot___________________________
-PLOT.PermRes.Line = '-ks';
-PLOT.PermRes.LineWidth = 2;
-PLOT.PermRes.MarkerEdgeColor = 'b';
-PLOT.PermRes.MarkerFaceColor = 'w';
-PLOT.PermRes.MarkerSize = 5;
-
-PLOT.PermRes.Error = 'b';
-PLOT.PermRes.ErrorLine = 'none';
-PLOT.PermRes.ErrorLineWidth = 0.5;
-
-% define label / title properties__________________________________________
-PLOT.xlabel.FontSize = 12;
-PLOT.ylabel.FontSize = 12;
-
-PLOT.xlabel.FontWeight = 'b';
-PLOT.ylabel.FontWeight = 'b';
-
-PLOT.xlabel.Text = 'Time-steps [ms]';
-if ANALYSIS.analysis_mode ~= 3
-    PLOT.ylabel.Text = 'Classification Accuracy [%]';
-elseif ANALYSIS.analysis_mode == 3
-    PLOT.ylabel.Text = 'Fisher-Z correlation coeff';
-end
-
-PLOT.PointZero.Color = 'r';
-PLOT.PointZero.LineWidth = 3;
-PLOT.PointZero.Point = find(ANALYSIS.data(3,:) == 1);
-
-if ANALYSIS.stmode == 1 && ANALYSIS.analysis_mode ~=3
-    PLOT.TileString = 'Spatial SVM ';
-elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ~=3
-    PLOT.TileString = 'Temporal SVM ';
-elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ~=3
-    PLOT.TileString = 'Spatiotemporal SVM ';
-elseif ANALYSIS.stmode == 1 && ANALYSIS.analysis_mode ==3
-    PLOT.TileString = 'Spatial SVR';  
-elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ==3
-    PLOT.TileString = 'Temporal SVR '; 
-elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ==3
-    PLOT.TileString = 'Spatiotemporal SVR ';  
-end
-
-PLOT.TitleFontSize = 14;
-PLOT.TitleFontWeight = 'b';
-%__________________________________________________________________________
-
-
 %% PLOT THE RESULTS
 %__________________________________________________________________________
 % 
 % plots the results depending on s/t-mode (information time-courses for
 % spatial/spatio-temporal decoding; heat maps for temporal decoding)
 
-if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
+if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial and spatiotemporal decoding
     
     % determine the time-point for locking the data ("point zero")
 %     [dummy pointzero] = min(abs(ANALYSIS.xaxis_scale(1,:)));
@@ -254,12 +157,12 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
            
         if size(ANALYSIS.DCG,1)==1
                 
-            title([PLOT.TileString ANALYSIS.DCG ' N='  num2str(ANALYSIS.nsbj)],...
+            title([PLOT.TitleString ANALYSIS.DCG ' N='  num2str(ANALYSIS.nsbj)],...
                 'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
            
         elseif size(ANALYSIS.DCG,1)==2
                 
-            title([PLOT.TileString ANALYSIS.DCG{1} 'to' ANALYSIS.DCG{2} ' N='  num2str(ANALYSIS.nsbj)],...
+            title([PLOT.TitleString ANALYSIS.DCG{1} 'to' ANALYSIS.DCG{2} ' N='  num2str(ANALYSIS.nsbj)],...
                 'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
            
         end
@@ -282,5 +185,91 @@ if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
     
         
     end % channel
+    
+    
+elseif ANALYSIS.stmode == 2 % If using temporal decoding
+    
+    % Load channel information (locations and labels)
+    channel_file = [ANALYSIS.channellocs ANALYSIS.channel_names_file];
+    load(channel_file);
+    % Copy to FW_ANALYSIS structure
+    ANALYSIS.chaninfo = chaninfo;
+    ANALYSIS.chanlocs = chanlocs;
+    
+    % Estimate of location for actual decoding results (depends on plotting preferences)
+    
+    clear temp_data;
+    clear temp_perm_data;
+    
+    if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+        temp_data = ANALYSIS.RES.mean_subj_acc(:,1);
+        fprintf('\n\nArithmetic mean used for plotting group average accuracy\n\n');
+
+    elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+        temp_data = ANALYSIS.RES.trimmean_subj_acc(:, 1);
+        fprintf('\n\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
+
+    elseif ANALYSIS.plot_robust == 2 % If plotting medians
+
+        temp_data = ANALYSIS.RES.median_subj_acc(:, 1);
+        fprintf('\n\nMedian used for plotting group average accuracy\nError bars represent standard errors\n\n');
+
+    end % of if ANALYSIS.plot_robust
+    
+    % Estimate of location for permutation decoding results (depends on plotting preferences)
+    if ANALYSIS.permstats == 1
+        
+        temp_perm_data(1:size(ANALYSIS.RES.mean_subj_acc, 1)) = ANALYSIS.chancelevel;
+        
+    elseif ANALYSIS.permstats == 2
+
+        if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+
+            temp_perm_data = ANALYSIS.RES.mean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+            temp_perm_data = ANALYSIS.RES.trimmean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 2 % If plotting medians
+            
+            temp_perm_data = ANALYSIS.RES.median_subj_perm_acc(:, 1);
+            
+        end % of if ANALYSIS.plot_robust
+    end % of if ANALYSIS.permstats
+
+    
+    
+    % Plot estimate of group decoding accuracy (mean/median/trimmed mean)
+    figure;
+    topoplot_decoding(temp_data,...
+        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+        
+            
+    % Plot estimate of group decoding accuracy relative to chance or permutation
+    % decoding accuracy (actual - chance | actual - permutation)
+    figure;
+    topoplot_decoding(temp_data - temp_perm_data,...
+        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Decoding Results Minus Chance, N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+        
+            
+    % Plot statistically significant channels
+    sig_locations = ANALYSIS.RES.h; % Mask based on statistical significance
+    
+    figure;
+    topoplot_decoding(sig_locations,...
+        ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    
+    hold on;
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Masked by stat. sig., N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
+            
     
 end % analysis mode

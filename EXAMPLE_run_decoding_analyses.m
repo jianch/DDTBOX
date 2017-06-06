@@ -69,6 +69,10 @@ nchannels = 64; % number of channels
 sampling_rate = 1000; % Data sampling rate in Hz
 pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
 
+% For plotting single subject temporal decoding results
+channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
+channellocs = [bdir, 'locations/']; % Path of directory containing channel information file
+
 %__________________________________________________________________________
 
 
