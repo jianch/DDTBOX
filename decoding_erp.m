@@ -659,7 +659,13 @@ fprintf('Results are saved for participant %d in directory: %s. \n',cfg.sbj,(cfg
 
 if cfg.display_on == 1
     
-    display_indiv_results_erp(cfg, RESULTS);
+    % Load default plotting parameters for single subject plots
+    PLOT = dd_set_plotting_defaults_indiv;
+    PLOT.channel_names_file = cfg.channel_names_file;
+    PLOT.chanellocs = cfg.channellocs;
+    
+    % Call individual results display function
+    display_indiv_results_erp(cfg, RESULTS, PLOT);
 
 end % display_on
 %__________________________________________________________________________ 

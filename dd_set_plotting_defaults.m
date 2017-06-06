@@ -19,7 +19,7 @@ function PLOT = dd_set_plotting_defaults(ANALYSIS)
 %
 % PLOT      Structure containing settings for plotting group-level decoding performance results
 %
-% Usage:   PLOT = dd_set_plotting_defaults
+% Usage:   PLOT = dd_set_plotting_defaults(ANALYSIS)
 %
 %
 % Copyright (c) 2013-2017 Stefan Bode and contributors

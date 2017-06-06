@@ -63,7 +63,7 @@ end % of avmode switch
 %% Settings for single subject decoding performance results (classifier accuracy/SVR performance)
 
 % From the group-level analyses configuration script:
-PLOT.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
+PLOT.perm_disp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
 
 % Temporal decoding results settings
 PLOT.channellocs = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/locations/']; % Path of directory containing channel information file
@@ -130,7 +130,7 @@ for sbj = sbj_todo % Plot for all selected subjects
     end % of if cross
     
     % Overwrite selected cfg settings related to plotting results
-    cfg.permdisp = PLOT.permdisp;
+    cfg.perm_disp = PLOT.perm_disp;
     
     % Plot the single subject results
     display_indiv_results_erp(cfg, RESULTS, PLOT);

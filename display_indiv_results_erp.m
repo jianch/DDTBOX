@@ -130,7 +130,7 @@ elseif cfg.stmode == 2 % Temporal decoding
             
             
     % Plot permutation decoding results
-    if cfg.permdisp == 1 % If displaying permutation decoding results
+    if cfg.perm_disp == 1 % If displaying permutation decoding results
 
         temp_perm_data(:, 1) = RESULTS.subj_perm_acc(:, 1);
         
