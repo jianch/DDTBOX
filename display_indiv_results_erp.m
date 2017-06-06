@@ -76,16 +76,18 @@ if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
 
     % X axis tick labels
     XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * cfg.step_width_ms ) - cfg.step_width_ms) - cfg.pointzero; 
-    point_zero = find(XTickLabels(1,:) == 0);
-
+    
+    % Determine point of event onset relative to start of epoch (in steps)
+    plotting_point_zero = (cfg.pointzero / cfg.step_width_ms) + 1;
+     
     % Mark event onset
     if cfg.analysis_mode ~= 3
-        line([point_zero point_zero], [100 30],'Color', PLOT.PointZero.Color, 'LineWidth', PLOT.PointZero.LineWidth);
+        line([plotting_point_zero, plotting_point_zero], [100 30],'Color', PLOT.PointZero.Color, 'LineWidth', PLOT.PointZero.LineWidth);
 
         % Set locations of X and Y axis tickmarks
         set(gca,'Ytick', [0:5:100], 'Xtick', [1:1:nsteps]);
     elseif cfg.analysis_mode == 3
-        line([point_zero, point_zero], [1 -1],'Color','r','LineWidth',3);
+        line([plotting_point_zero, plotting_point_zero], [1 -1],'Color','r','LineWidth',3);
 
         % Set locations of X and Y axis tickmarks
         set(gca,'Ytick', [-1:0.2:1], 'Xtick', [1:1:nsteps]);

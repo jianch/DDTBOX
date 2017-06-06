@@ -131,6 +131,7 @@ for sbj = sbj_todo % Plot for all selected subjects
     
     % Overwrite selected cfg settings related to plotting results
     cfg.perm_disp = PLOT.perm_disp;
+    cfg.pointzero = pointzero;
     
     % Plot the single subject results
     display_indiv_results_erp(cfg, RESULTS, PLOT);
