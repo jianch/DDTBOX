@@ -37,7 +37,7 @@ function display_group_results_erp(ANALYSIS, PLOT)
 % plots the results depending on s/t-mode (information time-courses for
 % spatial/spatio-temporal decoding; heat maps for temporal decoding)
 
-if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
+if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial and spatiotemporal decoding
     
     % determine the time-point for locking the data ("point zero")
 %     [dummy pointzero] = min(abs(ANALYSIS.xaxis_scale(1,:)));
