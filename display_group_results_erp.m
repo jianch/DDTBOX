@@ -261,11 +261,12 @@ elseif ANALYSIS.stmode == 2 % If using temporal decoding
         
             
     % Plot statistically significant channels
-    sig_mask = ANALYSIS.RES.h; % Mask based on statistical significance
+    sig_locations = ANALYSIS.RES.h; % Mask based on statistical significance
     
     figure;
-    topoplot_decoding(sig_mask,...
-        ANALYSIS.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    topoplot_decoding(sig_locations,...
+        ANALYSIS.chanlocs,'style','fill','electrodes','labelpoint','numcontour',1,'conv','off','maplimits',[0 1],'ccolor',[0 0 0],'ecolor',[1 1 1],'chaninfo', ANALYSIS.chaninfo, 'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    
     hold on;
     title([PLOT.TitleString, ANALYSIS.DCG, ' Masked by stat. sig., N=',  num2str(ANALYSIS.nsbj)],...
                 'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
