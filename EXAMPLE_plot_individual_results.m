@@ -51,7 +51,7 @@ window_width_ms =10; % width of sliding window in ms
 step_width_ms = 400; % step size with which sliding window is moved through the trial
 
 % Create labels based on SVM method used
-switch avmode
+switch analysis_mode
     case 1 % SVC with LIBSVM
         analysis_mode_label = 'SVM_LIBSVM';
     case 2 % SVC with LIBLINEAR
