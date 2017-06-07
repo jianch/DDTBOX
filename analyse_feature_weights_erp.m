@@ -198,19 +198,19 @@ fprintf('Absolute feature weights (per channel) transformed into z-values. \n')
 mean_fw_all_z(:,:) = mean(FW_ANALYSIS.ALL_Z,1);
 FW_ANALYSIS.AVERAGE_Z = mean_fw_all_z;
 
-fprintf('Z-transformed absolute feature weights averaged across participants. \n')
+fprintf('Z-standardised absolute feature weights averaged across participants. \n')
 
 % analysis time windows for matrix display
 FW_ANALYSIS.AVERAGE_Z_DISP = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.disp_steps(1):FW_ANALYSIS.disp_steps(end),:);
 
-fprintf('Z-transformed absolute feature weights selected from specified analysis time-steps for display. \n')
+fprintf('Z-standardised absolute feature weights selected from specified analysis time-steps for display. \n')
 
 % analysis time windows for heat map displays
 for stat_step = 1:size(FW_ANALYSIS.steps_for_testing,2)
     FW_ANALYSIS.AVERAGE_Z_HEATS(stat_step,:) = FW_ANALYSIS.AVERAGE_Z(FW_ANALYSIS.disp_steps(stat_step),:);
 end
 
-fprintf('Z-transformed absolute averaged feature weights selected from specified analysis time-steps for statstical tests. \n')
+fprintf('Z-standardised absolute averaged feature weights selected from specified analysis time-steps for statstical tests. \n')
 
 %% AVERAGE RELEVANT TIME STEPS FOR STATS/DISPLAY
 %__________________________________________________________________________
@@ -241,7 +241,7 @@ FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z = sum_fw_z ./ size(FW_ANALYSIS.steps_for_te
 FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS_MEAN = mean(FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_ABS,1);
 FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z_MEAN = mean(FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z,1);
 
-fprintf('Z-transformed absolute feature weights from specified analysis time-steps averaged across time-steps. \n')
+fprintf('Z-standardised absolute feature weights from specified analysis time-steps averaged across time-steps. \n')
 
 %% T-TESTS FOR FW - AVERAGED RELEVANT TIME BINS & SINGLE RELEVANT TIME BINS
 %__________________________________________________________________________
