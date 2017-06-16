@@ -475,6 +475,6 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
         end % of for cv (cross-validation step)
             
     end % repetition of cross_validation rounds
-    fprintf('Finished classification. \n');  
+    fprintf('\nFinished classification. \n');  
     
 end % of for main_analysis (real decoding vs permutation test data)   

@@ -72,11 +72,11 @@ cfg.n_all_permutation = cfg.cross_val_steps * cfg.permut_rep;
 
 if cfg.cross == 0 % If not performing cross-decoding
     
-    fprintf('DCG %d will be analysed. \n',cfg.dcg_todo);     
+    fprintf('\nDCG %d will be analysed. \n',cfg.dcg_todo);     
     
 elseif cfg.cross > 0
     
-    fprintf('DCG %d and %d will be analysed for cross-condition classification. \n', cfg.dcg_todo(1), cfg.dcg_todo(2));
+    fprintf('\nDCG %d and %d will be analysed for cross-condition classification. \n', cfg.dcg_todo(1), cfg.dcg_todo(2));
     
 end % of if cfg.cross
 
@@ -88,12 +88,12 @@ if cfg.analysis_mode == 3
 end % of if cfg.analysis_mode
     
 % Report information related to trial numbers and cross-validation settings
-fprintf('Cross-validation defaults for single-trial decoding:\n');
-fprintf('%d steps with %d cycles resulting in %d analyses.\n', cfg.cross_val_steps, cfg.n_rep_cross_val, cfg.n_all_analyses);
-fprintf('Balanced number of examples will be used for all analyses by default.\n');
+fprintf('\nCross-validation defaults for single-trial decoding:\n');
+fprintf('\n%d steps with %d cycles resulting in %d analyses.\n', cfg.cross_val_steps, cfg.n_rep_cross_val, cfg.n_all_analyses);
+fprintf('\nBalanced number of examples will be used for all analyses by default.\n');
 
 if cfg.perm_test == 1 % if also doing permuted labels analyses
-    fprintf('Random-label analysis will be based on %d analyses.\n', cfg.n_all_permutation);
+    fprintf('\nRandom-label analysis will be based on %d analyses.\n', cfg.n_all_permutation);
 end % of if cfg.perm_test
 
 %% LIBSVM and LIBLINEAR flags
@@ -183,17 +183,17 @@ cfg.backend_flags.all_flags = [cfg.backend_flags.all_flags, ' ', cfg.backend_fla
 % basic data in: eeg_sorted_cond{run, cond}(timepoints, channels, trials)
 % *** converted into work_data{run, cond}(timepoints, channels, trials)
 
-fprintf('Reading in data. Please wait... \n');
+fprintf('\nReading in data. Please wait... \n');
 open_name = (cfg.data_open_name);
 load(open_name);
-fprintf('Data loading complete.\n');
+fprintf('\nData loading complete.\n');
 
 % read in regression labels if performing SVR
 if cfg.analysis_mode == 3
     
     cfg.regress_open_name = cfg.regress_label_name;
     cfg.regress_data = load(cfg.regress_open_name);    
-    fprintf('Loaded regressand labels.\n');
+    fprintf('\nLoaded regressand labels.\n');
 
 end % of if cfg.analysis_mode
 
@@ -203,7 +203,7 @@ cfg.nchannels=cfg.nchannels;
 % If data is stored in a structure and not a cell, then convert into cell
 % array format
 if isstruct(work_data)
-    fprintf('Converting EEG-structure into cell.\n');
+    fprintf('\nConverting EEG-structure into cell.\n');
     wd = struct2cell(work_data); 
     clear work_data;
     for i = 1:size(wd, 2)
@@ -233,19 +233,19 @@ if size(work_data{1,1}, 1) == cfg.nchannels && size(work_data{1,1}, 2) ~= cfg.nc
         end % of for column        
     end % of for row
     
-    fprintf('Data was converted into the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');   
+    fprintf('\nData was converted into the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n\n');   
 
 elseif size(work_data{1,1}, 1) ~= cfg.nchannels && size(work_data{1,1}, 2) == cfg.nchannels  
     
-    fprintf('Data seems to be in the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n');
+    fprintf('\nData seems to be in the correct format: eeg_sorted_cond{run,cond}(timepoints,channels,trials).\n\n');
     
 elseif size(work_data{1,1}, 1) == cfg.nchannels && size(work_data{1,1}, 2) == cfg.nchannels
     
-    fprintf('Number of channels = number of time points? Check whether data is in the correct format.\n');
+    fprintf('\nNumber of channels = number of time points? Check whether data is in the correct format.\n\n');
     
 elseif size(work_data{1,1}, 1) ~= cfg.nchannels && size(work_data{1,1}, 2) ~= cfg.nchannels 
     
-    fprintf('Data might not be in the required format: eeg_sorted_cond{run,cond}(timepoints,channels,trials). \n');
+    fprintf('\nData might not be in the required format: eeg_sorted_cond{run,cond}(timepoints,channels,trials). \n\n');
     
 end % of if size work_data
 
@@ -315,7 +315,7 @@ for r = 1:size(reduced_data, 2)
     
 end % of for r
 
-fprintf('Minimum number of trials per condition computed for participant %d \n', cfg.sbj_todo);
+fprintf('\nMinimum number of trials per condition computed for participant %d \n', cfg.sbj_todo);
 
 % select min trials in all conditions
 for r = 1:size(reduced_data, 2)
@@ -333,7 +333,7 @@ for r = 1:size(reduced_data, 2)
     end % of for d
 end % of for r
 
-fprintf('Same number of trials used for all conditions within each run.\n');
+fprintf('\nSame number of trials used for all conditions within each run.\n');
 clear reduced_data;
 
 
@@ -368,7 +368,7 @@ if cfg.avmode == 1 % single-trials
         end % of for cond
     end % of for d
     
-    fprintf('Data from all runs (if more than one) have been pooled into one dataset.\n');    
+    fprintf('\nData from all runs (if more than one) have been pooled into one dataset.\n\n');    
     
 elseif cfg.avmode == 2 % run averages
     
@@ -384,7 +384,7 @@ elseif cfg.avmode == 2 % run averages
         end % of for r
     end % of for d
     
-    fprintf('Run averages based across trials were computed for each condition.\n');
+    fprintf('\nRun averages based across trials were computed for each condition.\n\n');
     
 end % of if cfg.avmode
 
@@ -442,8 +442,10 @@ if cfg.avmode == 1
                             % values for each cell (may arise when there are uneven
                             % exemplar numbers across label sets).
                             for svr_label_entry = 1:size(cfg.regress_data.SVR_matrix, 2)
+                                
                                 cfg.regress_data.SVR_labels{svr_label_entry} = cfg.regress_data.SVR_matrix(:, svr_label_entry);
-                                cfg.regress_data.SVR_labels{svr_label_entry}(isnan(cfg.regress_data.SVR_labels{svr_label_entry}(:))) = []; % Remove NaN values                                
+                                cfg.regress_data.SVR_labels{svr_label_entry}(isnan(cfg.regress_data.SVR_labels{svr_label_entry}(:))) = []; % Remove NaN values   
+                                
                             end % of for svr_label_entry
                             
                             temp_training_labels = cfg.regress_data.SVR_labels{cfg.regr_todo}(1:(ntrs_set * cfg.cross_val_steps));
@@ -583,7 +585,7 @@ end % of if cfg.avmode
 
 %% Section 7: Build labels and do classification
 
-fprintf('Starting with vector preparation... \n');
+fprintf('\nStarting with vector preparation... \n');
 [RESULTS] = prepare_my_vectors_erp(training_set, test_set, cfg);
 
 %% Section 8: Average Results Over Cross-Validation Steps
@@ -597,7 +599,9 @@ for na = 1:size(RESULTS.prediction_accuracy, 2)
     pa(:,:,:) = RESULTS.prediction_accuracy{na}(:,:,:);
     
     if cfg.perm_test == 1
+        
         perm_pa(:,:,:) = RESULTS.perm_prediction_accuracy{na}(:,:,:);
+        
     end % of if cfg.perm_test
                
     % calculate average decoding accuracy
@@ -606,13 +610,15 @@ for na = 1:size(RESULTS.prediction_accuracy, 2)
         
     % calculate average permutation test decoding accuracy
     if cfg.perm_test == 1
+        
         RESULTS.subj_perm_acc(na,:) = nanmean(nanmean(perm_pa,3), 2);
         clear perm_pa;
+        
     end % of if cfg.perm_test
         
 end % of for na
 
-fprintf('Results are computed and averaged for participant %d. \n', cfg.sbj);
+fprintf('\nResults are computed and averaged for participant %d \n', cfg.sbj);
 
 %% Section 9: Save The Decoding Results
 % Saves decoding results to a .mat file in the output directory. Some analysis
@@ -645,7 +651,7 @@ end % of if cfg.cross
     
 save(savename, 'cfg', 'RESULTS'); % Save cfg and RESULTS structures into a .mat file
 
-fprintf('Results are saved for participant %d in directory: %s. \n', cfg.sbj, (cfg.output_dir));
+fprintf('\nResults are saved for participant %d in directory: %s \n', cfg.sbj, (cfg.output_dir));
 
 
 %% Section 10: Display Individual Results
