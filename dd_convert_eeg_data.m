@@ -7,7 +7,7 @@ function dd_convert_eeg_data(EEG, events_by_cond, save_directory, save_filename,
 %   eeg_sorted_cond{run, condition}(timepoint, channel, epoch)
 %
 % This function also can create SVR condition labels corresponding to each
-% epoch in the dataset, save in the format:
+% epoch in the dataset, saved in the format:
 %
 %   SVR_labels{run, condition}(epoch, 1)
 %

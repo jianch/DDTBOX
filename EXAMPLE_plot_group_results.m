@@ -5,11 +5,14 @@
 % Group-level statistical analyses must be performed before running this script.
 % Please make copies of this script for your own projects.
 %
+% More information about the settings in this script can be found in the
+% DDTBOX wiki, available at: https://github.com/DDTBOX/DDTBOX/wiki
+%
 % This script calls display_group_results_erp and
 % display_feature_weights_results, both of which are included in DDTBOX.
 %
 %
-% Copyright (c) 2013-2016, Daniel Feuerriegel and contributors 
+% Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
 % 
 % This file is part of DDTBOX.
 %
@@ -27,31 +30,33 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% General settings
+
+%% General Settings
 
 % Full filepath of group-level results file
-group_results_file = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Tutorial/FLANKER_GROUPRES_NSBJ5_win10_steps10_av1_st3_SVM_LIBSVM_DCGCorrect vs. Error.mat'];
+group_results_file = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Tutorial/FLANKER_TEMPORAL_GROUPRES_NSBJ40_win200_steps100_av1_st2_SVM_LIBLIN_DCGCorrect vs. Error.mat'];
 
 % Load the data file to get ANALYSIS parameters
 load(group_results_file);
 
 % Select whether to plot decoding performance and feature weights results
-PLOT.decoding_performance_results = 1; % 1 = plot; 0 = don't plot
-PLOT.feature_weights_results = 1; % 1 = plot; 0 = don't plot
+% 1 = plot; 0 = don't plot
+PLOT.decoding_performance_results = 1; 
+PLOT.feature_weights_results = 1;
 
 
-%% Settings for group decoding performance results (classifier accuracy/SVR performance)
 
-% From the group-level analyses configuration script:
+%% Settings For Group Decoding Performance Results (Classification Accuracy / SVR Performance)
+
 ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
 ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
 ANALYSIS.plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
 % Note: You can plot the mean even if the data were originally plotted with
-% the median or trimmed mean. If you originally plotted the trimmed mean,
-% then you can also plot the median in this script.
+% the median or trimmed mean when performing group-level analyses.
+% If you originally plotted the trimmed mean, then you can also plot the median in this script.
 ANALYSIS.disp.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding results scalp maps
 
-% figure position on the screen
+% Figure position on the screen
 PLOT.FigPos = [100 100 800 400];
 
 % Figure title settings
@@ -72,6 +77,7 @@ elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ==3 % Temporal SVR
 elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ==3 % Spatiotemporal SVR
     PLOT.TitleString = 'Spatiotemporal SVR ';  
 end % of if ANALYSIS.stmode
+
 
 
 %% Decoding Performance X and Y Axis Properties
@@ -96,7 +102,6 @@ elseif ANALYSIS.analysis_mode == 3 % If using SVR
     
 end % of if ANALYSIS.analysis_mode
 
-% _________________________________________________________________________
 
 % Define x/y-axis limits and tick marks
 
@@ -126,53 +131,60 @@ PLOT.Xtick = [ANALYSIS.xaxis_scale(1,1) : ANALYSIS.xaxis_scale(1,end)];
 PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero; 
 
 
-%% Define properties of lines showing decoding performance and error bars
 
-% Actual decoding results
-PLOT.Res.Line = '-ks'; % Line colour and style
-PLOT.Res.LineWidth = 2;
-PLOT.Res.MarkerEdgeColor = 'k';
-PLOT.Res.MarkerFaceColor = 'w';
-PLOT.Res.MarkerSize = 5;
+%% Define Properties of Lines Showing Decoding Performance and Error Bars
+
+% Actual (non-permutation) decoding results
+PLOT.Res.Line = '-ks'; % Line colour and style. Default '-ks'
+PLOT.Res.LineWidth = 2; % Default 2
+PLOT.Res.MarkerEdgeColor = 'k'; % Default 'k' (black)
+PLOT.Res.MarkerFaceColor = 'w'; % Default 'w' (white)
+PLOT.Res.MarkerSize = 5; % Default 5
 
 % Error bar plotting
-PLOT.Res.Error = 'k'; % Line colour and style
-PLOT.Res.ErrorLineWidth = 0.5;
+PLOT.Res.Error = 'k'; % Line colour and style. Default 'k' (black)
+PLOT.Res.ErrorLineWidth = 0.5; % Default 0.5
 PLOT.Res.ErrorLine = 'none'; % Disables lines between error bars across steps
 
 % Properties of line showing permutation / chance results
-PLOT.PermRes.Line = '-ks'; % Line colour and style
-PLOT.PermRes.LineWidth = 2;
-PLOT.PermRes.MarkerEdgeColor = 'b';
-PLOT.PermRes.MarkerFaceColor = 'w';
-PLOT.PermRes.MarkerSize = 5;
+PLOT.PermRes.Line = '-ks'; % Line colour and style. Default '-ks'
+PLOT.PermRes.LineWidth = 2; % Default 2
+PLOT.PermRes.MarkerEdgeColor = 'b'; % Default 'b' (black)
+PLOT.PermRes.MarkerFaceColor = 'w'; % Default 'w' (white)
+PLOT.PermRes.MarkerSize = 5; % Default 5
 
 % Error bars for chance/permutation results
-PLOT.PermRes.Error = 'b'; % Line colour and style
-PLOT.PermRes.ErrorLineWidth = 0.5;
+PLOT.PermRes.Error = 'b'; % Line colour and style. Default 'b' (black)
+PLOT.PermRes.ErrorLineWidth = 0.5; % Default 0.5
 PLOT.PermRes.ErrorLine = 'none'; % Disables lines between error bars across steps
 
 
-%% Decoding performance plot annotations
+
+%% Decoding Performance Plot Annotations
 
 % Define properties of line showing event onset
-PLOT.PointZero.Color = 'r'; % Colour of line denoting event onset
-PLOT.PointZero.LineWidth = 3; % Width of line denoting event onset
+PLOT.PointZero.Color = 'r'; % Colour of line denoting event onset. Default 'r' (red)
+PLOT.PointZero.LineWidth = 3; % Width of line denoting event onset. Default 3
 PLOT.PointZero.Point = find(ANALYSIS.data(3,:) == 1);
 
 % Define properties of statistical significance markers
-PLOT.Sign.LineColor = 'y';
-PLOT.Sign.LineWidth = 10;
+PLOT.Sign.LineColor = 'y'; % Default 'y' (yellow)
+PLOT.Sign.LineWidth = 10; % Default 10
 
 % Positions of statistical significance markers
 if ANALYSIS.analysis_mode ~= 3 % If not using SVR
+    
     PLOT.Sign.LinePos = [PLOT.Y_min + 0.5, PLOT.Y_max - 0.5];
+    
 elseif ANALYSIS.analysis_mode == 3 % If using SVR
+    
     PLOT.Sign.LinePos = [PLOT.Y_min, PLOT.Y_max];
+    
 end % of if ANALYSIS.analysis_mode
 
 
-%% Plotting settings for feature weights analyses
+
+%% Feature Weights Results Plotting Settings
 
 % Maps and stats for averaged analysis time windows
 ANALYSIS.fw.display_average_zmap = 1; % z-standardised average FWs
@@ -181,22 +193,28 @@ ANALYSIS.fw.display_average_corr_threshmap = 1; % thresholded map t-test results
 
 % Maps and stats for each analysis time window
 ANALYSIS.fw.display_all_zmaps = 1; % z-standardised average FWs
-ANALYSIS.fw.display_all_uncorr_thresh_maps = 0; % thresholded map uncorrected t-test results
-ANALYSIS.fw.display_all_corr_thresh_maps = 0; % thresholded map t-test results corrected for multiple comparisons
+ANALYSIS.fw.display_all_uncorr_thresh_maps = 1; % thresholded map uncorrected t-test results
+ANALYSIS.fw.display_all_corr_thresh_maps = 1; % thresholded map t-test results corrected for multiple comparisons
 
 % Extra plotting options:
-ANALYSIS.fw.colormap = 'jet'; % Colormap for plotting of scalp feature weights maps
+ANALYSIS.fw.colormap = 'jet'; % Colormap for plotting of feature weights scalp maps
 
 
 
-%% Plot the classification accuracy/SVR performance results
+%% Plot the Classification Accuracy / SVR Performance Results
+
 if PLOT.decoding_performance_results
+    
     display_group_results_erp(ANALYSIS, PLOT);
+    
 end % of if PLOT.decoding_performance
 
-%% Plot feature weights results
+
+
+%% Plot Feature Weights Results
+
 if PLOT.feature_weights_results
+    
      display_feature_weights_results(ANALYSIS, FW_ANALYSIS);
+     
 end % of if PLOT.feature_weights
-
-

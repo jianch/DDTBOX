@@ -4,11 +4,15 @@
 % running decoding analyses on specified subjects and discrimination
 % groups. An explanation of each configurable parameter is described below.
 % Please make copies of this script for your own projects.
-%
+% 
+% More information on each analysis setting, as well as a tutorial on how
+% to run MVPA in DDTBOX, can be found in the DDTBOX wiki, 
+% available at: https://github.com/DDTBOX/DDTBOX/wiki
+% 
 % This script calls decoding_erp.m
 %
 %
-% Copyright (c) 2013-2016, Daniel Feuerriegel and contributors 
+% Copyright (c) 2013-2017, Daniel Feuerriegel and contributors 
 % 
 % This file is part of DDTBOX.
 %
@@ -25,12 +29,31 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
 %% Housekeeping
+
 clear variables;
 close all;
 
 
-%% Filepaths and locations of subject datasets
+
+%% Select Subject Datasets and Discrimination Groups
+
+% Set the subject datasets on which to perform MVPA
+sbj_todo = [1:4];
+
+% Enter the discrimination group for classification. Two discrimination
+% groups can be entered when using cross-condition decoding.
+dcgs_for_analyses = [1];
+
+% Perform cross-condition decoding? 1 = yes / 0 = no
+cross = 0;
+
+
+
+
+%% Filepaths and Locations of Subject Datasets
 
 % Enter the name of the study (for labeling saved decoding results files)
 study_name = 'EXAMPLE';
@@ -56,16 +79,15 @@ sbj_code = {...
 % Automatically calculates number of subjects from the number of data files
 nsbj = size(sbj_code, 1);
 
-
 % MATLAB workspace name for single subject data arrays and structures
-data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace
-    
-%__________________________________________________________________________
+data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use this name as their MATLAB workspace variable name
+  
 
 
-%% EEG dataset information
 
-nchannels = 64; % number of channels
+%% EEG Dataset Information
+
+nchannels = 64; % Number of channels
 sampling_rate = 1000; % Data sampling rate in Hz
 pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
 
@@ -73,10 +95,10 @@ pointzero = 100; % Corresponds to the time of the event/trigger code relative to
 channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
 channellocs = [bdir, 'locations/']; % Path of directory containing channel information file
 
-%__________________________________________________________________________
 
 
-%% Condition and discrimination group (dcg) information
+
+%% Condition and Discrimination Group (dcg) Information
 
 % Label each condition
 % Usage: cond_labels{condition number} = 'Name of condition';
@@ -109,15 +131,15 @@ svr_cond_labels{1} = [1];
 dcg_labels{1} = 'A vs. C';
 dcg_labels{2} = 'B vs. D';
 
-
 % This section automaticallly fills in various parameters related to dcgs and conditions 
 ndcg = size(dcg, 2);
 nclasses = size(dcg{1}, 2);      
 ncond = size(cond_labels, 2);
 
-%__________________________________________________________________________
 
-%% Multivariate classification/regression parameters
+
+
+%% Multivariate Classification/Regression Parameters
 
 analysis_mode = 1; % ANALYSIS mode (1=SVC with LIBSVM / 2=SVC with liblinear / 3=SVR with LIBSVM)
 stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
@@ -137,23 +159,12 @@ feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
 display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
 perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
 
-%__________________________________________________________________________
 
-%% Select subject datasets and discrimination groups
 
-% Set which subjects datasets to decode
-sbj_todo = [1:4];
 
-% Enter the discrimination group for classification. Two discrimination
-% groups can be entered when using cross-condition decoding.
-dcgs_for_analyses = [1];
+%% Copy All Settings Into the cfg Structure
+% No user input required in this section
 
-% Perform cross-condition decoding? 1 = yes / 0 = no
-cross = 0;
-
-%__________________________________________________________________________
-
-%% Copy all settings into the cfg structure
 cfg.bdir = bdir;
 cfg.output_dir = output_dir;
 cfg.sbj_code = sbj_code;
@@ -187,12 +198,12 @@ cfg.feat_weights_mode = feat_weights_mode;
 cfg.display_on = display_on;
 cfg.perm_disp = perm_disp;
 
-%__________________________________________________________________________
 
 
-%% Run the decoding analyses for specified subjects and dcgs
+%% Run the Decoding Analyses For Specified Subjects and dcgs
 
 for dcg_todo = dcgs_for_analyses
+    
     for sbj = sbj_todo
 
         % Save subject and dcg numbers into the configuration settings
@@ -209,4 +220,5 @@ for dcg_todo = dcgs_for_analyses
         decoding_erp(cfg);
 
     end % of for sbj
-end % of for dcg
+    
+end % of for dcg_todo

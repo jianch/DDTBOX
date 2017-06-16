@@ -53,7 +53,7 @@ function [Results] = multcomp_bonferroni(p_values, varargin)
 % Example:      [Results] = multcomp_bonferroni(p_values, 'alpha', 0.01)          
 %
 %
-% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% Copyright (c) 2017 Daniel Feuerriegel and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -71,7 +71,8 @@ function [Results] = multcomp_bonferroni(p_values, varargin)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% Handling variadic inputs
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05);
@@ -82,19 +83,27 @@ option_names = fieldnames(options);
 % Count arguments
 n_args = length(varargin);
 if round(n_args/2) ~= n_args/2
+    
    error([mfilename ' needs property name/property value pairs'])
-end
+   
+end % of if round
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
@@ -102,7 +111,9 @@ clear inp_name
 alpha_level = options.alpha;
 clear options;
 
-%% Bonferroni correction
+
+%% Bonferroni Correction
+
 n_total_comparisons = length(p_values); % Get the number of comparisons
 bonferroni_corrected_alpha = alpha_level / n_total_comparisons; % Calculate bonferroni-corrected alpha
 bonferroni_corrected_h = zeros(1, length(p_values)); % preallocate
@@ -111,7 +122,8 @@ bonferroni_corrected_h(p_values < bonferroni_corrected_alpha) = 1; % Compare eac
 % Multiply p-values by the number of tests
 bonferroni_corrected_p = p_values * n_total_comparisons;
 
-%% Copy output into Results structure
+
+%% Copy Output into Results structure
 Results.corrected_h = bonferroni_corrected_h;
 Results.corrected_alpha = bonferroni_corrected_alpha;
 Results.uncorrected_p = p_values;

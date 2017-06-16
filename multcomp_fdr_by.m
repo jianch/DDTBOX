@@ -60,7 +60,8 @@ function [Results] = multcomp_fdr_by(p_values, varargin)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% Handling variadic inputs
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05);
@@ -71,25 +72,34 @@ option_names = fieldnames(options);
 % Count arguments
 n_args = length(varargin);
 if round(n_args/2) ~= n_args/2
+    
    error([mfilename ' needs property name/property value pairs'])
-end
+   
+end % of if round
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name,option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
 % Renaming variables for use below:
 alpha_level = options.alpha;
 clear options;
+
 
 %% False Disovery Rate Correction - Benjamini-Yekutieli
 n_total_comparisons = length(p_values); % Get the number of comparisons
@@ -99,25 +109,35 @@ sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
 % j values precalculated to help calculate the Benjamini-Yekutieli critical alpha
 j_values = zeros(1, n_total_comparisons);
+
 for j_iteration = 1:n_total_comparisons
+    
     j_values(j_iteration) = 1 / j_iteration;
-end
+    
+end % of for j_iteration
 
 % Find critical k value
 for benyek_step = 1:n_total_comparisons
+    
     if sorted_p(benyek_step) <= (benyek_step / (n_total_comparisons * sum(j_values))) * alpha_level
+        
         benyek_critical_alpha = sorted_p(benyek_step);
-    end
-end
+        
+    end % of if sorted_p
+end % of for benyek_step
 
 % If no tests are significant set critical alpha to zero
 if ~exist('benyek_critical_alpha', 'var')
+    
     benyek_critical_alpha = 0;
-end
+    
+end % of if ~exist
 
 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
 fdr_corrected_h(p_values <= benyek_critical_alpha) = 1;
 
-%% Copy output into Results structure
+
+%% Copy Output Into Results Structure
+
 Results.corrected_h = fdr_corrected_h;
 Results.critical_alpha = benyek_critical_alpha;

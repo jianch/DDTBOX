@@ -4,8 +4,10 @@ function display_indiv_results_erp(cfg, RESULTS, PLOT)
 % for a single subject. If permutation tests are run and display of 
 % permutation results is on, then these results are displayed for comparison.
 %
-% This function is called by decoding_erp and custom plotting scripts.
+% This function is called by decoding_erp, but can also be called by 
+% custom plotting scripts such as EXAMPLE_plot_individual_results
 % 
+%
 % Inputs:
 %
 %   cfg         structure containing participant dataset information and 
@@ -18,7 +20,10 @@ function display_indiv_results_erp(cfg, RESULTS, PLOT)
 %               subject results.
 %
 %
-% Copyright (c) 2013-2016 Stefan Bode and contributors
+% Usage:        display_indiv_results_erp(cfg, RESULTS, PLOT)
+%
+%
+% Copyright (c) 2013-2017 Stefan Bode and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -36,10 +41,10 @@ function display_indiv_results_erp(cfg, RESULTS, PLOT)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% DISPLAY RESULTS
+%% Display Results
 
 % determine the x-axis scaling
-nsteps = size(RESULTS.subj_acc,2);
+nsteps = size(RESULTS.subj_acc, 2);
 
 if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
 
@@ -47,7 +52,9 @@ if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
     
     % Plot actual decoding results
     temp_data(1,:) = RESULTS.subj_acc(1,:);
-    plot(temp_data, PLOT.Res.Line ,'LineWidth', PLOT.Res.LineWidth, ...
+    
+    plot(temp_data, PLOT.Res.Line, ...
+        'LineWidth', PLOT.Res.LineWidth, ...
         'MarkerEdgeColor',PLOT.Res.MarkerEdgeColor, ...
         'MarkerFaceColor', PLOT.Res.MarkerFaceColor, ...
         'MarkerSize', PLOT.Res.MarkerSize);
@@ -57,7 +64,9 @@ if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
     if cfg.perm_disp == 1
 
         temp_perm_data(1,:) = RESULTS.subj_perm_acc(1,:);
-        plot(temp_perm_data, PLOT.PermRes.Line, 'LineWidth', PLOT.PermRes.LineWidth, ...
+        
+        plot(temp_perm_data, PLOT.PermRes.Line, ...
+            'LineWidth', PLOT.PermRes.LineWidth, ...
             'MarkerEdgeColor', PLOT.PermRes.MarkerEdgeColor, ...
             'MarkerFaceColor', PLOT.PermRes.MarkerFaceColor, ...
             'MarkerSize', PLOT.PermRes.MarkerSize);
@@ -65,39 +74,58 @@ if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
     end % of if cfg.perm_disp
 
     % X axis label
-    xlabel('Time-steps [ms]', 'FontSize', PLOT.xlabel.FontSize, 'FontWeight', PLOT.xlabel.FontWeight);
+    xlabel('Time-steps [ms]', ...
+        'FontSize', PLOT.xlabel.FontSize, ...
+        'FontWeight', PLOT.xlabel.FontWeight);
 
     % Y axis label
-    if cfg.analysis_mode ~= 3 % If performing SVM classification
-        ylabel('Classification Accuracy [%]' ,'FontSize', PLOT.ylabel.FontSize, 'FontWeight', PLOT.ylabel.FontWeight);
+    if cfg.analysis_mode ~= 3 % If performed classification analyses
+        
+        ylabel('Classification Accuracy [%]', ...
+            'FontSize', PLOT.ylabel.FontSize, ...
+            'FontWeight', PLOT.ylabel.FontWeight);
+        
     elseif cfg.analysis_mode == 3 % If performing SVR
-        ylabel('Fisher Z-transformed correlation coeff', 'FontSize', PLOT.ylabel.FontSize, 'FontWeight', PLOT.ylabel.FontWeight);
-    end; 
+        
+        ylabel('Fisher Z-transformed correlation coeff', ...
+            'FontSize', PLOT.ylabel.FontSize, ...
+            'FontWeight', PLOT.ylabel.FontWeight);
+        
+    end % of if cfg.analysis_mode
 
     % X axis tick labels
-    XTickLabels(1:1:nsteps) = ( ( (1:1:nsteps) * cfg.step_width_ms ) - cfg.step_width_ms) - cfg.pointzero; 
+    XTickLabels(1:1:nsteps) = (((1:1:nsteps) * cfg.step_width_ms) - cfg.step_width_ms) - cfg.pointzero; 
     
     % Determine point of event onset relative to start of epoch (in steps)
     plotting_point_zero = (cfg.pointzero / cfg.step_width_ms) + 1;
      
-    % Mark event onset
-    if cfg.analysis_mode ~= 3
-        line([plotting_point_zero, plotting_point_zero], [100 30],'Color', PLOT.PointZero.Color, 'LineWidth', PLOT.PointZero.LineWidth);
+    % Mark event onset and set tick labels
+    if cfg.analysis_mode ~= 3 % If performed classification
+        
+        line([plotting_point_zero, plotting_point_zero], [100 30], ...
+            'Color', PLOT.PointZero.Color, ...
+            'LineWidth', PLOT.PointZero.LineWidth);
 
         % Set locations of X and Y axis tickmarks
-        set(gca,'Ytick', [0:5:100], 'Xtick', [1:1:nsteps]);
-    elseif cfg.analysis_mode == 3
-        line([plotting_point_zero, plotting_point_zero], [1 -1],'Color','r','LineWidth',3);
+        set(gca, 'Ytick', [0:5:100], 'Xtick', [1:1:nsteps]);
+        
+    elseif cfg.analysis_mode == 3 % If performed regression
+        
+        line([plotting_point_zero, plotting_point_zero], [1 -1], ...
+            'Color', 'r', ...
+            'LineWidth', 3);
 
         % Set locations of X and Y axis tickmarks
         set(gca,'Ytick', [-1:0.2:1], 'Xtick', [1:1:nsteps]);
+        
     end % of if cfg.analysis_mode
 
-    set(gca,'XTickLabel', XTickLabels);
+    set(gca, 'XTickLabel', XTickLabels);
 
     % Title of plot
-    title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label ' - analysis '...
-        num2str(1) ' of ' num2str(size(RESULTS.subj_acc,1))],'FontSize',14,'FontWeight','b');
+    title(['SBJ', num2str(cfg.sbj_todo), ' ', cfg.dcg_label, ' - analysis ', num2str(1), ' of ', num2str(size(RESULTS.subj_acc, 1))], ...
+        'FontSize', 14, ...
+        'FontWeight', 'b');
 
     % Legend
     if cfg.perm_disp == 1 % If plotting permutation results
@@ -113,9 +141,10 @@ if cfg.stmode == 1 || cfg.stmode == 3 % Spatial and spatiotemporal decoding
 elseif cfg.stmode == 2 % Temporal decoding
 
     % Load channel information (locations and labels)
-    channel_file = [PLOT.channellocs PLOT.channel_names_file];
+    channel_file = [PLOT.channellocs, PLOT.channel_names_file];
     load(channel_file);
-    % Copy to FW_ANALYSIS structure
+    
+    % Copy to PLOT structure
     PLOT.chaninfo = chaninfo;
     PLOT.chanlocs = chanlocs;
 
@@ -123,13 +152,16 @@ elseif cfg.stmode == 2 % Temporal decoding
     temp_data(:, 1) = RESULTS.subj_acc(:, 1);
     
     figure;
-    topoplot_decoding(temp_data,...
-        PLOT.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', PLOT.chaninfo, 'colormap', PLOT.temporal_decoding_colormap);
+    topoplot_decoding(temp_data, PLOT.chanlocs, ...
+        'style', 'both', ...
+        'electrodes', 'labelpoint', ...
+        'maplimits', 'minmax', ...
+        'chaninfo', PLOT.chaninfo, ...
+        'colormap', PLOT.temporal_decoding_colormap);
     hold on;
     
     % Title of plot
-    title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label],'FontSize',14,'FontWeight','b');
-            
+    title(['SBJ', num2str(cfg.sbj_todo), ' ', cfg.dcg_label], 'FontSize', 14, 'FontWeight', 'b');
             
     % Plot permutation decoding results
     if cfg.perm_disp == 1 % If displaying permutation decoding results
@@ -137,17 +169,19 @@ elseif cfg.stmode == 2 % Temporal decoding
         temp_perm_data(:, 1) = RESULTS.subj_perm_acc(:, 1);
         
         figure;
-        topoplot_decoding(temp_perm_data,...
-            PLOT.chanlocs,'style','both','electrodes','labelpoint','maplimits','minmax','chaninfo', PLOT.chaninfo, 'colormap', PLOT.temporal_decoding_colormap);
+        topoplot_decoding(temp_perm_data, PLOT.chanlocs, ...
+            'style', 'both', ...
+            'electrodes', 'labelpoint', ...
+            'maplimits', 'minmax', ...
+            'chaninfo', PLOT.chaninfo, ...
+            'colormap', PLOT.temporal_decoding_colormap);
         hold on;
 
         % Title of plot
-        title(['SBJ' num2str(cfg.sbj_todo) ' ' cfg.dcg_label ' Permutation Decoding Results'],'FontSize',14,'FontWeight','b');
+        title(['SBJ', num2str(cfg.sbj_todo), ' ', cfg.dcg_label, ' Permutation Decoding Results'], ...
+            'FontSize', 14, ...
+            'FontWeight', 'b');
 
     end % of if cfg.perm_disp
-
-    
+  
 end % of if cfg.stmode
-
-clear temp_data;
-clear temp_perm_data;
