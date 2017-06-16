@@ -111,7 +111,7 @@ end % of if ANALYSIS.fw.display_average_zmap
 
 
 
-%% Display Avearage Heat Maps For Selected Steps: Significance-Thresholded Map Uncorrected For MCs
+%% Display Average Heat Maps For Selected Steps: Significance-Thresholded Map Uncorrected For MCs
 
 if ANALYSIS.fw.display_average_uncorr_threshmap == 1
     

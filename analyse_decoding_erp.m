@@ -120,14 +120,16 @@ for s = 1:ANALYSIS.nsbj
     if s == 1 % If the first subject
         
         % ask for the specific time steps to analyse
-        if ANALYSIS.avmode == 1 || ANALYSIS.avmode == 1 % DF NOTE: Is the second IF statement supposed to specify a different value?
+        if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
     
             fprintf('\n');
             fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n', size(RESULTS.subj_acc,2), cfg.window_width_ms);
             ANALYSIS.firststep = 1;
             
             if isempty(ANALYSIS.laststep) % If last time step has not been defined by user
+                
                 ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
+                
             end % of if isempty
         end % of if if ANALYSIS.avmode
     

@@ -60,18 +60,6 @@ end % of if isempty
 
 
 
-%% Load Channel Information
-
-% Load channel information file
-channel_file = [ANALYSIS.channellocs, ANALYSIS.channel_names_file];
-load(channel_file);
-
-% Copy to FW_ANALYSIS structure
-FW_ANALYSIS.chaninfo = chaninfo;
-FW_ANALYSIS.chanlocs = chanlocs;
-
-
-
 %% Get Single Subject Data
 % Get data from each participant
 
@@ -587,6 +575,14 @@ fprintf('T-Tests (corrected and uncorrected for multiple comparisons) performed 
 
 
 %% Plot Feature Weights Results
+
+% Load channel information file
+channel_file = [ANALYSIS.channellocs, ANALYSIS.channel_names_file];
+load(channel_file);
+
+% Copy to FW_ANALYSIS structure
+FW_ANALYSIS.chaninfo = chaninfo;
+FW_ANALYSIS.chanlocs = chanlocs;
 
 display_feature_weights_results(ANALYSIS, FW_ANALYSIS);
 

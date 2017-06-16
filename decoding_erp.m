@@ -549,8 +549,7 @@ elseif cfg.avmode == 2 % run averages
             % cross-validation steps. Don't repeat because data is not randomly drawn from experiment        
             for r = 1:size(mean_balanced_data, 2)
 
-                % r = test data-set
-                test_run = r;   % DF NOTE: Variable test_run appears to be unused       
+                % run r = test data-set
                 test_set{d,con,r,1} = mean_balanced_data{d,r,con};
 
                 % all other runs = training data-set
@@ -558,6 +557,7 @@ elseif cfg.avmode == 2 % run averages
                 sz_train = size(train_on, 2);
 
                 for trainrun = 1:sz_train
+                    
                     if trainrun == 1
                         
                         train_data = mean_balanced_data{d,train_on(trainrun),con};

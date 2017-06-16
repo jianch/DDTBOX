@@ -60,8 +60,6 @@ elseif cfg.stmode == 2 % Temporal decoding
     
 end % of if cfg.stmode
 
-nconds = cfg.nconds;
-
 
 %% Load In Regression Labels (For SVR)
 
