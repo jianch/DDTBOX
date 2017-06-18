@@ -43,12 +43,19 @@ close all;
 % Set the subject datasets on which to perform MVPA
 sbj_todo = [1:4];
 
-% Enter the discrimination group for classification. Two discrimination
-% groups can be entered when using cross-condition decoding.
-dcgs_for_analyses = [1];
+% Enter the discrimination group(s) for classification. 
+% Each discrimination group should be in a separate cell entry.
+% e.g. dcgs_for_analyses{1} = [1];
+% Two discrimination groups can be entered when using cross-condition decoding.
+% (SVM trained using the first entry/dcg, tested on the second entry/dcg)
+% e.g. dcgs_for_analyses{1} = [1, 2];
+dcgs_for_analyses{1} = [1];
 
-% Perform cross-condition decoding? 1 = yes / 0 = no
-cross = 0;
+% Perform cross-condition decoding? 
+% 0 = no
+% 1 = train 1st dcg, test 2nd dcg
+% 2 = train 2nd dcg, test 1st dcg
+cross = 1;
 
 
 
@@ -202,8 +209,11 @@ cfg.perm_disp = perm_disp;
 
 %% Run the Decoding Analyses For Specified Subjects and dcgs
 
-for dcg_todo = dcgs_for_analyses
+for dcg_set = 1:length(dcgs_for_analyses)
     
+    clear dcg_todo;
+    dcg_todo = dcgs_for_analyses{dcg_set};
+        
     for sbj = sbj_todo
 
         % Save subject and dcg numbers into the configuration settings
@@ -221,4 +231,4 @@ for dcg_todo = dcgs_for_analyses
 
     end % of for sbj
     
-end % of for dcg_todo
+end % of for dcg_set

@@ -63,8 +63,8 @@ end % of if cfg.analysis_mode
 cfg.window_width = floor(cfg.window_width_ms / ((1/cfg.sampling_rate) * 1000));
 cfg.step_width = floor(cfg.step_width_ms / ((1/cfg.sampling_rate) * 1000));
 
-% Set dcg label for current analysis
-cfg.dcg_label = cfg.dcg_labels{cfg.dcg_todo};
+% % Set dcg label for current analysis
+% cfg.dcg_label = cfg.dcg_labels{cfg.dcg_todo};
 
 % cross-validation defaults for single-trial decoding
 cfg.n_all_analyses = cfg.cross_val_steps * cfg.n_rep_cross_val;
@@ -84,7 +84,9 @@ end % of if cfg.cross
 % (to be saved in cfg.regress_struct_name(rows = trials; columns = variable values)
 % The data is always the same, so by default: dcg_todo = 1 
 if cfg.analysis_mode == 3 
+    
     cfg.regr_todo = cfg.svr_cond_labels{cfg.dcg_todo};
+    
 end % of if cfg.analysis_mode
     
 % Report information related to trial numbers and cross-validation settings
@@ -93,7 +95,9 @@ fprintf('\n%d steps with %d cycles resulting in %d analyses.\n', cfg.cross_val_s
 fprintf('\nBalanced number of examples will be used for all analyses by default.\n');
 
 if cfg.perm_test == 1 % if also doing permuted labels analyses
+    
     fprintf('\nRandom-label analysis will be based on %d analyses.\n', cfg.n_all_permutation);
+    
 end % of if cfg.perm_test
 
 %% LIBSVM and LIBLINEAR flags
@@ -203,15 +207,20 @@ cfg.nchannels=cfg.nchannels;
 % If data is stored in a structure and not a cell, then convert into cell
 % array format
 if isstruct(work_data)
+    
     fprintf('\nConverting EEG-structure into cell.\n');
     wd = struct2cell(work_data); 
     clear work_data;
+    
     for i = 1:size(wd, 2)
+        
         for j = 1:size(wd, 3)
+            
             temp(:,:,:) = wd{1,i,j}(:,:,:);
             temp = double(temp);
             work_data{i,j} = temp;
             clear temp;
+            
         end % of for j
     end % of for i
 end % of if isstruct
@@ -223,6 +232,7 @@ clear eeg_sorted_cond;
 if size(work_data{1,1}, 1) == cfg.nchannels && size(work_data{1,1}, 2) ~= cfg.nchannels  
     
     for row = 1:size(work_data, 1)
+        
         for column = 1:size(work_data, 2)
             
             temp(:,:,:) = work_data{row,column}(:,:,:);
