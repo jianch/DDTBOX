@@ -96,7 +96,7 @@ Labels = labels_test;
 
 %% Prediction (Test the Classifier)
 
-if sum(cfg.analysis_mode == [1 3]) % libsvm
+if sum(cfg.analysis_mode == [1, 3]) % libsvm
     
     [predicted_label, accuracy, decision_values] = svmpredict(Labels, Samples, model);
     
@@ -142,6 +142,7 @@ if cfg.analysis_mode == 1 % SVM classification with LIBSVM
     % extracting accuracy for N-classes
     elseif cfg.nconds > 2
 
+        % Generate all pairs of conditions
         classes = 1:cfg.nconds;
         pairs = nchoosek(classes, 2);
 
@@ -151,10 +152,13 @@ if cfg.analysis_mode == 1 % SVM classification with LIBSVM
             
         end % of for cl
 
+        % Calculate the winning class out of all classes
         votes = decision_values * wt;
         [maxvote, winvote] = max(votes');
-        classcorrectness = (classes == winvote) * 100;
-
+        
+        % Accuracy defined as the proportion of test labels that equal the
+        % winning class
+        classcorrectness = (labels_test == winvote') * 100;
         acc = mean(classcorrectness);
 
     end % of if cfg.nconds
