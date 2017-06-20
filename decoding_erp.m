@@ -82,7 +82,6 @@ end % of if cfg.cross
 
 % For SVR dcg_todo defines condition that the target variable comes from 
 % (to be saved in cfg.regress_struct_name(rows = trials; columns = variable values)
-% The data is always the same, so by default: dcg_todo = 1 
 if cfg.analysis_mode == 3 
     
     cfg.regr_todo = cfg.svr_cond_labels{cfg.dcg_todo};
@@ -482,7 +481,7 @@ if cfg.avmode == 1
                         
                         delete_test_trials = fliplr(sort(test_trials));
                         
-                    elseif cfg.cross == 1 || cfg.cross == 2 % If performing cross-decoding
+                    elseif cfg.cross == 1 % If performing cross-decoding
                         
                         % if doing cross-classification, ensure that trials
                         % from one training set don't end up in the
@@ -648,14 +647,6 @@ elseif cfg.cross == 1 % Cross-decoding (train dcg 1, test dcg 2)
         '_av' num2str(cfg.avmode) '_st' num2str(cfg.stmode) '_' ...
         cfg.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo(1)}...
         'toDCG' cfg.dcg_labels{cfg.dcg_todo(2)} '.mat'];
-    
-elseif cfg.cross == 2 % Cross-decoding (train dcg 2, test dcg 1)
-    
-        savename = [(cfg.output_dir) cfg.study_name '_SBJ' num2str(cfg.sbj) ...
-            '_win' num2str(cfg.window_width_ms) '_steps' num2str(cfg.step_width_ms)...
-            '_av' num2str(cfg.avmode) '_st' num2str(cfg.stmode) '_' ...
-            cfg.analysis_mode_label '_DCG' cfg.dcg_labels{cfg.dcg_todo(2)}...
-            'toDCG' cfg.dcg_labels{cfg.dcg_todo(1)} '.mat'];
     
 end % of if cfg.cross
     

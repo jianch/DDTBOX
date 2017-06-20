@@ -139,12 +139,6 @@ for main_analysis = 1:nr_rounds % 1=real decoding, 2=permutation test
                             data_training = double(training_set{1,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
                             data_test = double(test_set{2,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
                         
-                         elseif cfg.cross == 2 % train on B, predict left-out from A
-                            
-                         % extract training and test data for current step for time window
-                            data_training = double(training_set{2,con,cv,ncv}((1+( (s-1)*cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
-                            data_test = double(test_set{1,con,cv,ncv}((1 + ( (s - 1) * cfg.step_width) ):( (s * cfg.window_width) - ( (s - 1) * (cfg.window_width-cfg.step_width) ) ),:,:));
-                            
                         end % of if cfg.cross
                         
                         % spatial decoding: vectors consist of average data within time-window

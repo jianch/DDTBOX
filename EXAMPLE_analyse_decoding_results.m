@@ -42,7 +42,7 @@ sbjs_todo = [1:10];
 % groups can be entered as a vector when using cross-condition decoding.
 dcg_todo = [1];
 
-% Perform cross-condition decoding? 1 = yes / 0 = no
+% Was cross-condition decoding performed? 1 = yes / 0 = no
 cross = 0;
 
 

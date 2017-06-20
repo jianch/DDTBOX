@@ -59,7 +59,6 @@ cross = 1;
 
 
 
-
 %% Filepaths and Locations of Subject Datasets
 
 % Enter the name of the study (for labeling saved decoding results files)
