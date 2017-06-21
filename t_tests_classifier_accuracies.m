@@ -48,6 +48,9 @@ function [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS)
 
 %% Perform Group-Level Tests
 
+% Output that t tests were used to command line
+fprintf('\n------------------------------------------------------------------------\nGroup decoding performance analyses using paired-samples t tests\n------------------------------------------------------------------------\n');
+
 for na = 1:size(ANALYSIS.RES.mean_subj_acc, 1) % analysis
         
     for step = 1:size(ANALYSIS.RES.mean_subj_acc, 2) % step/analysis time window
@@ -149,13 +152,13 @@ switch ANALYSIS.multcompstats
 
 case 0 % No correction for multiple comparisons
 
-    fprintf('\n\nCorrection for multiple comparisons has not been applied\n\n');
+    fprintf('\nCorrection for multiple comparisons has not been applied\n\n');
 
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
 
 case 1 % Bonferroni Correction
 
-    fprintf('\n\nPerforming corrections for multiple comparisons (Bonferroni)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (Bonferroni)\n\n');
 
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
         
@@ -185,7 +188,7 @@ case 1 % Bonferroni Correction
 
 case 2 % Holm-Bonferroni Correction
     
-    fprintf('\n\nPerforming corrections for multiple comparisons (Holm-Bonferroni)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (Holm-Bonferroni)\n\n');
 
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
 
@@ -215,7 +218,7 @@ case 2 % Holm-Bonferroni Correction
     
 case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
     
-    fprintf('\n\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
     
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
 
@@ -315,7 +318,7 @@ case 3 % Strong FWER Control Permutation Test (Blaire-Karniski)
    
 case 4 % Cluster-Based Permutation Test
  
-    fprintf('\n\nPerforming corrections for multiple comparisons (cluster-based permutation test)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (cluster-based permutation test)\n\n');
     
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
 
@@ -365,7 +368,7 @@ case 4 % Cluster-Based Permutation Test
             
             % Report cluster-corrected results
             fprintf('The adjusted critical cluster mass for analysis %i is %3.3f \n', na, ANALYSIS.RES.critical_cluster_mass(na));
-            fprintf('%i statistically significant clusters were found for analysis %i \n', ANALYSIS.RES.n_sig_clusters, na);
+            fprintf('%i statistically significant cluster(s) were found for analysis %i \n', ANALYSIS.RES.n_sig_clusters, na);
 
         end % of for na loop
         
@@ -419,7 +422,7 @@ case 4 % Cluster-Based Permutation Test
             
             % Report cluster-corrected results
             fprintf('The adjusted critical cluster mass for step %i is %3.3f \n', step, ANALYSIS.RES.critical_cluster_mass(step));
-            fprintf('%i statistically significant clusters were found for step %i \n', ANALYSIS.RES.n_sig_clusters, step);
+            fprintf('%i statistically significant cluster(s) were found for step %i \n', ANALYSIS.RES.n_sig_clusters, step);
 
         end % of for step
         
@@ -430,7 +433,7 @@ case 4 % Cluster-Based Permutation Test
         
 case 5 % KTMS Generalised FWER Control Using Permutation Testing
     
-    fprintf('\n\nPerforming corrections for multiple comparisons (KTMS generalised FWER control)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (KTMS generalised FWER control)\n\n');
 
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
 
@@ -537,7 +540,7 @@ case 5 % KTMS Generalised FWER Control Using Permutation Testing
         
 case 6 % Benjamini-Hochberg FDR Control
 
-    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Hochberg)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Hochberg FDR control)\n\n');
     
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
     
@@ -547,7 +550,7 @@ case 6 % Benjamini-Hochberg FDR Control
             [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
             ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
             ANALYSIS.RES.bky_crit_alpha(na) = MCC_Results.critical_alpha;
-            fprintf('\n\nThe adjusted critical alpha for analysis %i is %1.6f \n\n', na, MCC_Results.critical_alpha(na));
+            fprintf('The adjusted critical alpha for analysis %i is %1.6f \n\n', na, MCC_Results.critical_alpha(na));
             
         end % of for na
 
@@ -558,7 +561,7 @@ case 6 % Benjamini-Hochberg FDR Control
             [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats);
             ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
             ANALYSIS.RES.bky_crit_alpha(step) = MCC_Results.critical_alpha;
-            fprintf('\n\nThe adjusted critical alpha for step %i is %1.6f \n\n', step, MCC_Results.critical_alpha(step));
+            fprintf('The adjusted critical alpha for step %i is %1.6f \n\n', step, MCC_Results.critical_alpha(step));
             
         end % of for step
     
@@ -566,7 +569,7 @@ case 6 % Benjamini-Hochberg FDR Control
     
 case 7 % Benjamini-Krieger-Yekutieli FDR Control
     
-    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Krieger-Yekutieli)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Krieger-Yekutieli FDR control)\n\n');
 
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
     
@@ -597,7 +600,7 @@ case 7 % Benjamini-Krieger-Yekutieli FDR Control
     
 case 8 % Benjamini-Yekutieli FDR Control
     
-    fprintf('\n\nPerforming corrections for multiple comparisons (Benjamini-Yekutieli)\n\n');
+    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Yekutieli FDR control)\n\n');
 
     if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial or spatiotemporal decoding
     
@@ -628,7 +631,7 @@ case 8 % Benjamini-Yekutieli FDR Control
     
 otherwise % If some other option is chosen then do not correct for multiple comparisons, but notify user
         
-    fprintf('\n\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values\n\n');
+    fprintf('\nUnavailable multiple comparisons option chosen. Will use uncorrected p-values\n\n');
     ANALYSIS.RES.h_ttest = ANALYSIS.RES.h_ttest_uncorrected; 
     
 end % of ANALYSIS.multcompstats switch

@@ -145,7 +145,7 @@ multcompstats = 0; % Correction for multiple comparisons:
                     % 6 = Benjamini-Hochberg FDR Control
                     % 7 = Benjamini-Krieger-Yekutieli FDR Control
                     % 8 = Benjamini-Yekutieli FDR Control
-n_iterations = 1000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
+n_iterations = 5000; % Number of permutation or bootstrap iterations for resampling-based multiple comparisons correction procedures
 ktms_u = 2; % u parameter of the KTMS GFWER control procedure
 cluster_test_alpha = 0.05; % For cluster-based test: Significance threshold for detecting effects at individual time windows (e.g. 0.05)
 

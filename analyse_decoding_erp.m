@@ -62,12 +62,15 @@ elseif ANALYSIS.analysis_mode == 3
     ANALYSIS.analysis_mode_label='SVR_LIBSVM';
 end % of if ANALYSIS.analysis_mode
     
-fprintf('Group-level statistics will now be computed and displayed. \n'); 
+fprintf('\nGroup-level statistics will now be computed and displayed. \n'); 
 
 
 
 
 %% Load Single Subject Results Files
+
+% State that we are loading single subject results
+fprintf('\n------------------------------------------------------------------------\nLoading single subject results\n------------------------------------------------------------------------\n');
 
 for s = 1:ANALYSIS.nsbj
     
@@ -77,7 +80,7 @@ for s = 1:ANALYSIS.nsbj
     % open subject's decoding results       
     if size(ANALYSIS.dcg_todo, 2) == 1 % If not analysing cross-decoding results
         
-        fprintf('Loading results for subject %d in DCG %s.\n', sbj, ANALYSIS.dcg_labels{ANALYSIS.dcg_todo});
+        fprintf('\nLoading results for subject %d in DCG %s.\n', sbj, ANALYSIS.dcg_labels{ANALYSIS.dcg_todo});
         
         open_name = [(ANALYSIS.output_dir), ANALYSIS.study_name, '_SBJ', num2str(sbj), ...
             '_win', num2str(ANALYSIS.window_width_ms), '_steps', num2str(ANALYSIS.step_width_ms), ...
@@ -227,7 +230,7 @@ for s = 1:ANALYSIS.nsbj
     
 end % of for s
 
-fprintf('All data from all subjects loaded.\n');
+fprintf('\nAll data from all subjects loaded.\n');
 
 
 
@@ -342,7 +345,7 @@ elseif ANALYSIS.group_level_analysis == 2 % Group-level stats based on t tests
 
 end % of if ANALYSIS.group_level_analysis
 
-fprintf('All group statistics performed.\n');
+fprintf('\n*** Group stats on decoding performance measures completed. ***\n\n');
 
 
 
@@ -360,6 +363,9 @@ end % of if ANALYSIS.fw.do
 
 
 %% Save the Results
+
+% Report that we are saving results
+fprintf('\n------------------------------------------------------------------------\nSaving results\n------------------------------------------------------------------------\n');
 
 if size(ANALYSIS.dcg_todo,2) == 1 % Standard decoding analyses
 
@@ -380,15 +386,18 @@ end % of if size
 
 save(savename, 'ANALYSIS', 'FW_ANALYSIS', '-v7.3');
 
-fprintf('All results saved in %s. \n', savename);
+fprintf('\nAll results saved in %s. \n', savename);
 
 
 
 %% Plot the Results
 
+% Report that we are plotting group decoding performance results
+fprintf('\n------------------------------------------------------------------------\nPlotting group decoding performance results\n------------------------------------------------------------------------\n');
+
 if ANALYSIS.disp.on == 1
     
-    fprintf('Results will be plotted. \n');
+    fprintf('\nGroup decoding performance results will be plotted. \n');
     
     % Automatically use the default plotting settings
     PLOT = dd_set_plotting_defaults(ANALYSIS);
@@ -398,6 +407,6 @@ if ANALYSIS.disp.on == 1
     
 elseif ANALYSIS.disp.on ~= 1
     
-    fprintf('No figures were produced for the results. \n');
+    fprintf('\nNo figures were produced for the group decoding performance results. \n');
     
 end % of if ANALYSIS.disp.on

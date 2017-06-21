@@ -144,12 +144,15 @@ n_permutations_per_subject = size(permtest_data, 3); % Number of permutation sam
 P1 = n_permutations_per_subject + 1; % Number of first-level permutations + 1 extra for observed data
 P2 = n_second_level_permutations; % Number of second-level permutations to draw
 
+% Output that minimum statistic method was used to command line
+fprintf('\n------------------------------------------------------------------------\nGroup decoding performance analyses using the minimum statistic method\n------------------------------------------------------------------------\n');
+
 % Checking if the P2 value is larger than the possible number of unique
 % permutations
 if P2 > P1 ^ n_subjects 
 
     % Warn that the number of second-level permutations has been adjusted
-    fprintf('\n\n Warning: Selected number of second-level permutations is more than the \n number of possible unique permutations. Setting P2 to the \n number of permutations per subject ^ number of subjects... \n\n'); 
+    fprintf('\nWarning: Selected number of second-level permutations is more than the \n number of possible unique permutations. Setting P2 to the \n number of permutations per subject ^ number of subjects... \n\n'); 
     
     % Set P2 to the number of unique second-level permutations
     P2 = P1 ^ n_subjects;
@@ -160,11 +163,11 @@ end % of if P2
 % random draws)
 if P2 == P1 ^ n_subjects
     
-    fprintf('\n\n enumerating all %d second-level permutations\n\n', P2)
+    fprintf('\nenumerating all %d second-level permutations\n\n', P2)
     
 else
     
-    fprintf('\n\n randomly generating %d of %d possible second-level permutations\n\n', P2, P1 ^ n_subjects)
+    fprintf('\nrandomly generating %d of %d possible second-level permutations\n\n', P2, P1 ^ n_subjects)
     
 end % of if P2
 

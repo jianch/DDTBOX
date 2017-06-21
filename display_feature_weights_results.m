@@ -49,7 +49,6 @@ if isempty(ANALYSIS.fw.colormap)
 end % of if isempty
 
 
-
 %% Display Matrix of All Steps: Z-Standardised Absolute Feature Weights
 % This matrix is plotted from
 % FW_ANALYSIS.AVERAGE_Z_DISP{analysis-time-steps, channel}. Note that this
@@ -57,6 +56,9 @@ end % of if isempty
 
 if ANALYSIS.fw.display_matrix == 1
 
+    % Report that we are plotting the FWs display matrix
+    fprintf('\nPlotting matrix of feature weights for selected analysis time windows...\n');
+    
     % Create labels
     channel_labels = [];
     
@@ -94,6 +96,9 @@ end % of if ANALYSIS.fw.display_matrix
 
 if ANALYSIS.fw.display_average_zmap == 1
      
+    % Report that we are plotting the FWs display matrix
+    fprintf('\nPlotting heat map of z-standardised absolute FWs averaged over selected analysis time windows...\n');
+    
     to_plot = FW_ANALYSIS.AVERAGESTEPS_SELECT_FW_Z_MEAN';
     
     figure;
@@ -114,6 +119,9 @@ end % of if ANALYSIS.fw.display_average_zmap
 %% Display Average Heat Maps For Selected Steps: Significance-Thresholded Map Uncorrected For MCs
 
 if ANALYSIS.fw.display_average_uncorr_threshmap == 1
+    
+    % Report that we are plotting the FWs display matrix
+    fprintf('\nPlotting statistically significant FWs averaged over selected analysis time windows (uncorrected for multiple comparisons)...\n');
     
     to_plot = FW_ANALYSIS.h_matrix_z_averagestep_uncorr;
     
@@ -137,6 +145,9 @@ end % of if ANALYSIS.fw.display_average_uncorr_threshmap
 
 if ANALYSIS.fw.display_average_corr_threshmap == 1
     
+    % Report that we are plotting the FWs display matrix
+    fprintf('\nPlotting statistically significant FWs averaged over selected analysis time windows (corrected for multiple comparisons)...\n');
+    
     to_plot = FW_ANALYSIS.h_matrix_z_averagestep_corr;
     
     figure;
@@ -158,6 +169,8 @@ end % of if ANALYSIS.fw.display_average_corr_threshmap
 %% Display Heat Map For Each Selected Step: Z-Standardised Absolute Feature Weights
 
 if ANALYSIS.fw.display_all_zmaps == 1
+    
+    fprintf('\nPlotting heat maps of z-standardised absolute FWs for each selected analysis time window...\n');
     
     for steps = 1:size(FW_ANALYSIS.p_matrix_z_corr, 2)
         
@@ -185,6 +198,8 @@ end % of if ANALYSIS.fw.display_all_zmaps
 
 if ANALYSIS.fw.display_all_uncorr_thresh_maps == 1
     
+    fprintf('\nPlotting statistically significant FWs for each selected analysis time window (uncorrected for multiple comparisons)...\n');
+    
     for steps = 1:size(FW_ANALYSIS.h_matrix_z_uncorr, 2)
         
         to_plot(:,:) = FW_ANALYSIS.h_matrix_z_uncorr{steps};
@@ -210,6 +225,8 @@ end % of if ANALYSIS.fw.display_all_uncorr_thresh_maps
 %% Display Heat Maps For Each Selected Step: Significance-Thresholded Maps Corrected For MCs
 
 if ANALYSIS.fw.display_all_corr_thresh_maps == 1
+    
+    fprintf('\nPlotting statistically significant FWs for each selected analysis time window (corrected for multiple comparisons)...\n');
     
     for steps = 1:size(FW_ANALYSIS.h_matrix_z_corr, 2)
         

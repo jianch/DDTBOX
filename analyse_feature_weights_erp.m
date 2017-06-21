@@ -35,6 +35,10 @@ function [FW_ANALYSIS] = analyse_feature_weights_erp(ANALYSIS)
 
 %% General Parameters
 
+% Output that feature weights will be analysed to command line
+fprintf('\n------------------------------------------------------------------------\nFeature weight analyses\n------------------------------------------------------------------------\n');
+
+
 % Prompt user to input time-steps used in feature weights analysis
 if isempty(ANALYSIS.fw.steps_for_testing)
     
@@ -51,18 +55,27 @@ if isempty(ANALYSIS.fw.disp_steps)
     
     fprintf('\n');
     FW_ANALYSIS.disp_steps = input('Enter the consecutive time steps for which a feature weight matrix should be displayed (e.g. [4:12]): ');
+    fprintf('\n');
     
 else % If user has already specified
     
     FW_ANALYSIS.disp_steps = ANALYSIS.fw.disp_steps;
+    fprintf('\n');
     
 end % of if isempty
 
 
 
 %% Get Single Subject Data
-% Get data from each participant
 
+% Report whether averaging FWs across timepoints within each analysis time window.
+if ANALYSIS.stmode == 3 % Spatio-temporal decoding
+    
+    fprintf('Spatiotemporal decoding was performed. Averaging FWs across timepoints WITHIN each analysis time window. \n')
+
+end % of if ANALYSIS.stmode
+
+% Get data from each participant
 for sbj = 1:ANALYSIS.nsbj
            
     % results are stored in:
@@ -119,18 +132,18 @@ for sbj = 1:ANALYSIS.nsbj
         
     elseif ANALYSIS.stmode == 2 % Temporal decoding
         
-        fprintf('error - temporal decoding uses data WITHIN time analysis window as features, not channels. \n')
+        fprintf('\nerror - Feature weight analyses not (yet) available for temporal decoding results\n')
         
     end % of if ANALYSIS.stmode
     
     
     
-    %% Average FWs Across Time WITHIN a Time Step (For Temporal/Spatio-Temporal Decoding)
+    %% Average FWs Across Time WITHIN an Analysis Time Window (For Temporal/Spatio-Temporal Decoding)
     % not required for spatial decoding, because that is based on average
     % of time step
     
     if ANALYSIS.stmode == 3 % Spatio-temporal decoding
-             
+                   
        for steps = 1:size(FW_ANALYSIS.ALL_FW_STEP, 2)
                     
             start_point = 1;
@@ -156,13 +169,10 @@ for sbj = 1:ANALYSIS.nsbj
             end % of for withinstep
                     
         end % of for steps
-                
-        fprintf('Averaging across time-steps WITHIN analysis time window performed for subject %d. \n', sbj)
-        
+                       
     else
         
         FW_ANALYSIS.ALL_FW_STEP_CHANNEL = FW_ANALYSIS.ALL_FW_STEP;
-        fprintf('Averaging across time-steps WITHIN analysis time window was not required. \n')
         
     end % of if ANALYSIS.stmode
     
@@ -322,6 +332,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                 
                 case 1 % Bonferroni correction
                     
+                    fprintf('\nPerforming corrections for multiple comparisons (Bonferroni)\n\n');
+                    
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
                     for steps = 1:size(FW_ANALYSIS.steps_for_testing, 2)
@@ -334,6 +346,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
             
                 case 2 % Holm-Bonferroni correction
                     
+                    fprintf('\nPerforming corrections for multiple comparisons (Holm-Bonferroni)\n\n');
+                    
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
                     for steps = 1:size(FW_ANALYSIS.steps_for_testing, 2)
@@ -345,6 +359,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     end % of for steps
                     
                 case 3 % strong FWER control permutation test
+                    
+                    fprintf('\nPerforming corrections for multiple comparisons (maximum statistic permutation test)\n\n');
                     
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
@@ -373,7 +389,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     % Stopgap until cluster-based permutation testing is
                     % implemented (needs neighborhood matrix of electrode
                     % posititons).
-                    fprintf('Cluster-based correction not currently available... No correction was performed');
+                    fprintf('\nCluster-based multiple comparisons correction method not currently available... No correction was performed\n\n');
+                    
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label;
                     
                     for steps = 1:size(FW_ANALYSIS.steps_for_testing, 2)
@@ -384,6 +401,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     end % of for steps
                     
                 case 5 % Generalised FWER control procedure
+                    
+                    fprintf('\nPerforming corrections for multiple comparisons (KTMS generalised FWER control)\n\n');
                     
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
@@ -409,6 +428,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 6 % Benjamini-Hochberg false discovery rate control
                     
+                    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Hochberg FDR control)\n\n');
+                    
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
                     for steps = 1:size(FW_ANALYSIS.steps_for_testing, 2)
@@ -421,6 +442,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 7 % Benjamini-Krieger-Yekutieli false discovery rate control
                     
+                    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Krieger-Yekutieli FDR control)\n\n');
+                    
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
                     for steps = 1:size(FW_ANALYSIS.steps_for_testing, 2)
@@ -432,6 +455,8 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     end % of for steps
                       
                 case 8 % Benjamini-Yekutieli false discovery rate control
+                    
+                    fprintf('\nPerforming corrections for multiple comparisons (Benjamini-Yekutieli FDR control)\n\n');
                     
                     FW_ANALYSIS.p_matrix_z_corr_label = FW_ANALYSIS.p_matrix_z_uncorr_label; % Copy same labels as uncorrected
                     
@@ -524,7 +549,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                 case 4 % Cluster-based permutation test (not yet available)
                     
-                    fprintf('Cluster-based correction not currently available... No correction was performed');
+                    fprintf('\nCluster-based correction not currently available... No correction was performed\n');
                     FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_ANALYSIS.p_matrix_z_averagestep_uncorr; % Copy from uncorrected ver.
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_ANALYSIS.p_matrix_z_averagestep_uncorr_label; % Copy from uncorrected ver.
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = FW_ANALYSIS.h_matrix_z_averagestep_uncorr;
@@ -572,6 +597,7 @@ end % of for p_corr
 
 fprintf('T-Tests (corrected and uncorrected for multiple comparisons) performed on results from single selected time-steps. \n')
 
+fprintf('\n*** Feature weight analyses completed ***\n')
 
 
 %% Plot Feature Weights Results
