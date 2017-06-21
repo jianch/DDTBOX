@@ -1,9 +1,9 @@
 % EXAMPLE_run_decoding_analyses.m
 %
 % This script is used for configuring and running decoding analyses in DDTBOX.  
-% A brief explanation of each configurable parameter is described below.
-% More information on each analysis setting, as well as a tutorial on how
-% to run MVPA in DDTBOX, can be found in the DDTBOX wiki, 
+% A brief explanation of each configurable setting is described below.
+% More information on the analysis options in this script, as well as 
+% a tutorial on how to run MVPA in DDTBOX, can be found in the DDTBOX wiki, 
 % available at: https://github.com/DDTBOX/DDTBOX/wiki
 %
 % Please make copies of this script for your own projects.
@@ -32,9 +32,10 @@
 
 %% Housekeeping
 
-% Clears the workspace and closes all windows
+% Clears the workspace and closes all figure windows
 clear variables;
 close all;
+
 
 
 
@@ -47,15 +48,19 @@ sbj_todo = [1:10];
 % Each discrimination group should be in a separate cell entry.
 % Decoding analyses will be run for all dcgs listed here.
 % e.g. dcgs_for_analyses{1} = [1];
-% Two discrimination groups can be entered when using cross-condition decoding.
+% e.g. dcgs_for_analyses{2} = [3];
+% Two discrimination groups can be entered when performing cross-condition decoding.
 % (SVM trained using the first entry/dcg, tested on the second entry/dcg)
 % e.g. dcgs_for_analyses{1} = [1, 2];
+
 dcgs_for_analyses{1} = [1];
 dcgs_for_analyses{2} = [2];
 
 % Perform cross-condition decoding? 
 % 0 = No / 1 = Yes
+
 cross = 0;
+
 
 
 
@@ -65,10 +70,10 @@ cross = 0;
 study_name = 'EXAMPLE';
 
 % Base directory path (where single subject EEG datasets and channel locations files are stored)
-bdir = '/Users/username/Desktop/My Project/DDTBOX Analyses/';
+bdir = '/Desktop/My Study/';
 
 % Output directory (where decoding results will be saved)
-output_dir = '/Users/username/Desktop/My Project/DDTBOX Analyses/Decoding Results/';
+output_dir = '/Desktop/My Study/Decoding Results/';
     
 % Filepaths of single subject datasets (relative to the base directory)
 sbj_code = {...
@@ -90,35 +95,45 @@ data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use
   
 
 
+
 %% EEG Dataset Information
 
 nchannels = 64; % Number of channels
 sampling_rate = 1000; % Data sampling rate in Hz
-pointzero = 100; % Corresponds to the time of the event/trigger code relative to the prestimulus baseline (in ms)
+pointzero = 100; % Corresponds to the time of the event of interest (e.g. stimulus presentation) relative to the start of the epoch (in ms)
 
-% For plotting single subject temporal decoding results
-channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
-channellocs = [bdir, 'channel locations/']; % Path of directory containing channel information file
+% For plotting single subject temporal decoding results 
+% (not required if performing spatial or spatiotemporal decoding)
+channel_names_file = 'channel_inf.mat'; % Name of the .mat file containing channel labels and channel locations
+channellocs = [bdir, 'Channel Locations/']; % Path of the directory containing channel information file
+
 
 
 
 %% Condition and Discrimination Group (dcg) Information
 
-% Label each condition
+% Label each condition / category
 % Usage: cond_labels{condition number} = 'Name of condition';
 % Example: cond_labels{1} = 'Correct Responses';
+% Example: cond_labels{2} = 'Error Responses';
 % Condition label {X} corresponds to data in column X of the single subject
 % data arrays.
+
 cond_labels{1} = 'condition_A';
 cond_labels{2} = 'condition_B';
 cond_labels{3} = 'condition_C';
 cond_labels{4} = 'condition_D';
         
 % Discrimination groups
-% Enter the condition numbers of the conditions to discriminate between
+% Enter the condition numbers of the conditions used in classification analyses.
 % Usage: dcg{discrimination group number} = [condition 1, condition 2];
-% Example: dcg{1} = [1, 2]; to compare conditions 1 and 2 for dcg 1
-dcg{1} = [1, 2]; 
+% Example: dcg{1} = [1, 2]; to use conditions 1 and 2 for dcg 1
+
+% If performing support vector regression, only one condition number is
+% needed per dcg.
+% SVR example: dcg{1} = [1]; to perform SVR on data from condition 1
+
+dcg{1} = [1, 2];
 dcg{2} = [3, 4]; 
 
 % Support Vector Regression (SVR) condition labels
@@ -126,12 +141,14 @@ dcg{2} = [3, 4];
 % group number. The SVR_labels array contains multiple cells, each
 % containing a list of SVR condition labels.
 % Usage: svr_cond_labels{dcg} = [cell number in SVR_labels];
-% Example: svr_cond_labels{1} = [2]; to use array cell 2 labels for dcg 1
+% Example: svr_cond_labels{1} = [2]; to use SVR labels in cell 2 for dcg 1
+
 svr_cond_labels{1} = [1];
               
 % Label each discrimination group
 % Usage: dcg_labels{Discrimination group number} = 'Name of discrimination group'
 % Example: dcg_labels{1} = 'Correct vs. Error Responses';
+
 dcg_labels{1} = 'A vs. C';
 dcg_labels{2} = 'B vs. D';
 
@@ -145,23 +162,23 @@ ncond = size(cond_labels, 2);
 
 %% Multivariate Classification/Regression Parameters
 
-analysis_mode = 1; % ANALYSIS mode (1=SVC with LIBSVM / 2=SVC with liblinear / 3=SVR with LIBSVM)
-stmode = 1; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-window_width_ms = 50; % width of sliding window in ms
-step_width_ms = 50; % step size with which sliding window is moved through the trial
+analysis_mode = 1; % ANALYSIS mode (1 = SVM classification with LIBSVM / 2 = SVM classification with LIBLINEAR / 3 = SVR with LIBSVM)
+stmode = 1; % SPACETIME mode (1 = spatial / 2 = temporal / 3 = spatio-temporal)
+avmode = 1; % AVERAGE mode (1 = no averaging; use single-trial data / 2 = use run-averaged data). Note: Single trials needed for SVR
+window_width_ms = 50; % Width of sliding analysis window in ms
+step_width_ms = 50; % Step size with which sliding analysis window is moved through the trial
 zscore_convert = 0; % Convert data into z-scores before decoding? 0 = no / 1 = yes
-cross_val_steps = 2; % How many cross-validation steps (if no runs available)?
-n_rep_cross_val = 3; % How many repetitions of full cross-validation with re-ordered data?
-perm_test = 1; % Run decoding using permuted condition labels? 0=no / 1=yes
-permut_rep = 3; % How many repetitions of full cross-validation with permutation results?
+cross_val_steps = 10; % How many cross-validation steps (if no runs available)?
+n_rep_cross_val = 10; % How many repetitions of full cross-validation with re-ordered data?
+perm_test = 1; % Run decoding using permuted condition labels? 0 = no / 1 = yes
+permut_rep = 10; % How many repetitions of full cross-validation for permuted labels analysis?
 
 % Feature weights extraction
-feat_weights_mode = 1; % Extract feature weights? 0=no / 1=yes
+feat_weights_mode = 1; % Extract feature weights? 0 = no / 1 = yes
 
 % Single subject decoding results plotting
-display_on = 1; % Display individual subject results? 1=figure displayed / 0=no figure
-perm_disp = 1; % display the permutation decoding results in figure? 0=no / 1=yes
+display_on = 1; % Display single subject decoding performance results? 0 = no / 1 = yes
+perm_disp = 1; % Display the permuted labels decoding results in figure? 0 = no / 1 = yes
 
 
 

@@ -1,11 +1,12 @@
 % EXAMPLE_plot_indiv_results.m
 %
-% This script is used for plotting single subject results of 
-% classifier accuracy/SVR performance.
-% Please make copies of this script for your own projects.
+% This script is used for plotting single subject classifier accuracy
+% or SVR performance results. 
 %
 % More information about the plotting settings in this script can be found
 % in the DDTBOX Wiki, available at: https://github.com/DDTBOX/DDTBOX/wiki
+%
+% Please make copies of this script for your own projects.
 %
 % This script calls display_indiv_results_erp
 %
@@ -30,30 +31,31 @@
 
 
 %% Filepaths of Single Subject Results Files
+
 % The following variables are used to locate the saved single subject results files
 
-% Select subject datasets to plot, e.g. [1:10] for first ten subjects
+% Select subject datasets to plot, e.g. sbj_todo = [1:10] for first ten subjects
 sbj_todo = [1:10];
 
-% Specify directory in which results were saved
-output_dir = '/Users/danielfeuerriegel/Desktop/Decoding Results';
+% Specify directory in which decoding results were saved
+output_dir = '/Desktop/My Study/Decoding Results';
 
-% Name of the study
+% Name of the study (used for finding single subject results files)
 study_name = 'EXAMPLE';
 
-% Name of the discrimination group
+% Name(s) of the discrimination groups used
 dcg_labels{1} = 'Correct vs. Error';
 dcg_labels{2} = ''; % Use this second entry when plotting cross-decoding results
 
 % Decoding parameters
-cross = 0; % Specify whether cross-decoding was performed (1 = Yes / 0 = No)
-analysis_mode = 1; % ANALYSIS mode (1=SVC with LIBSVM / 2=SVC with liblinear / 3=SVR with LIBSVM)
-stmode = 3; % SPACETIME mode (1=spatial / 2=temporal / 3=spatio-temporal)
-avmode = 1; % AVERAGE mode (1=no averaging; single-trial / 2=run average) !!! need single trials for SVR !!!
-window_width_ms = 10; % width of sliding window in ms
-step_width_ms = 10; % step size with which sliding window is moved through the trial
+cross = 0; % Specify whether cross-decoding was performed (0 = no / 1 = yes)
+analysis_mode = 1; % ANALYSIS mode (1 = SVC with LIBSVM / 2 = SVC with LIBLINEAR / 3 = SVR with LIBSVM)
+stmode = 3; % SPACETIME mode (1 = spatial / 2 = temporal / 3 = spatio-temporal)
+avmode = 1; % AVERAGE mode (1 = no averaging; single-trials / 2 = run averaged data)
+window_width_ms = 10; % Width of the sliding analysis window in ms
+step_width_ms = 10; % Step size with which the sliding analysis window was moved through the trial
 
-% Create labels based on SVM method used
+% Create labels based on SVM method used (no input required)
 switch analysis_mode
     case 1 % SVC with LIBSVM
         analysis_mode_label = 'SVM_LIBSVM';
@@ -65,18 +67,19 @@ end % of avmode switch
 
 
 
+
 %% Settings for Plotting Decoding Performance Results
 
-PLOT.perm_disp = 1; % display the results from permuted labels decoding in figure as separate line? 0=no / 1=yes
-PLOT.pointzero = 1; % Time of the event of interest (e.g. stimulus presentation), relative to the beginning of the epoch (in ms)
+PLOT.perm_disp = 1; % display the results from permuted labels decoding in figure as separate line? 0 = no / 1 = yes
+PLOT.pointzero = 1; % Time of the event of interest (e.g. stimulus presentation), relative to the start of the epoch (in ms)
 
-% Temporal decoding results settings
-PLOT.channellocs = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/locations/']; % Path of directory containing channel information file
-PLOT.channel_names_file = 'channel_inf_flanker.mat'; % Name of .mat file containing channel labels and channel locations
+% Temporal decoding results plotting settings
+PLOT.channellocs = ['/Desktop/My Study/Channel Locations/']; % Path of directory containing channel information file
+PLOT.channel_names_file = 'channel_information.mat'; % Name of .mat file containing channel labels and channel locations
 PLOT.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding results scalp maps
 
 % figure position on the screen
-PLOT.FigPos = [100 100 800 400]; % Default [100 100 800 400]
+PLOT.FigPos = [100, 100, 800, 400]; % Default [100, 100, 800, 400]
 
 % Figure title settings
 PLOT.TitleFontSize = 14; % Default 14
@@ -96,14 +99,14 @@ PLOT.ylabel.FontWeight = 'Bold'; % 'Normal' (Regular) or 'b' / 'Bold'
 
 %% Define Properties of Lines Showing Decoding Performance
 
-% Actual decoding results
+% Actual (not permuted labels) decoding results
 PLOT.Res.Line = '-ks'; % Line colour and style. Default '-ks'
 PLOT.Res.LineWidth = 2; % Default 2
 PLOT.Res.MarkerEdgeColor = 'k'; % Default 'k' (black)
 PLOT.Res.MarkerFaceColor = 'w'; % Default 'w' (white)
 PLOT.Res.MarkerSize = 5; % Default 5
 
-% Properties of line showing permutation / chance results
+% Properties of line showing permuted labels / chance results
 PLOT.PermRes.Line = '-ks'; % Line colour and style. Default '-ks'
 PLOT.PermRes.LineWidth = 2; % Default 2
 PLOT.PermRes.MarkerEdgeColor = 'b'; % Default 'b' (blue)

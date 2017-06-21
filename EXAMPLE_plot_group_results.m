@@ -1,12 +1,13 @@
 % EXAMPLE_plot_group_results.m
 %
 % This script is used for plotting group-level results of 
-% classifier accuracy/SVR performance and feature weights analyses.
+% classifier accuracy/SVR performance and feature weight analyses.
 % Group-level statistical analyses must be performed before running this script.
-% Please make copies of this script for your own projects.
 %
 % More information about the settings in this script can be found in the
 % DDTBOX wiki, available at: https://github.com/DDTBOX/DDTBOX/wiki
+%
+% Please make copies of this script for your own projects.
 %
 % This script calls display_group_results_erp and
 % display_feature_weights_results, both of which are included in DDTBOX.
@@ -33,35 +34,37 @@
 
 %% General Settings
 
-% Full filepath of group-level results file
-group_results_file = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Tutorial/FLANKER_TEMPORAL_GROUPRES_NSBJ40_win200_steps100_av1_st2_SVM_LIBLIN_DCGCorrect vs. Error.mat'];
+% Full filepath of group results file
+group_results_file = ['/Desktop/My Study/Decoding Results/EXAMPLE_GROUPRES_NSBJ30_win10_steps10_av1_st1_SVM_LIBSVM_DCGCorrect vs. Error.mat'];
 
 % Load the data file to get ANALYSIS parameters
 load(group_results_file);
 
 % Select whether to plot decoding performance and feature weights results
-% 1 = plot; 0 = don't plot
+% 1 = plot / 0 = don't plot
 PLOT.decoding_performance_results = 1; 
 PLOT.feature_weights_results = 1;
 
 
 
+
 %% Settings For Group Decoding Performance Results (Classification Accuracy / SVR Performance)
 
-ANALYSIS.permdisp = 1; % display the results from permutation test in figure as separate line? 0=no / 1=yes
-ANALYSIS.disp.sign = 1; % display statistically significant steps in results figure? 0=no / 1=yes
+ANALYSIS.permdisp = 1; % Display results from permuted labels analyses in the figure as separate line? 0 = no / 1 = yes
+ANALYSIS.disp.sign = 1; % Mark statistically significant steps in results figure? 0 = no / 1 = yes
 ANALYSIS.plot_robust = 0; % Choose estimate of location to plot. 0 = arithmetic mean / 1 = trimmed mean / 2 = median
 % Note: You can plot the mean even if the data were originally plotted with
 % the median or trimmed mean when performing group-level analyses.
 % If you originally plotted the trimmed mean, then you can also plot the median in this script.
+
 ANALYSIS.disp.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding results scalp maps
 
 % Figure position on the screen
-PLOT.FigPos = [100 100 800 400];
+PLOT.FigPos = [100, 100, 800, 400];
 
 % Figure title settings
 PLOT.TitleFontSize = 14;
-PLOT.TitleFontWeight = 'Bold'; % 'Normal' (Regular) or 'Bold'
+PLOT.TitleFontWeight = 'Bold'; % 'Normal' (Regular) or 'b' / 'Bold'
 
 % Title text automatically generated based on the decoding method used
 if ANALYSIS.stmode == 1 && ANALYSIS.analysis_mode ~=3 % Spatial SVM Classification
@@ -77,6 +80,7 @@ elseif ANALYSIS.stmode == 2 && ANALYSIS.analysis_mode ==3 % Temporal SVR
 elseif ANALYSIS.stmode == 3 && ANALYSIS.analysis_mode ==3 % Spatiotemporal SVR
     PLOT.TitleString = 'Spatiotemporal SVR ';  
 end % of if ANALYSIS.stmode
+
 
 
 
@@ -108,14 +112,14 @@ end % of if ANALYSIS.analysis_mode
 % Y-axis depends on analysis mode
 if ANALYSIS.analysis_mode ~= 3 % If not using SVR
     
-    PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
-    PLOT.Y_max = 80; % Y axis upper bound (in % accuracy)
+    PLOT.Y_min = 40; % Y axis lower bound (in percent accuracy)
+    PLOT.Y_max = 80; % Y axis upper bound (in percent accuracy)
     PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
     
 elseif ANALYSIS.analysis_mode == 3 % If using SVR
     
-    PLOT.Y_min = -0.5; % Y axis lower bound (Fisher-Z corr coeff)
-    PLOT.Y_max = 0.5; % Y axis upper bound (Fisher-Z corr coeff)
+    PLOT.Y_min = -0.5; % Y axis lower bound (Fisher-Z-transformed correlation coefficient)
+    PLOT.Y_max = 0.5; % Y axis upper bound (Fisher-Z-transformed correlation coefficient)
     PLOT.Ysteps = 0.1; % Interval between Y axis labels/tick marks
     
 end % of if ANALYSIS.analysis_mode
@@ -132,9 +136,10 @@ PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero;
 
 
 
+
 %% Define Properties of Lines Showing Decoding Performance and Error Bars
 
-% Actual (non-permutation) decoding results
+% Actual (not permuted labels) decoding results
 PLOT.Res.Line = '-ks'; % Line colour and style. Default '-ks'
 PLOT.Res.LineWidth = 2; % Default 2
 PLOT.Res.MarkerEdgeColor = 'k'; % Default 'k' (black)
@@ -144,19 +149,20 @@ PLOT.Res.MarkerSize = 5; % Default 5
 % Error bar plotting
 PLOT.Res.Error = 'k'; % Line colour and style. Default 'k' (black)
 PLOT.Res.ErrorLineWidth = 0.5; % Default 0.5
-PLOT.Res.ErrorLine = 'none'; % Disables lines between error bars across steps
+PLOT.Res.ErrorLine = 'none'; % Entering 'none' disables lines between error bars across steps
 
-% Properties of line showing permutation / chance results
+% Properties of line showing permuted labels / chance results
 PLOT.PermRes.Line = '-ks'; % Line colour and style. Default '-ks'
 PLOT.PermRes.LineWidth = 2; % Default 2
 PLOT.PermRes.MarkerEdgeColor = 'b'; % Default 'b' (black)
 PLOT.PermRes.MarkerFaceColor = 'w'; % Default 'w' (white)
 PLOT.PermRes.MarkerSize = 5; % Default 5
 
-% Error bars for chance/permutation results
+% Error bars for chance/permuted labels results
 PLOT.PermRes.Error = 'b'; % Line colour and style. Default 'b' (black)
 PLOT.PermRes.ErrorLineWidth = 0.5; % Default 0.5
-PLOT.PermRes.ErrorLine = 'none'; % Disables lines between error bars across steps
+PLOT.PermRes.ErrorLine = 'none'; % Entering 'none' disables lines between error bars across steps
+
 
 
 
@@ -184,6 +190,7 @@ end % of if ANALYSIS.analysis_mode
 
 
 
+
 %% Feature Weights Results Plotting Settings
 
 % Maps and stats for averaged analysis time windows
@@ -198,6 +205,7 @@ ANALYSIS.fw.display_all_corr_thresh_maps = 1; % thresholded map t-test results c
 
 % Extra plotting options:
 ANALYSIS.fw.colormap = 'jet'; % Colormap for plotting of feature weights scalp maps
+
 
 
 
