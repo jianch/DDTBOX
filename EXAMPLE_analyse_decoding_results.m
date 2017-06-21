@@ -116,7 +116,7 @@ step_width_ms = 10; % step size with which sliding window is moved through the t
 laststep = []; % Last step within the epoch to analyse. If left blank then this will be
 %                prompted at the command line while running analyses.
 pstats = 0.05; % critical p-value
-group_level_analysis = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
+group_level_analysis_method = 2; % Select statistical analysis method: 1 = Global null and prevalence testing based on the minimum statistic / 2 = Global null testing with t tests
 
 %__________________________________________________________________________
 % If using minimum statistic approach for group-level analyses:
@@ -239,7 +239,7 @@ ANALYSIS.window_width_ms = window_width_ms;
 ANALYSIS.step_width_ms = step_width_ms;
 ANALYSIS.laststep = laststep;
 ANALYSIS.pstats = pstats;
-ANALYSIS.group_level_analysis = group_level_analysis;
+ANALYSIS.group_level_analysis_method = group_level_analysis_method;
 ANALYSIS.P2 = P2;
 ANALYSIS.minstat_multcomp = minstat_multcomp;
 ANALYSIS.permstats = permstats;

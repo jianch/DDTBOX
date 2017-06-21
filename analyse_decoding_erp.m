@@ -211,7 +211,7 @@ for s = 1:ANALYSIS.nsbj
         % Extract classifier and permutation test accuracies
         ANALYSIS.RES.all_subj_acc(s, na, ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_acc(na, ANALYSIS.firststep:ANALYSIS.laststep);
         
-        if ANALYSIS.permstats == 2 % If also analysing permuted labels decoding results
+        if ANALYSIS.permstats == 2 || ANALYSIS.group_level_analysis_method == 1 % If also analysing permuted labels decoding results (including when using minimum statistic method)
             
             ANALYSIS.RES.all_subj_perm_acc(s, na, ANALYSIS.firststep:ANALYSIS.laststep) = RESULTS.subj_perm_acc(na, ANALYSIS.firststep:ANALYSIS.laststep);
         
@@ -275,7 +275,7 @@ ANALYSIS.RES.se_subj_acc(:,:) = SE';
 clear SE;
 
 
-if ANALYSIS.permstats == 2 % If analysing permuted labels decoding results
+if ANALYSIS.permstats == 2 || ANALYSIS.group_level_analysis_method == 1 % If analysing permuted labels decoding results (including when using the minimum statistic method)
     
     % OPTION 1: Use average results from random-labels test
     % Calculate average accuracy & standard error across subjects for permutation results
@@ -344,15 +344,15 @@ fprintf('All data from all subjects averaged.\n');
 
 %% Statistical Tests on Decoding Performance Results
 
-if ANALYSIS.group_level_analysis == 1 % Group-level stats based on the minimum statistic
+if ANALYSIS.group_level_analysis_method == 1 % Group-level stats based on the minimum statistic
     
     [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS);
     
-elseif ANALYSIS.group_level_analysis == 2 % Group-level stats based on t tests
+elseif ANALYSIS.group_level_analysis_method == 2 % Group-level stats based on t tests
     
     [ANALYSIS] = t_tests_classifier_accuracies(ANALYSIS);
 
-end % of if ANALYSIS.group_level_analysis
+end % of if ANALYSIS.group_level_analysis_method
 
 fprintf('\n*** Group stats on decoding performance measures completed. ***\n\n');
 
