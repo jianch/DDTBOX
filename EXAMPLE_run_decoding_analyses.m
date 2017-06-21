@@ -1,13 +1,12 @@
 % EXAMPLE_run_decoding_analyses.m
 %
-% This script is used for specifying configuration settings for DDTBOX and
-% running decoding analyses on specified subjects and discrimination
-% groups. An explanation of each configurable parameter is described below.
-% Please make copies of this script for your own projects.
-% 
+% This script is used for configuring and running decoding analyses in DDTBOX.  
+% A brief explanation of each configurable parameter is described below.
 % More information on each analysis setting, as well as a tutorial on how
 % to run MVPA in DDTBOX, can be found in the DDTBOX wiki, 
 % available at: https://github.com/DDTBOX/DDTBOX/wiki
+%
+% Please make copies of this script for your own projects.
 % 
 % This script calls decoding_erp.m
 %
@@ -33,29 +32,30 @@
 
 %% Housekeeping
 
+% Clears the workspace and closes all windows
 clear variables;
 close all;
 
 
 
-%% Select Subject Datasets and Discrimination Groups
+%% Select Subject Datasets and Discrimination Groups (dcgs)
 
 % Set the subject datasets on which to perform MVPA
-sbj_todo = [1:4];
+sbj_todo = [1:10];
 
-% Enter the discrimination group(s) for classification. 
+% Enter the discrimination groups (dcgs) for decoding analyses. 
 % Each discrimination group should be in a separate cell entry.
+% Decoding analyses will be run for all dcgs listed here.
 % e.g. dcgs_for_analyses{1} = [1];
 % Two discrimination groups can be entered when using cross-condition decoding.
 % (SVM trained using the first entry/dcg, tested on the second entry/dcg)
 % e.g. dcgs_for_analyses{1} = [1, 2];
 dcgs_for_analyses{1} = [1];
+dcgs_for_analyses{2} = [2];
 
 % Perform cross-condition decoding? 
-% 0 = no
-% 1 = train 1st dcg, test 2nd dcg
-% 2 = train 2nd dcg, test 1st dcg
-cross = 1;
+% 0 = No / 1 = Yes
+cross = 0;
 
 
 
@@ -64,20 +64,20 @@ cross = 1;
 % Enter the name of the study (for labeling saved decoding results files)
 study_name = 'EXAMPLE';
 
-% Base directory path (where single subject EEG datasets and channel locations information will be stored)
-bdir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/';
+% Base directory path (where single subject EEG datasets and channel locations files are stored)
+bdir = '/Users/username/Desktop/My Project/DDTBOX Analyses/';
 
 % Output directory (where decoding results will be saved)
-output_dir = '/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/DECODING_RESULTS/Test/';
+output_dir = '/Users/username/Desktop/My Project/DDTBOX Analyses/Decoding Results/';
     
 % Filepaths of single subject datasets (relative to the base directory)
 sbj_code = {...
 
-    ['DATA/sbj1/SBJ1_full'];... % subject 1
-    ['DATA/sbj2/SBJ2_full'];... % subject 2 
-    ['DATA/sbj3/SBJ3_full'];... % subject 3
-    ['DATA/sbj4/SBJ4_full'];... % subject 4
-    ['DATA/sbj5/SBJ5_full'];... % subject 5
+    ['EEG Data/sbj1'];... % subject 1
+    ['EEG Data/sbj2'];... % subject 2 
+    ['EEG Data/sbj3'];... % subject 3
+    ['EEG Data/sbj4'];... % subject 4
+    ['EEG Data/sbj5'];... % subject 5
 
     };
     
@@ -90,7 +90,6 @@ data_struct_name = 'eeg_sorted_cond'; % Data arrays for use with DDTBOX must use
   
 
 
-
 %% EEG Dataset Information
 
 nchannels = 64; % Number of channels
@@ -99,8 +98,7 @@ pointzero = 100; % Corresponds to the time of the event/trigger code relative to
 
 % For plotting single subject temporal decoding results
 channel_names_file = 'channel_inf.mat'; % Name of .mat file containing channel labels and channel locations
-channellocs = [bdir, 'locations/']; % Path of directory containing channel information file
-
+channellocs = [bdir, 'channel locations/']; % Path of directory containing channel information file
 
 
 
@@ -120,8 +118,8 @@ cond_labels{4} = 'condition_D';
 % Enter the condition numbers of the conditions to discriminate between
 % Usage: dcg{discrimination group number} = [condition 1, condition 2];
 % Example: dcg{1} = [1, 2]; to compare conditions 1 and 2 for dcg 1
-dcg{1} = [1, 3]; 
-dcg{2} = [2, 4]; 
+dcg{1} = [1, 2]; 
+dcg{2} = [3, 4]; 
 
 % Support Vector Regression (SVR) condition labels
 % Enter the array entry containing condition labels for each discrimination

@@ -293,7 +293,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                     
                     zero_data_temp = zeros(length(temp_z), 1); % Make vector of zeroes for single-sample comparison
                     [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp_z, zero_data_temp, ...
-                        'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, ...
+                        'percent', ANALYSIS.fw.trimming, 'alpha', ANALYSIS.pstats, ...
                         'tail', ANALYSIS.fw.ttest_tail);
 
                 end % of if ANALYSIS.fw.use_robust
@@ -470,7 +470,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
             elseif ANALYSIS.fw.use_robust == 1 % Yuen's t test
             
                 zero_data_temp = zeros(length(temp), 1); % Make vector of zeroes for single-sample comparison
-                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, 'percent', ANALYSIS.trimming_fw, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw.ttest_tail);
+                [h,p, ~, ~, ~, ~, ~, ~] = yuend_ttest(temp, zero_data_temp, 'percent', ANALYSIS.fw.trimming, 'alpha', ANALYSIS.pstats, 'tail', ANALYSIS.fw.ttest_tail);
                 
             end % of if ANALYSIS.fw.use_robust
             

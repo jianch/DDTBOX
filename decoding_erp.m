@@ -442,7 +442,9 @@ if cfg.avmode == 1
                         % use specifiied varaible condition only
                                                 
                         if isfield(cfg.regress_data, 'SVR_labels') % Check whether SVR_labels was loaded from regression labels file
+                            
                             temp_training_labels = cfg.regress_data.SVR_labels{cfg.regr_todo}(1:(ntrs_set * cfg.cross_val_steps));
+                            
                         else % If using old SVR labels matrices DDTBOX will automatically convert to an array
                             
                             fprintf('\n WARNING: SVR labels are stored as a matrix. Coverting to cell array SVR_labels.\n Each cell number corresponds to a column in the SVR labels matrix.\n\n'); 
