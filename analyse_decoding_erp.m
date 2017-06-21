@@ -122,18 +122,27 @@ for s = 1:ANALYSIS.nsbj
     % Define missing parameters using the first subject's dataset
     if s == 1 % If the first subject
         
+        % First analysis time window is always step 1 (can change this in
+        % future, if desired)
+        ANALYSIS.firststep = 1;
+        
         % ask for the specific time steps to analyse
         if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % If using spatial or spatiotemporal decoding
     
             fprintf('\n');
             fprintf('You have %d time-steps in your RESULTS. Each time-step represents a %d ms time-window. \n', size(RESULTS.subj_acc,2), cfg.window_width_ms);
-            ANALYSIS.firststep = 1;
             
             if isempty(ANALYSIS.laststep) % If last time step has not been defined by user
                 
                 ANALYSIS.laststep = input('Enter the number of the last time-window you want to analyse: ');
                 
             end % of if isempty
+            
+        elseif ANALYSIS.stmode == 2 % If using temporal decoding
+            
+            ANALYSIS.laststep = 1; % Only looking at a single analysis time window for temporal decoding
+            fprintf('\n*** NOTE: For temporal decoding only results from the first analysis time window will be analysed\n');
+            
         end % of if if ANALYSIS.avmode
     
         % shift everything back by step-width, as first bin gets label = 0ms
