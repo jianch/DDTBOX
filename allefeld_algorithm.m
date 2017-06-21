@@ -4,7 +4,10 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % based on the minimum statistic (described in Allefeld et al., 2016). 
 % The testing procedure includes a test for global null (i.e. that
 % no subjects show any effects, which is a fixed effects analysis) and also
-% estimates the prevalence of an effect as a proportion of the sample.
+% estimates the prevalence of an effect as a proportion of the population.
+% This procedure, by extension, tests the majority null hypothesis (puMN
+% and pcMN below) that the prevalence of decodable information is less than
+% 0.5 in the population.
 %
 % Allefeld, C., Gorgen, K., Haynes, J.D. (2016). Valid population inference
 % for information-based imaging: From the second-level t-test to prevalence
@@ -13,6 +16,7 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % Code for the algorithm in this script is adapted from the prevalence-permutation
 % repository of Carsten Allefeld. The original code can be found at:
 % https://github.com/allefeld/prevalence-permutation
+%
 % Each 'step' or equation (Eq) described in this function corresponds to an operation
 % described in Allefeld et al. (2016).
 %
@@ -34,10 +38,11 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 %
 %   ...                 ...
 %
+%
 % Optional Keyword Inputs:
 %
-%   n_second_level_permutations     The number of second-level permutations to
-%                                   generate. Default = 100000
+%   P2                  The number of second-level permutations to generate.
+%                       Default = 100000
 %
 %   alpha_level         The nominal alpha level for significance testing.
 %                       Default = 0.05
@@ -69,7 +74,7 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % Example:      % [Results, Params] = allefeld_algorithm(observed_data, permtest_data, 'P2', 100000, 'alpha_level', 0.05)
 %
 %
-% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% Copyright (c) 2017 Daniel Feuerriegel and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -86,7 +91,9 @@ function [Results, Params] = allefeld_algorithm(observed_data, permtest_data, va
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%% Handling variadic inputs
+
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha_level', 0.05,...
@@ -97,20 +104,29 @@ option_names = fieldnames(options);
 
 % Count arguments
 n_args = length(varargin);
-if round(n_args/2) ~= n_args/2
-   error([mfilename ' needs property name/property value pairs'])
-end
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+if round(n_args/2) ~= n_args/2
+    
+   error([mfilename ' needs property name/property value pairs'])
+   
+end % of if round
+
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
@@ -128,28 +144,35 @@ n_permutations_per_subject = size(permtest_data, 3); % Number of permutation sam
 P1 = n_permutations_per_subject + 1; % Number of first-level permutations + 1 extra for observed data
 P2 = n_second_level_permutations; % Number of second-level permutations to draw
 
+% Output that minimum statistic method was used to command line
+fprintf('\n------------------------------------------------------------------------\nGroup decoding performance analyses using the minimum statistic method\n------------------------------------------------------------------------\n');
+
 % Checking if the P2 value is larger than the possible number of unique
 % permutations
 if P2 > P1 ^ n_subjects 
 
     % Warn that the number of second-level permutations has been adjusted
-    fprintf('\n\n Warning: Selected number of second-level permutations is more than the \n number of possible unique permutations. Setting P2 to the \n number of permutations per subject ^ number of subjects... \n\n'); 
+    fprintf('\nWarning: Selected number of second-level permutations is more than the \n number of possible unique permutations. Setting P2 to the \n number of permutations per subject ^ number of subjects... \n\n'); 
     
     % Set P2 to the number of unique second-level permutations
     P2 = P1 ^ n_subjects;
     
-end
+end % of if P2
     
 % Stating how the permutation test will be done (all permutations or
 % random draws)
 if P2 == P1 ^ n_subjects
-    fprintf('\n\n enumerating all %d second-level permutations\n\n', P2)
+    
+    fprintf('\nenumerating all %d second-level permutations\n\n', P2)
+    
 else
-    fprintf('\n\n randomly generating %d of %d possible second-level permutations\n\n', P2, P1 ^ n_subjects)
-end
+    
+    fprintf('\nrandomly generating %d of %d possible second-level permutations\n\n', P2, P1 ^ n_subjects)
+    
+end % of if P2
 
 
-%% Step 1:
+%% Compute First-Level Estimates of Classification Accuracy
 % Step 1: Compute the first-level estimates of classification accuracy for
 % the observed data and permutation samples.
 
@@ -163,7 +186,8 @@ classification_acc_perm(1:n_time_windows, 1:n_subjects, 1) = classification_acc;
 classification_acc_perm(1:n_time_windows, 1:n_subjects, 2:P1) = permtest_data;
 
 
-%% Step 2
+%% Minimum Statistic Method
+
 % Step 2: Calculate the minimum classification accuracy m(step) across all 
 % included subjects for each analysis time step/time window. The minimum
 % classification accuracy from permutation samples is computed for each
@@ -181,26 +205,30 @@ cRank = zeros(n_time_windows, 1); % For corrected p-values
 
 % Perform second-level permutations
 for j = 1:P2
+    
     % Select first-level permutations
-    if P2 == P1 ^ n_subjects % complete enumeration
+    if P2 == P1 ^ n_subjects % complete enumeration (all possible permutations)
+        
         % Translate index of second-level permutation (j)
         % into indices of first-level permutations (is)
         jc = j - 1;
         is = nan(n_subjects, 1); % Preallocate first-level permutation accuracies vector
         
         for k = 1:n_subjects
+            
             is(k) = rem(jc, P1) + 1;
             jc = floor(jc / P1);
+            
         end % of for k
         
-    else        % Monte Carlo
+    else        % Monte Carlo (large number of randomly-selected permutations)
         
         % randomly select permutations, except for first
         if j == 1
             is = ones(n_subjects, 1);
         else
             is = randi(P1, n_subjects, 1);
-        end % of if j == 1
+        end % of if j
         
     end % of if P2
     
@@ -213,7 +241,7 @@ for j = 1:P2
     % store result of neutral permutation (actual value) for each time window
     if j == 1
         m1 = m;
-    end
+    end % of if j
     
     % Compare actual (observed) value with permutation value for each time window separately,
     % determines uncorrected p-values for global null hypothesis.
@@ -259,19 +287,14 @@ for j = 1:P2
     % defined, `puGN <= alphac`, is not equivalent to the significance
     % criterion for the GN, `pcGN <= alpha`, but is slightly more
     % conservative. A possible disagreement may be detected by
-    % comparing the lines
-    %   global null hypothesis is rejected
-    % and
-    %   prevalence bound is defined
-    % in the diagnostic output. The two numbers should normally be
-    % identical, but the second one can be smaller.
-    
+    % comparing the lines global null hypothesis is rejected and
+    % prevalence bound is defined in the diagnostic output. The two 
+    % numbers should normally be identical, but the second one can be smaller.
     
 end % of for j
 
 
-%% Collate results for output
-
+%% Collate Results For Output
 
 % Copy results into structures for output
 % Results structure
@@ -301,17 +324,3 @@ Params.puMNMin = puMNMin; % lower bound on uncorrected p-values for majority nul
 Params.pcMNMin = pcMNMin; % lower bound on corrected p-values for majority null hypothesis
 Params.gamma0uMax = gamma0uMax; % upper bound for lower bounds (uncorrected)
 Params.gamma0cMax = gamma0cMax; % upper bound for lower bounds (corrected)
-
-
-
-
-
-
-
-
-
-
-
-
-
-

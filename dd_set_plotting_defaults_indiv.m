@@ -39,16 +39,20 @@ function PLOT = dd_set_plotting_defaults_indiv
 
 
 
-%% figure position on the screen
+%% Figure Position on the Screen
+
 PLOT.FigPos = [100 100 800 400];
 
 
-%% Figure title settings
+
+%% Figure Title
+
 PLOT.TitleFontSize = 14;
 PLOT.TitleFontWeight = 'Bold'; % 'Normal' (Regular) or 'Bold'
 
 
-%% Decoding Performance X and Y Axis Properties
+
+%% X and Y Axis Properties
 
 % Axis label properties
 PLOT.xlabel.FontSize = 12;
@@ -57,7 +61,8 @@ PLOT.xlabel.FontWeight = 'Bold'; % 'Normal' (Regular) or 'b' / 'Bold'
 PLOT.ylabel.FontWeight = 'Bold'; % 'Normal' (Regular) or 'b' / 'Bold'
 
 
-%% Properties of lines showing decoding performance
+
+%% Lines Showing Decoding Performance
 
 % Actual decoding results
 PLOT.Res.Line = '-ks'; % Line colour and style
@@ -73,14 +78,16 @@ PLOT.PermRes.MarkerEdgeColor = 'b';
 PLOT.PermRes.MarkerFaceColor = 'w';
 PLOT.PermRes.MarkerSize = 5;
 
-%% Decoding performance plot annotations
+
+
+%% Line Marking Event Onset
 
 % Define properties of line showing event onset
 PLOT.PointZero.Color = 'r'; % Colour of line denoting event onset
 PLOT.PointZero.LineWidth = 3; % Width of line denoting event onset
 
 
-%% Temporal decoding results plotting settings
+
+%% Temporal Decoding Results Plotting Settings
+
 PLOT.temporal_decoding_colormap = 'jet'; % Colormap for temporal decoding results scalp maps
-
-

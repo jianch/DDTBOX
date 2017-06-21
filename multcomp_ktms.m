@@ -106,7 +106,8 @@ function [Results] = multcomp_ktms(cond1_data, cond2_data, varargin)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%% Handling variadic inputs
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05,...
@@ -122,19 +123,27 @@ option_names = fieldnames(options);
 % Count arguments
 n_args = length(varargin);
 if round(n_args/2) ~= n_args/2
+    
    error([mfilename ' needs property name/property value pairs'])
-end
+   
+end % of if round
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
@@ -147,14 +156,21 @@ percent = options.percent;
 tail = options.tail;
 clear options;
 
-%% Tests on observed data
+
+%% Tests on Observed (Non-Permutation) Data
+
 % Checking whether the number of steps of the first and second datasets are equal
 if size(cond1_data, 2) ~= size(cond2_data, 2)
+    
    error('Condition 1 and 2 datasets do not contain the same number of comparisons/tests!');
-end
+   
+end % of if size
+
 if size(cond1_data, 1) ~= size(cond2_data, 1)
+    
    error('Condition 1 and 2 datasets do not contain the same number of subjects!');
-end
+   
+end % of if size
 
 % Generate difference scores between conditions
 diff_scores = cond1_data - cond2_data;
@@ -174,7 +190,9 @@ if use_yuen == 0 % If using Student's t
 elseif use_yuen == 1 % If using Yuen's t
     
     uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
+    
     for step = 1:n_total_comparisons
+        
         [~, p_values(step), ~, uncorrected_t(step)] = yuend_ttest(cond1_data(:, step), cond2_data(:, step), 'alpha', alpha_level, 'percent', percent, 'tail', tail);
         
     end % of for step
@@ -190,10 +208,14 @@ sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
 % Automatically reject the u smallest hypotheses (u is set by user as ktms_u variable).
 if ktms_u > 0
+    
     ktms_auto_reject_threshold = sorted_p(ktms_u);
+    
 elseif ktms_u == 0 % if ktms_u is set to zero
+    
     ktms_auto_reject_threshold = 0;
-end
+    
+end % of if ktms_u
 
 corrected_h(p_values <= ktms_auto_reject_threshold) = 1; % Mark tests with u smallest p-values as statistically significant.
 
@@ -213,7 +235,9 @@ for iteration = 1:n_iterations
         temp_signs = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
 
     for step = 1:n_total_comparisons
+        
         temp(:, step) = temp_signs .* diff_scores(1:n_subjects, step);
+        
     end % of for step
     
     % Perform paired-samples t tests
@@ -226,9 +250,13 @@ for iteration = 1:n_iterations
         
         temp_t = zeros(1, n_total_comparisons); % Preallocate
         temp_comparison_dataset = zeros(size(temp, 1), 1);
+        
         for step = 1:n_total_comparisons
+            
             [~, ~, ~, temp_t(step)] = yuend_ttest(temp(1:n_subjects, step), temp_comparison_dataset, 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+            
         end % of for step
+        
         t_stat(:, iteration) = temp_t;
         
     end % of if use_yuen
@@ -298,7 +326,9 @@ corrected_p(corrected_p > 1) = 1;
 % Mark statistically significant steps
 corrected_h(corrected_p < alpha_level) = 1;
 
-%% Copy output into Results structure
+
+%% Copy Output Into Results Structure
+
 Results.corrected_h = corrected_h;
 Results.corrected_p = corrected_p;
 Results.t_values = uncorrected_t;

@@ -100,7 +100,7 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 % Example:          [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, 'alpha', 0.05, 'iterations', 10000, 'clusteringalpha', 0.01, 'use_yuen', 1, 'percent', 20, 'tail', 'both')
 %
 %
-% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% Copyright (c) 2017 Daniel Feuerriegel and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -118,7 +118,9 @@ function [Results] = multcomp_cluster_permtest(cond1_data, cond2_data, varargin)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 
-%% Handling variadic inputs
+
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05,...
@@ -133,24 +135,33 @@ option_names = fieldnames(options);
 
 % Count arguments
 n_args = length(varargin);
-if round(n_args/2) ~= n_args/2
-   error([mfilename ' needs property name/property value pairs'])
-end
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+if round(n_args/2) ~= n_args/2
+    
+   error([mfilename ' needs property name/property value pairs'])
+   
+end % of if round
+
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
-% Renaming variables for use below:
+% Renaming variables for use in the function:
 alpha_level = options.alpha;
 n_iterations = options.iterations;
 clustering_alpha = options.clusteringalpha;
@@ -160,15 +171,20 @@ tail = options.tail;
 clear options;
 
 
-%% Tests on observed data
+%% Tests on Observed (Non-Permutation) Data
 
 % Checking whether the number of steps of the first and second datasets are equal
 if size(cond1_data, 2) ~= size(cond2_data, 2)
+    
    error('Condition 1 and 2 datasets do not contain the same number of comparisons!');
-end
+   
+end % of if size
+
 if size(cond1_data, 1) ~= size(cond2_data, 1)
+    
    error('Condition 1 and 2 datasets do not contain the same number of subjects!');
-end
+   
+end % of if size
 
 % Generate difference scores between conditions
 diff_scores = cond1_data - cond2_data;
@@ -176,22 +192,25 @@ diff_scores = cond1_data - cond2_data;
 n_subjects = size(diff_scores, 1); % Calculate number of subjects
 n_total_comparisons = size(diff_scores, 2); % Calculating the number of comparisons
 
-
 % Preallocate vector of uncorrected h values (1 = sig / 0 = nonsig)
 uncorrected_h = zeros(n_total_comparisons, 1);
 
 % Perform t-tests at each step 
 if use_yuen == 0 % If using Student's t
+    
     [uncorrected_h, ~, ~, extra_stats] = ttest(diff_scores, 0, 'Alpha', clustering_alpha, 'tail', tail);
     uncorrected_t = extra_stats.tstat; % Vector of t statistics from each test
 
 elseif use_yuen == 1 % If using Yuen's t
+    
     uncorrected_t = zeros(1, n_total_comparisons); % Preallocate
+    
     for step = 1:n_total_comparisons
+        
         [uncorrected_h(step), ~, ~, uncorrected_t(step)] = yuend_ttest(cond1_data(:, step), cond2_data(:, step), 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+        
     end % of for step
 end % of if use_yuen
-
 
 % Seed the random number generator based on the clock time
 rng('shuffle');
@@ -213,59 +232,82 @@ for iteration = 1:n_iterations
     temp_signs = (rand(n_subjects, 1) > .5) * 2 - 1; % Switches signs of labels
 
     for step = 1:n_total_comparisons 
+        
         % Randomly switch the sign of difference scores (equivalent to
         % switching labels of conditions)
         temp(:,step) = temp_signs .* diff_scores(1:n_subjects, step);
+        
     end % of for step
     
     % Run t tests
     if use_yuen == 0 % If using Student's t
+        
         % Run t tests
         [cluster_perm_test_h(:, iteration), ~, ~, temp_stats] = ttest(temp, 0, 'Alpha', clustering_alpha, 'tail', tail);
         t_stat(:, iteration) = temp_stats.tstat; % Get t statistics
 
     elseif use_yuen == 1 % If using Yuen's t
+        
         temp_comparison_dataset = zeros(size(temp, 1), 1); % Create dummy comparison dataset of zeroes
+        
         for step = 1:n_total_comparisons
+            
             [cluster_perm_test_h(step, iteration), ~, ~, t_stat(step, iteration)] = yuend_ttest(temp(:, step), temp_comparison_dataset, 'alpha', alpha_level, 'percent', percent, 'tail', tail);
+            
         end % of for step
     end % of if use_yuen
         
         % Marking the sign of each t statistic to avoid clustering pos
         % and neg direction significant results
         for step = 1:n_total_comparisons
+            
             if t_stat(step, iteration) < 0;
+                
                 t_sign(step, iteration) = -1; 
+                
             else
+                
                 t_sign(step, iteration) = 1; 
+                
             end % of if t_stat
         end % of for step
+        
     % Identify clusters and generate a maximum cluster statistic
     cluster_mass_vector = [0]; % Resets vector of cluster masses
     cluster_counter = 0;
 
     for step = 1:n_total_comparisons    
+        
         if cluster_perm_test_h(step, iteration) == 1
+            
             if step == 1 % If the first test in the set
+                
                 cluster_counter = cluster_counter + 1;
                 cluster_mass_vector(cluster_counter) = abs(t_stat(step, iteration));
+                
             else
+                
                 % Add to the cluster if there are consecutive
                 % statistically significant tests with the same sign.
                 % Otherwise, make a new cluster.
                 if cluster_perm_test_h(step - 1, iteration) == 1 && t_sign(step - 1, iteration) == t_sign(step, iteration)
+                    
                     cluster_mass_vector(cluster_counter) = cluster_mass_vector(cluster_counter) + abs(t_stat(step, iteration));
+                    
                 else
+                    
                     cluster_counter = cluster_counter + 1;
                     cluster_mass_vector(cluster_counter) = abs(t_stat(step, iteration));
-                end 
-            end % of if test == 1
-        end % of if clusterPermTest
-    end % of for steps = 1:n_total_steps
+                    
+                end % of if cluster_perm_test_h
+            end % of if step
+        end % of if cluster_perm_test_h
+    end % of for step
 
     % Find the maximum cluster mass
     max_cluster_mass(iteration) = max(cluster_mass_vector);
-end % of iterations loop
+    
+end % of for iteration
 
 % Calculating the 95th percentile of maximum cluster mass values (used as decision
 % critieria for statistical significance)
@@ -279,40 +321,60 @@ cluster_corrected_sig_steps = zeros(1, n_total_comparisons);
 clear t_sign;
 
 for step = 1:n_total_comparisons   
+    
     if uncorrected_h(step) == 1
+        
         if step == 1 % If the first test in the set
+            
             cluster_counter = cluster_counter + 1;
             cluster_mass_vector(cluster_counter) = abs(uncorrected_t(step));
             cluster_locations(step) = cluster_counter;
             % Tagging as positive or negative sign effect
+            
             if uncorrected_t < 0
+                
                 t_sign(step) = -1;
+                
             else
+                
                 t_sign(step) = 1;
-            end
+                
+            end % of if uncorrected_t
+            
         elseif step > 1
+            
             % Tagging as positive or negative sign effect
             if uncorrected_t < 0
+                
                 t_sign(step) = -1;
+                
             else
+                
                 t_sign(step) = 1;
-            end
+                
+            end % of if uncorrected_t
 
             % Add to the same cluster only if the previous test was sig.
             % and of the same sign (direction).
             if uncorrected_h(step - 1) == 1 && t_sign(step - 1) == t_sign(step)
+                
                 cluster_mass_vector(cluster_counter) = cluster_mass_vector(cluster_counter) + abs(uncorrected_t(step));
                 cluster_locations(step) = cluster_counter;
+                
             else
+                
                 cluster_counter = cluster_counter + 1;
                 cluster_mass_vector(cluster_counter) = abs(uncorrected_t(step));
                 cluster_locations(step) = cluster_counter;
+                
             end % of if uncorrected_h
-        end % of if step == 1
-    end % of if uncorrected_h(step) == 1  
-end % of for step = 1:n_total_comparisons
+        end % of if step
+    end % of if uncorrected_h(step)  
+end % of for step
 
-%% Calculate p-values for each cluster
+
+%% Calculate P-Values For Each Cluster
+
 % Calculating a p-value for each cluster
 % p-values are corrected according to Phipson and Smyth (2010) methods
 cluster_p = ones(length(cluster_mass_vector), 1); % Preallocate p-values
@@ -325,7 +387,9 @@ for cluster_no = 1:length(cluster_mass_vector)
     p_t = (b + 1) / (n_iterations + 1); % Calculate conservative version of p-value as in Phipson & Smyth, 2010
     
     if strcmp(tail, 'both') == 1 % If using two-tailed testing
+        
         p_t = p_t .* 2; % Doubling of p-value for two-tailed testing (essentially Bonferroni correction for two tests)
+        
     end % of if strcmp tail
 
     cluster_p(cluster_no) = p_t; % P-value for each cluster
@@ -337,18 +401,23 @@ end % of for cluster_no
 cluster_sig = zeros(length(cluster_mass_vector), 1); % Preallocate vector that marks sig. clusters
 
 for cluster_no = 1:length(cluster_mass_vector);
+    
     if cluster_p(cluster_no) < alpha_level % if cluster is statistically significant
+        
         % Mark tests within cluster as significant
         cluster_corrected_sig_steps(cluster_locations == cluster_no) = 1;    
         cluster_sig(cluster_no) = 1;
-    end
-end
+        
+    end % of if cluster_p
+end % of for cluster_no
 
 % Update analysis structure with cluster-corrected significant time
 % windows
 corrected_h = cluster_corrected_sig_steps;
 
-%% Copy output into Results structure
+
+%% Copy Output into Results Structure
+
 Results.uncorrected_h = uncorrected_h;
 Results.corrected_h = corrected_h;
 Results.t_values = uncorrected_t;

@@ -2,14 +2,22 @@ function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vect
 %
 % Performs multivariate pattern classification/regression using input
 % vectors of training/test data and condition labels. Feature weights from
-% the SVM training dataset are also extracted when requested.
+% the SVM training dataset are also extracted if requested by the user.
 %
-% This function is called by prepare_my_vectors_erp.
+% This function is called by prepare_my_vectors_erp
 %
-% This script interacts with LIBSVM toolbox (Chang & Lin) to do the classfication / regression
-% see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+% This script interacts with either LIBSVM toolbox (Chang & Lin) or 
+% LIBLINEAR (Fan et al.) to do the classfication / regression
+%
+% for LIBSVM see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 % Chang CC, Lin CJ (2011). LIBSVM : a library for support vector machines. ACM TIST, 2(3):27,
 %
+% for LIBLINEAR see: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
+% R.-E. Fan, K.-W. Chang, C.-J. Hsieh, X.-R. Wang, and C.-J. Lin. 
+% LIBLINEAR: A library for large linear classification. 
+% Journal of Machine Learning Research 9(2008), 1871--1874.
+% 
+% Feature weights extraction:
 % Both corrected and uncorrected feature weights are extracted and stored.
 % Uncorrected feature weights are directly obtained from the SVM training
 % functions. Corrected feature weights undergo an additional transformation
@@ -44,7 +52,7 @@ function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vect
 %                               method in Haufe et al. (2014).
 %
 %
-% Copyright (c) 2013-2016 Stefan Bode and contributors
+% Copyright (c) 2013-2017 Stefan Bode and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -61,59 +69,72 @@ function [acc, feat_weights, feat_weights_corrected] = do_my_classification(vect
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%% define samples and labels for training
+%% Define Samples and Labels For Training
 
 Samples = vectors_train;
 Labels = labels_train;
 
 
-%% training 
-%__________________________________________________________________________
+%% Training the SVMs
+
 if sum(cfg.analysis_mode == [1 3 4]) %  libsvm
-    model = svmtrain(Labels,Samples,cfg.backend_flags.all_flags);
+    
+    model = svmtrain(Labels, Samples, cfg.backend_flags.all_flags);
+    
 elseif sum(cfg.analysis_mode == [2]) %  liblinear
-   model = train(Labels,sparse(Samples),cfg.backend_flags.all_flags);
-end
+    
+   model = train(Labels, sparse(Samples), cfg.backend_flags.all_flags);
+   
+end % of if sum
 %__________________________________________________________________________    
 
 
-%% define samples and labels for testing
+%% Define Samples and Labels for Testing
 Samples = vectors_test;
 Labels = labels_test;
 
 
-%% prediction
-%__________________________________________________________________________
+%% Prediction (Test the Classifier)
 
-if sum(cfg.analysis_mode == [1 3]) % libsvm
-    [predicted_label, accuracy, decision_values] = svmpredict(Labels, Samples, model); 
+if sum(cfg.analysis_mode == [1, 3]) % libsvm
+    
+    [predicted_label, accuracy, decision_values] = svmpredict(Labels, Samples, model);
+    
 elseif sum(cfg.analysis_mode == [2]) % liblinear
+    
     [predicted_label, accuracy, decision_values] = predict(Labels, sparse(Samples), model); 
-end
+    
+end % of if sum
 
-if cfg.analysis_mode == 1 % SVM classification with libsvm
+%% Calculate Decoding Performance and Extract Feature Weights
+
+if cfg.analysis_mode == 1 % SVM classification with LIBSVM
+    
     % calculating feature weights
     w = model.SVs' * model.sv_coef;
     b = -model.rho;
 
-    feat_weights = zeros(size(w,1),3);
-    feat_weights_corrected = zeros(size(w,1),3);
+    feat_weights = zeros(size(w,1), 3);
+    feat_weights_corrected = zeros(size(w,1), 3);
     
-    if cfg.feat_weights_mode == 1 
+    if cfg.feat_weights_mode == 1 % If extracting feature weights
+        
         % uncorrected feature weights
-        feat_weights(:,1) = 1:(size(w,1));
+        feat_weights(:,1) = 1:(size(w, 1));
         feat_weights(:,2) = w;
         feat_weights(:,3) = abs(w);
         
         % corrected feature weights according to Haufe et al. (2014) method
-        feat_weights_corrected(:,1) = 1:(size(w,1));
+        feat_weights_corrected(:,1) = 1:(size(w, 1));
         vectors_train_temp = (vectors_train - repmat(mean(vectors_train), size(vectors_train, 1), 1)) ./ sqrt(size(vectors_train, 1) - 1);
         feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
         clear vectors_train_temp;
         feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
-    end
+        
+    end % of if cfg.feat_weights_mode
+    
 
-    % extracting accuracy for 2-classes 
+    % calculate classification accuracy for 2-classes 
     if cfg.nconds == 2
 
         acc = accuracy(1);
@@ -121,32 +142,37 @@ if cfg.analysis_mode == 1 % SVM classification with libsvm
     % extracting accuracy for N-classes
     elseif cfg.nconds > 2
 
+        % Generate all pairs of conditions
         classes = 1:cfg.nconds;
-        pairs = nchoosek(classes,2);
+        pairs = nchoosek(classes, 2);
 
         for cl = classes
+            
             wt(:,cl) = (pairs(:,1) == cl) - (pairs(:,2) == cl);
-        end
+            
+        end % of for cl
 
+        % Calculate the winning class out of all classes
         votes = decision_values * wt;
-        [maxvote,winvote] = max(votes');
-        classcorrectnes = (classes == winvote) * 100;
+        [maxvote, winvote] = max(votes');
+        
+        % Accuracy defined as the proportion of test labels that equal the
+        % winning class
+        classcorrectness = (labels_test == winvote') * 100;
+        acc = mean(classcorrectness);
 
-        acc = mean(classcorrectnes);
-
-    end % if nclass
+    end % of if cfg.nconds
     
-elseif cfg.analysis_mode == 2 % SVM classification with liblinear
+elseif cfg.analysis_mode == 2 % SVM classification with LIBLINEAR
     
     % calculating feature weights
-    %w = model.SVs' * model.sv_coef;
-    %b = -model.rho;
     w = model.w';
 
-    feat_weights = zeros(size(w,1),3);
-    feat_weights_corrected = zeros(size(w,1),3);
+    feat_weights = zeros(size(w,1), 3);
+    feat_weights_corrected = zeros(size(w,1), 3);
     
-    if cfg.feat_weights_mode == 1 
+    if cfg.feat_weights_mode == 1 % If extracting feature weights
+        
         % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
@@ -158,35 +184,36 @@ elseif cfg.analysis_mode == 2 % SVM classification with liblinear
         feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
         clear vectors_train_temp;
         feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
-    end
+    
+    end % of if cfg.feat_weights_mode
 
     % extracting accuracy for 2-classes 
     if cfg.nconds == 2
 
-        acc=accuracy(1);
+        acc = accuracy(1);
     
     % extracting accuracy for N-classes
     elseif cfg.nconds > 2
 
         classes = 1:cfg.nconds;
-        pairs = nchoosek(classes,2);
+        pairs = nchoosek(classes, 2);
 
         for cl = classes
-            wt(:,cl) = (pairs(:,1)==cl) - (pairs(:,2)==cl);
-        end
+            wt(:,cl) = (pairs(:,1) == cl) - (pairs(:,2) == cl);
+        end % of for cl
 
-        votes = decision_values*wt;
-        [maxvote,winvote] = max(votes');
-        classcorrectnes = (classes==winvote)*100;
+        votes = decision_values * wt;
+        [maxvote, winvote] = max(votes');
+        classcorrectness = (classes == winvote) * 100;
 
-        acc = mean(classcorrectnes);
+        acc = mean(classcorrectness);
 
-    end % if nclass
+    end % of if cfg.nconds
        
 elseif cfg.analysis_mode == 3 % SVR
     
     % correlating the predicted label with the test labels
-    c_sample = corrcoef(predicted_label,Labels);
+    c_sample = corrcoef(predicted_label, Labels);
     avecorrectness = c_sample(1,2);
     
     % convert into Fisher-Z
@@ -200,10 +227,11 @@ elseif cfg.analysis_mode == 3 % SVR
     
     % calculating feature weights
     w = model.SVs' * model.sv_coef;
-    feat_weights = zeros(size(w,1),3);  
-    feat_weights_corrected = zeros(size(w,1),3);
+    feat_weights = zeros(size(w,1), 3);  
+    feat_weights_corrected = zeros(size(w,1), 3);
     
-    if cfg.feat_weights_mode == 1
+    if cfg.feat_weights_mode == 1 % If extracting feature weights
+        
         % uncorrected feature weights
         feat_weights(:,1) = 1:(size(w,1));
         feat_weights(:,2) = w;
@@ -215,7 +243,7 @@ elseif cfg.analysis_mode == 3 % SVR
         feat_weights_corrected(:,2) = vectors_train_temp' * (vectors_train_temp * feat_weights(:,2));
         clear vectors_train_temp;
         feat_weights_corrected(:,3) = abs(feat_weights_corrected(:,2));
-    end
+        
+    end % of if cfg.feat_weights_mode
     
-end % if analysis_mode
-%__________________________________________________________________________
+end % if cfg.analysis_mode

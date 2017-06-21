@@ -9,23 +9,29 @@ function [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS)
 % for information-based imaging: From the second-level t-test to prevalence
 % inference. Neuroimage 141, 378-392.
 %
+%  This function calls the function allefeld_algorithm.
+%
 %
 % Inputs:
 %
-%   ANALYSIS            Structure containing organised data and analysis
-%                       parameters set in analyse_decoding_erp
+%   ANALYSIS            Structure containing single subject decoding results 
+%                       and analysis parameters.
+%                       
 %
 % Outputs:
 %
 %   ANALYSIS            Structure containing the data input to the function
 %                       plus the results of the statistical analyses and
-%                       the analysis parameters used in the test.
+%                       the analysis parameters used in the test. For a
+%                       summary of these outputs see the header for the
+%                       function allefeld_algorithm.m or type 
+%                       'help allefeld_algorithm'.
 %
 %
-% Example:      % [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS)
+% Example:       [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS)
 %
 %
-% Copyright (c) 2016 Daniel Feuerriegel and contributors
+% Copyright (c) 2017 Daniel Feuerriegel and contributors
 % 
 % This file is part of DDTBOX.
 %
@@ -43,18 +49,24 @@ function [ANALYSIS] = min_statistic_classifier_accuracies(ANALYSIS)
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-% Get number of time windows, number of subject, number of permutations per
-% subject
+
+%% Set Analysis Parameters
+
+% Calculate number of time windows, number of subjects, number of permutations per subject
 n_time_windows = size(ANALYSIS.RES.all_subj_perm_acc_reps_draw, 3);
 n_subjects = size(ANALYSIS.RES.all_subj_perm_acc_reps_draw, 1);
 n_permutations_per_subject = length(ANALYSIS.RES.all_subj_perm_acc_reps_draw{1, 1, 1});
 
-for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
+
+%% Run Statistical Tests
+
+for na = 1:size(ANALYSIS.RES.mean_subj_acc, 1) % analysis
 
     % Get classification accuracies from the observed data: 
     % ANALYSIS.RES.all_subj_acc(subject, analysis, time_window)
-    % and copy into a
-    % matrix:  observed_data(time_window, subject)
+    % and copy into a matrix:  
+    % observed_data(time_window, subject)
+    
     observed_data = squeeze(ANALYSIS.RES.all_subj_acc(:, na, :));
     observed_data = permute(observed_data, [2, 1]);
 
@@ -66,6 +78,7 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
     permtest_data = NaN(n_time_windows, n_subjects, n_permutations_per_subject); % Preallocate
     
     for subject_no = 1:size(ANALYSIS.RES.all_subj_perm_acc_reps_draw, 1)
+        
         for time_window = 1:size(ANALYSIS.RES.all_subj_perm_acc_reps_draw, 3)
             
             temp = ANALYSIS.RES.all_subj_perm_acc_reps_draw{subject_no, na, time_window};
@@ -74,13 +87,14 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
         end % of for time_window    
     end % of for subject_no
 
-    % Run the algorithm in Allefeld et al. (2016) for global null and
+    % Run the algorithm described in Allefeld et al. (2016) for global null and
     % prevalence testing using the minimum statistic and permutation testing
     [RESULTS, PARAMS] = allefeld_algorithm(observed_data, permtest_data, 'n_second_level_permutations', ANALYSIS.P2, 'alpha_level', ANALYSIS.pstats);
      
      % Extract p-values and check for statistical significance
      % Outputs from Results structure are vectors of length n_time_windows
-
+     
+     % p-values
      ANALYSIS.RES.p_minstat_uncorrected(na, :) = RESULTS.puGN; % Uncorrected for multiple comparisons
      ANALYSIS.RES.p_minstat_corrected(na, :) = RESULTS.pcGN; % Corrected for multiple comparisons
 
@@ -88,17 +102,18 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
      ANALYSIS.RES.h_minstat_uncorrected(na, :) = zeros(1, n_time_windows); % Preallocate
      ANALYSIS.RES.h_minstat_corrected(na, :) = zeros(1, n_time_windows); % Preallocate
      
+     % Compare p-values against nominal alpha to determine statistical significance
      ANALYSIS.RES.h_minstat_uncorrected(na, RESULTS.puGN < ANALYSIS.pstats) = 1;
      ANALYSIS.RES.h_minstat_corrected(na, RESULTS.pcGN < ANALYSIS.pstats) = 1;
      
-     % Copy into generic (analysis-unspecific) matrices for p and h
+     % Copy p-values and sig. test results into generic (not analysis type-specific) matrices.
+     % Generic matrices are used for plotting
      ANALYSIS.RES.p_uncorrected(na, :) = ANALYSIS.RES.p_minstat_uncorrected(na, :);
      ANALYSIS.RES.p_corrected(na, :) = ANALYSIS.RES.p_minstat_corrected(na, :);
      ANALYSIS.RES.h_uncorrected(na, :) = ANALYSIS.RES.h_minstat_uncorrected(na, :);
      ANALYSIS.RES.h_corrected(na, :) = ANALYSIS.RES.h_minstat_uncorrected(na, :);
      
-     % Extract prevalence estimates (corrected and uncorrected for multiple
-     % comparisons)
+     % Extract prevalence estimates (corrected and uncorrected for multiple comparisons)
      ANALYSIS.RES.prevalence_lowerbound_uncorrected(na, :) = RESULTS.gamma0u;
      ANALYSIS.RES.prevalence_lowerbound_corrected(na, :) = RESULTS.gamma0c;
      
@@ -116,13 +131,13 @@ for na = 1:size(ANALYSIS.RES.mean_subj_acc,1) % analysis
 end % of for na (loop through analyses)
 
 
-% Marking h values (statistical significance) for plotting depending on whether using multiple
+% Marking h values (statistical significance) for plotting, depending on whether using multiple
 % comparisons corrections
- if ANALYSIS.minstat_multcomp == 1
+ if ANALYSIS.minstat_multcomp == 1 % If performing multiple comparisons correction
      
      ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_corrected;
      
- elseif ANALYSIS.minstat_multcomp == 0
+ elseif ANALYSIS.minstat_multcomp == 0 % If multiple comparisons correction not selected by user
 
      ANALYSIS.RES.h = ANALYSIS.RES.h_minstat_uncorrected;
 

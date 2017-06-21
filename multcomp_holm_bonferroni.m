@@ -57,7 +57,9 @@ function [Results] = multcomp_holm_bonferroni(p_values, varargin)
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%% Handling variadic inputs
+
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05);
@@ -68,19 +70,26 @@ option_names = fieldnames(options);
 % Count arguments
 n_args = length(varargin);
 if round(n_args/2) ~= n_args/2
+    
    error([mfilename ' needs property name/property value pairs'])
-end
+   
+end % of if round
 
-for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+for pair = reshape(varargin, 2, []) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % of for pair
+
 clear pair
 clear inp_name
 
@@ -97,19 +106,26 @@ sorted_p = sort(p_values); % Sort p-values from smallest to largest
 found_crit_alpha = 0; % Reset to signify that we have not found the Holm-Bonferroni corrected critical alpha level
 
 for holm_step = 1:n_total_comparisons
+    
    % Iteratively look for the critical alpha level
    if sorted_p(holm_step) > alpha_level / (n_total_comparisons + 1 - holm_step) && found_crit_alpha == 0
+       
        holm_corrected_alpha = sorted_p(holm_step);
        found_crit_alpha = 1;
-   end  
-end
+       
+   end % of if sorted_p  
+end % of for holm_step
 
 if ~exist('holm_corrected_alpha', 'var') % If all null hypotheses are rejected
+    
     holm_corrected_alpha = alpha_level;
-end
+    
+end % of if ~exist
 
 holm_corrected_h(p_values < holm_corrected_alpha) = 1; % Compare each p-value to the corrected threshold.
 
-%% Copy output to Results structure
+
+%% Copy Output to Results Structure
+
 Results.corrected_h = holm_corrected_h;
 Results.critical_alpha = holm_corrected_alpha;
