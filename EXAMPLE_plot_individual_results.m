@@ -68,6 +68,7 @@ end % of avmode switch
 %% Settings for Plotting Decoding Performance Results
 
 PLOT.perm_disp = 1; % display the results from permuted labels decoding in figure as separate line? 0=no / 1=yes
+PLOT.pointzero = 1; % Time of the event of interest (e.g. stimulus presentation), relative to the beginning of the epoch (in ms)
 
 % Temporal decoding results settings
 PLOT.channellocs = ['/Users/danielfeuerriegel/Desktop/DDTBOX Project/MVPA_WORKSHOP/locations/']; % Path of directory containing channel information file
@@ -148,7 +149,7 @@ for sbj = sbj_todo % Plot for all selected subjects
     
     % Overwrite selected cfg settings related to plotting results
     cfg.perm_disp = PLOT.perm_disp;
-    cfg.pointzero = pointzero;
+    cfg.pointzero = PLOT.pointzero;
     
     % Plot the single subject results
     display_indiv_results_erp(cfg, RESULTS, PLOT);

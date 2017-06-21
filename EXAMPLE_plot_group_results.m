@@ -205,6 +205,8 @@ ANALYSIS.fw.colormap = 'jet'; % Colormap for plotting of feature weights scalp m
 
 if PLOT.decoding_performance_results
     
+    fprintf('\n------------------------------------------------------------------------\nPlotting group decoding performance results\n------------------------------------------------------------------------\n');
+    
     display_group_results_erp(ANALYSIS, PLOT);
     
 end % of if PLOT.decoding_performance
@@ -215,6 +217,8 @@ end % of if PLOT.decoding_performance
 
 if PLOT.feature_weights_results
     
-     display_feature_weights_results(ANALYSIS, FW_ANALYSIS);
+    fprintf('\n------------------------------------------------------------------------\nPlotting feature weights results\n------------------------------------------------------------------------\n');
+    
+    display_feature_weights_results(ANALYSIS, FW_ANALYSIS);
      
 end % of if PLOT.feature_weights
