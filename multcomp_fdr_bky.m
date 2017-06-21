@@ -1,45 +1,65 @@
-function [fdr_corrected_h, bky_stage2_critical_alpha] = multcomp_fdr_bky(p_values, varargin)
-
-%__________________________________________________________________________
-% Multiple comparisons correction function written by Daniel Feuerriegel 21/04/2016 
-% to complement DDTBOX scripts written by Stefan Bode 01/03/2013.
+function [Results] = multcomp_fdr_bky(p_values, varargin)
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
-%
-% The author (Stefan Bode) further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
-%
-% This script receives a vector of p-values and outputs
-% false discovery rate corrected null hypothesis test results (Benjamin-Krieger-Yekutieli procedure).
-% The number of tests is determined by the length of the vector of p-values.
+% This function receives a vector of p-values and outputs
+% false discovery rate corrected null hypothesis test results 
+% (Benjamin-Krieger-Yekutieli procedure). The number of tests is 
+% determined by the length of the vector of p-values.
 %
 % Benjamini, Y., Krieger, A. M., & Yekutieli, D. (2006). Adapting linear step-up
 % procedures that control the false discovery rate. Biometrika, 93, 491-507.
 % doi 10.1093/biomet/93.3.491
 %
+% Please cite this article when using this multiple comparisons correction.
 %
-% requires:
-% - p_values (vector of p-values from the hypothesis tests of interest)
+% Inputs:
+%
+%   p_values        vector of p-values from the hypothesis tests of interest
+%
+%  'Key1'          Keyword string for argument 1
+%
+%   Value1         Value of argument 1
 % 
-% optional:
-% - alpha (uncorrected alpha level for statistical significance, default 0.05)
+% Optional Keyword Inputs:
+%
+%   alpha           uncorrected alpha level for statistical significance, 
+%                   default 0.05
+%
+% Outputs:
+%
+%   Results structure containing:
+%
+%   corrected_h     vector of false discovery rate-corrected hypothesis tests 
+%                   derived from comparing p-values to false discovery rate 
+%                   adjusted critical alpha level. 
+%                   1 = statistically significant, 0 = not statistically significant
+%
+%   critical_alpha       adjusted alpha level. p-values smaller or
+%                        equal to this are declared statistically-significant
 %
 %
-% outputs:
-% - fdr_corrected_h (vector of false discovery rate corrected hypothesis tests 
-% derived from comparing p-values to false discovery rate adjusted critical alpha level. 
-% 1 = statistically significant, 0 = not statistically significant)
+% Example:      [Results] = multcomp_fdr_bky(p_values, 'alpha', 0.05)
 %
-% - bky_stage2_critical_alpha (adjusted alpha level. p-values smaller or
-% equal to this are declared statistically-significant).
-%__________________________________________________________________________
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
+% Copyright (c) 2017 Daniel Feuerriegel and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%% Handling variadic inputs
+
+%% Handling Variadic Inputs
+
 % Define defaults at the beginning
 options = struct(...
     'alpha', 0.05);
@@ -49,20 +69,29 @@ option_names = fieldnames(options);
 
 % Count arguments
 n_args = length(varargin);
+
 if round(n_args/2) ~= n_args/2
+    
    error([mfilename ' needs property name/property value pairs'])
-end
+   
+end % of if round
 
 for pair = reshape(varargin,2,[]) % pair is {propName;propValue}
+    
    inp_name = lower(pair{1}); % make case insensitive
 
    % Overwrite default options
    if any(strcmp(inp_name, option_names))
+       
       options.(inp_name) = pair{2};
+      
    else
+       
       error('%s is not a recognized parameter name', inp_name)
-   end
-end
+      
+   end % of if any
+end % for for pair
+
 clear pair
 clear inp_name
 
@@ -71,11 +100,10 @@ alpha_level = options.alpha;
 clear options;
 
 
-
-%% False Disovery Rate - Benjamini-Krieger-Yekutieli
+%% False Disovery Rate Correction - Benjamini-Krieger-Yekutieli
 
 n_total_comparisons = length(p_values); % Get the number of comparisons
-fdr_corrected_h = zeros(1, length(p_values)); % preallocate
+fdr_corrected_h = zeros(1, length(p_values)); % Preallocate
 
 sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
@@ -84,19 +112,24 @@ sorted_p = sort(p_values); % Sort p-values from smallest to largest
 
 % Find critical k value
 for bky_step = 1:n_total_comparisons
+    
     if sorted_p(bky_step) <= (bky_step / n_total_comparisons) * (alpha_level / ( 1 + alpha_level));
+        
         bky_stage1_critical_alpha = sorted_p(bky_step);
-    end
-end
+        
+    end % of if sorted_p
+end % for for bky_step
+
 % If no tests are significant set critical alpha to zero
 if ~exist('bky_stage1_critical_alpha', 'var')
+    
     bky_stage1_critical_alpha = 0;
-end
+    
+end % of if ~exist
 
 % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
 bky_stage1_h = zeros(1, n_total_comparisons); % Preallocate for speed
 bky_stage1_h(p_values <= bky_stage1_critical_alpha) = 1;
-
 
 % Count the number of rejected null hypotheses (for use in stage 2)
 bky_stage1_n_rejections = sum(bky_stage1_h);
@@ -114,17 +147,28 @@ elseif bky_stage1_n_rejections == n_total_comparisons; % if all null hypothesese
 else % If some (but not all) null hypotheses were rejected  
     
     for bky_step = 1:n_total_comparisons
+        
         if sorted_p(bky_step) <= (bky_step / n_total_comparisons) * ( (n_total_comparisons / (n_total_comparisons - bky_stage1_n_rejections) ) * (alpha_level / ( 1 + alpha_level)) );
+            
             bky_stage2_critical_alpha = sorted_p(bky_step);
-        end
-    end
+            
+        end % of if sorted_p
+    end % for for bky_step
 
     % If no tests are significant set critical alpha to zero
     if ~exist('bky_stage2_critical_alpha', 'var')
+        
         bky_stage2_critical_alpha = 0;
-    end
+        
+    end % of if ~exist
 
     % Declare tests significant if they are smaller than or equal to the adjusted critical alpha
     fdr_corrected_h(p_values <= bky_stage2_critical_alpha) = 1;
 
 end % of if bky_stage1_n_rejections
+
+
+%% Copy Output Into Results Structure
+
+Results.corrected_h = fdr_corrected_h;
+Results.critical_alpha = bky_stage2_critical_alpha;

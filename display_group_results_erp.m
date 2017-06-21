@@ -1,226 +1,304 @@
-function display_group_results_erp(ANALYSIS)
-%__________________________________________________________________________
-% DDTBOX script written by Stefan Bode 01/03/2013
+function display_group_results_erp(ANALYSIS, PLOT)
 %
-% The toolbox was written with contributions from:
-% Daniel Bennett, Jutta Stahl, Daniel Feuerriegel, Phillip Alday
+% This function plots results of group-level analyses of 
+% classification/regression performance.  
 %
-% The author further acknowledges helpful conceptual input/work from: 
-% Simon Lilburn, Philip L. Smith, Elaine Corbett, Carsten Murawski, 
-% Carsten Bogler, John-Dylan Haynes
-%__________________________________________________________________________
+% This function is called by analyse_decoding_erp, but can also be called
+% by custom plotting scripts such as EXAMPLE_plot_group_results.
 %
-% This script is will plot results from the group analysis 
-
-%__________________________________________________________________________
 %
-% Variable naming convention: STRUCTURE_NAME.example_variable
-
-%% GENERAL PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
-
-% post-processing script = 2 - needed for interaction with other scripts to regulate
-% functions such as saving data, calling specific sub-sets of parameters
-global CALL_MODE
-CALL_MODE = 3;
-
-global DCGTODO;
-global SLIST;
-
-%% PLOTTING PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%__________________________________________________________________________
-
-% figure position__________________________________________________________
-PLOT.FigPos = [100 100 800 400];
-
-% define x/y-axis__________________________________________________________
-PLOT.Y_min = 40; % Y axis lower bound (in % accuracy)
-PLOT.Y_max = 70; % Y axis upper bound (in % accuracy)
-PLOT.Ysteps = 5; % Interval between Y axis labels/tick marks
-
-PLOT.X_min = 1; % X axis lower bound (first time point)
-PLOT.X_max = ANALYSIS.xaxis_scale(2,end);
-PLOT.Xsteps = ANALYSIS.step_width_ms;
-
-PLOT.Ytick = [PLOT.Y_min:PLOT.Ysteps:PLOT.Y_max];
-PLOT.Xtick = [ANALYSIS.xaxis_scale(1,1) : ANALYSIS.xaxis_scale(1,end)];
-
-PLOT.XtickLabel = ANALYSIS.xaxis_scale(2,:) - ANALYSIS.pointzero; 
-
-% define properties of significance markers________________________________
-PLOT.Sign.LineColor = 'y';
-PLOT.Sign.LinePos = [PLOT.Y_min+0.5 PLOT.Y_max-0.5];
-PLOT.Sign.LineWidth = 10;
-
-% define properties of main plot___________________________________________
-PLOT.Res.Line = '-ks';
-PLOT.Res.LineWidth = 2;
-PLOT.Res.MarkerEdgeColor = 'k';
-PLOT.Res.MarkerFaceColor = 'w';
-PLOT.Res.MarkerSize = 5;
-
-PLOT.Res.Error = 'k';
-PLOT.Res.ErrorLine = 'none';
-PLOT.Res.ErrorLineWidth = 0.5;
-
-% define properties of permutation / chance plot___________________________
-PLOT.PermRes.Line = '-ks';
-PLOT.PermRes.LineWidth = 2;
-PLOT.PermRes.MarkerEdgeColor = 'b';
-PLOT.PermRes.MarkerFaceColor = 'w';
-PLOT.PermRes.MarkerSize = 5;
-
-PLOT.PermRes.Error = 'b';
-PLOT.PermRes.ErrorLine = 'none';
-PLOT.PermRes.ErrorLineWidth = 0.5;
-
-% define label / title properties__________________________________________
-PLOT.xlabel.FontSize = 12;
-PLOT.ylabel.FontSize = 12;
-
-PLOT.xlabel.FontWeight = 'b';
-PLOT.ylabel.FontWeight = 'b';
-
-PLOT.xlabel.Text = 'Time-steps [ms]';
-PLOT.ylabel.Text = 'Classification Accuracy [%]';
-
-PLOT.PointZero.Color = 'r';
-PLOT.PointZero.LineWidth = 3;
-PLOT.PointZero.Point = find(ANALYSIS.data(3,:) == 1);
-
-if ANALYSIS.stmode == 1
-    PLOT.TileString = 'Spatial Class ';
-elseif ANALYSIS.stmode == 2
-    PLOT.TileString = 'Temporal Class ';
-elseif ANALYSIS.stmode == 3
-    PLOT.TileString = 'Spatiotemporal Class ';
-end
-
-PLOT.TitleFontSize = 14;
-PLOT.TitleFontWeight = 'b';
-%__________________________________________________________________________
-
-%% PLOT THE RESULTS
-%__________________________________________________________________________
+% Inputs:
+%
+%   ANALYSIS        structure containing analysis settings and data
 % 
+%   PLOT            structure containing decoding performance plotting
+%                   settings. For a list of settings see the documentation
+%                   or see the function dd_set_plotting_defaults
+%
+%
+% Copyright (c) 2013-2017 Stefan Bode and contributors
+% 
+% This file is part of DDTBOX.
+%
+% DDTBOX is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+%% Plot the Results
 % plots the results depending on s/t-mode (information time-courses for
 % spatial/spatio-temporal decoding; heat maps for temporal decoding)
 
-if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3
+if ANALYSIS.stmode == 1 || ANALYSIS.stmode == 3 % Spatial and spatiotemporal decoding
     
-    % determine the time-point for locking the data ("point zero")
-%     [dummy pointzero] = min(abs(ANALYSIS.xaxis_scale(1,:)));
-%     ANALYSIS.pointzero=pointzero; clear pointzero;
-    
-    % plot the information time-course for each analysis
-    %______________________________________________________________________
-    for ana = 1:size(ANALYSIS.RES.mean_subj_acc,1)
+    % Plot the information time-course for each analysis
+    for ana = 1:size(ANALYSIS.RES.mean_subj_acc, 1)
         
-        fighandle = figure('Position',PLOT.FigPos);
+        fighandle = figure('Position', PLOT.FigPos);
         
-        % get results to plot
-        %__________________________________________________________________
-        temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
-        temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
+        % get results to plot        
+        if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+            
+            temp_data(1,:) = ANALYSIS.RES.mean_subj_acc(ana,:);
+            temp_se(1,:) = ANALYSIS.RES.se_subj_acc(ana,:);
+            fprintf('\nArithmetic mean used for plotting group average accuracy\nError bars represent standard errors\n\n');
         
+        elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+        
+            temp_data(1,:) = ANALYSIS.RES.trimmean_subj_acc(ana,:);
+            temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
+            fprintf('\n%i percent trimmed mean used for plotting group average accuracy\nError bars represent standard errors\n\n', ANALYSIS.plot_robust_trimming);
+
+        elseif ANALYSIS.plot_robust == 2 % If plotting medians
+            
+            temp_data(1,:) = ANALYSIS.RES.median_subj_acc(ana,:);
+            temp_se = ANALYSIS.RES.se_subj_acc(ana,:); % Still plotting non-robust SE
+            fprintf('\nMedian used for plotting group average accuracy\nError bars represent standard errors\n\n');
+
+        end % of if ANALYSIS.plot_robust
+            
         % get permutation results to plot
-        %__________________________________________________________________
-        if ANALYSIS.permstats == 1
-            temp_perm_data(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = ANALYSIS.chancelevel;
-            temp_perm_se(1,1:size(ANALYSIS.RES.mean_subj_acc(ana,:),2)) = zeros;
+        if ANALYSIS.permstats == 1 % If testing against theoretical chance
+            
+            temp_perm_data(1, 1:size(ANALYSIS.RES.mean_subj_acc(ana,:), 2)) = ANALYSIS.chancelevel;
+            temp_perm_se(1, 1:size(ANALYSIS.RES.mean_subj_acc(ana,:), 2)) = zeros;
+            
         elseif ANALYSIS.permstats == 2
-            temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
-            temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
-        end
+            
+            if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+                
+                temp_perm_data(1,:) = ANALYSIS.RES.mean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:);
+                
+            elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+                temp_perm_data(1,:) = ANALYSIS.RES.trimmean_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:); % Still plotting non-robust SE
+                
+            elseif ANALYSIS.plot_robust == 2 % If plotting medians
+                
+                temp_perm_data(1,:) = ANALYSIS.RES.median_subj_perm_acc(ana,:);
+                temp_perm_se(1,:) = ANALYSIS.RES.se_subj_perm_acc(ana,:); % Still plotting non-robust SE
+                
+            end % of if ANALYSIS.plot_robust
+            
+        end % of if ANALYSIS.permstats
         
-        % mark significant points
-        %__________________________________________________________________
-        
+        % Mark statistically significant points        
         if ANALYSIS.disp.sign == 1
-            for step = 1:size(temp_data,2)
+            
+            for step = 1:size(temp_data, 2)
                 
                 % plot if found significant...
-                if ANALYSIS.RES.h_ttest(ana,step) == 1
+                if ANALYSIS.RES.h(ana, step) == 1
                     
-%                     % ... and if after baseline (careful - this might be a meaningful result!)
-%                     if step >= PLOT.PointZero.Point
-
-                        line([step step],PLOT.Sign.LinePos,'Color',PLOT.Sign.LineColor,'LineWidth',PLOT.Sign.LineWidth);
+                        line([step, step], PLOT.Sign.LinePos,'Color', PLOT.Sign.LineColor, 'LineWidth', PLOT.Sign.LineWidth);
                         hold on;
-
-%                     end 
                     
-                end % if h_ttest
-            end % step
-        end % disp
+                end % of if ANALYSIS.RES.h
+            end % of for step
+        end % of if ANALYSIS.disp.sign
         
         % plot main results
-        %__________________________________________________________________
-        plot(temp_data,PLOT.Res.Line,'LineWidth',PLOT.Res.LineWidth,'MarkerEdgeColor',PLOT.Res.MarkerEdgeColor,...
-            'MarkerFaceColor',PLOT.Res.MarkerFaceColor,'MarkerSize',PLOT.Res.MarkerSize);
+        plot(temp_data, PLOT.Res.Line, 'LineWidth', PLOT.Res.LineWidth, ...
+            'MarkerEdgeColor', PLOT.Res.MarkerEdgeColor,...
+            'MarkerFaceColor', PLOT.Res.MarkerFaceColor, ...
+            'MarkerSize', PLOT.Res.MarkerSize);
         hold on;      
         
-        errorbar(temp_data,temp_se,PLOT.Res.Error,'linestyle',PLOT.Res.ErrorLine,...
-            'linewidth',PLOT.Res.ErrorLineWidth);
+        % plot error bars
+        errorbar(temp_data, temp_se, PLOT.Res.Error, ...
+            'linestyle', PLOT.Res.ErrorLine, ...
+            'linewidth', PLOT.Res.ErrorLineWidth);
         hold on;
         
-        %% plot permutation / chance results
-        %__________________________________________________________________
-        if ANALYSIS.permdisp == 1
+        
+        
+        %% Plot Permutation / Chance Results
+
+        if ANALYSIS.permdisp == 1 % If select to plot permutation decoding results
             
-            plot(temp_perm_data,PLOT.PermRes.Line,'LineWidth',PLOT.PermRes.LineWidth,'MarkerEdgeColor',PLOT.PermRes.MarkerEdgeColor,...
-                'MarkerFaceColor',PLOT.PermRes.MarkerFaceColor,'MarkerSize',PLOT.PermRes.MarkerSize);
+            plot(temp_perm_data, PLOT.PermRes.Line, ...
+                'LineWidth', PLOT.PermRes.LineWidth, ...
+                'MarkerEdgeColor', PLOT.PermRes.MarkerEdgeColor,...
+                'MarkerFaceColor', PLOT.PermRes.MarkerFaceColor, ...
+                'MarkerSize', PLOT.PermRes.MarkerSize);
             hold on;      
 
-            errorbar(temp_perm_data,temp_perm_se,PLOT.PermRes.Error,'linestyle',PLOT.PermRes.ErrorLine,...
-                'linewidth',PLOT.PermRes.ErrorLineWidth);
+            errorbar(temp_perm_data, temp_perm_se, PLOT.PermRes.Error, ...
+                'linestyle', PLOT.PermRes.ErrorLine,...
+                'linewidth', PLOT.PermRes.ErrorLineWidth);
             hold on;
             
-        end
+        end % of if ANALYSIS.permdisp
         
-        %% define labels, point zero, title
-        %__________________________________________________________________
         
-        axis([1 ANALYSIS.laststep PLOT.Y_min PLOT.Y_max]);
         
-        xlabel(PLOT.xlabel.Text,'FontSize',PLOT.xlabel.FontSize,'FontWeight',PLOT.xlabel.FontWeight);
-        ylabel(PLOT.ylabel.Text,'FontSize',PLOT.ylabel.FontSize,'FontWeight',PLOT.ylabel.FontWeight);
+        %% Define Axis Labels, Point Zero, Title
+              
+        % Axis limits
+        axis([1, ANALYSIS.laststep, PLOT.Y_min, PLOT.Y_max]);
         
-        %% define title
-        if ANALYSIS.analysis_mode == 1 || ANALYSIS.analysis_mode == 2
-           
-            if size(ANALYSIS.DCG,1)==1
+        % Axis Labels
+        xlabel(PLOT.xlabel.Text, 'FontSize', PLOT.xlabel.FontSize, 'FontWeight', PLOT.xlabel.FontWeight);
+        ylabel(PLOT.ylabel.Text, 'FontSize', PLOT.ylabel.FontSize, 'FontWeight', PLOT.ylabel.FontWeight);
+        
+        % Title
+        if size(ANALYSIS.DCG,1) == 1 % If did not perform cross-decoding
                 
-                title([PLOT.TileString ANALYSIS.DCG ' N='  num2str(ANALYSIS.nsbj)],...
-                    'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
+            title([PLOT.TitleString, ANALYSIS.DCG, ' N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
            
-            elseif size(ANALYSIS.DCG,1)==2
+        elseif size(ANALYSIS.DCG,1) == 2 % If performed cross-decoding
                 
-                title([PLOT.TileString ANALYSIS.DCG{1} 'to' ANALYSIS.DCG{2} ' N='  num2str(ANALYSIS.nsbj)],...
-                    'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
+            title([PLOT.TitleString, ANALYSIS.DCG{1}, 'to', ANALYSIS.DCG{2}, ' N=',  num2str(ANALYSIS.nsbj)],...
+                'FontSize', PLOT.TitleFontSize, 'FontWeight', PLOT.TitleFontWeight);
            
-            end
-            
-        elseif ANALYSIS.analysis_mode == 3 || ANALYSIS.analysis_mode == 4
-           
-            title(['Regression N=' num2str(ANALYSIS.nsbj)],...
-                'FontSize',PLOT.TitleFontSize,'FontWeight',PLOT.TitleFontWeight);
-        end
+        end % of if size
+
+        % mark point zero (data was time-locked to this event)
+        line([PLOT.PointZero.Point, PLOT.PointZero.Point], [PLOT.Y_max, PLOT.Y_min], ...
+            'Color', PLOT.PointZero.Color,...
+            'LineWidth', PLOT.PointZero.LineWidth);
         
-        %% mark point zero (data was time-locked to this event)
-        line([PLOT.PointZero.Point PLOT.PointZero.Point], [PLOT.Y_max PLOT.Y_min],'Color',PLOT.PointZero.Color,...
-            'LineWidth',PLOT.PointZero.LineWidth);
         
-        %% define ticks and axis labels
-        %__________________________________________________________________
         
-        set(gca,'Ytick',PLOT.Ytick,'Xtick',PLOT.Xtick);
-        set(gca,'XTickLabel',PLOT.XtickLabel);
+        %% Define Ticks and Axis Labels
+        
+        set(gca,'Ytick', PLOT.Ytick, 'Xtick', PLOT.Xtick);
+        set(gca, 'XTickLabel', PLOT.XtickLabel);
 
         % clear temp-data
         clear temp_data;   
         clear temp_se; 
     
-    end % channel
+        
+    end % of for ana (looping across channels)
     
-end % analysis mode
+elseif ANALYSIS.stmode == 2 % If using temporal decoding
+    
+    
+    
+    %% (Temporal Decoding) Load channel information (locations and labels)
+    channel_file = [ANALYSIS.channellocs, ANALYSIS.channel_names_file];
+    load(channel_file);
+    
+    % Copy to FW_ANALYSIS structure
+    FW_ANALYSIS.chaninfo = chaninfo;
+    FW_ANALYSIS.chanlocs = chanlocs;
+    
+    clear temp_data;
+    clear temp_perm_data;
+    
+    
+    
+    %% (Temporal Decoding) Plot Results
+    
+    % Estimate of location for actual decoding results (depends on plotting preferences)
+    if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+        
+        temp_data = ANALYSIS.RES.mean_subj_acc(:,1);
+        fprintf('\nArithmetic mean used for plotting group average accuracy\n\n');
+
+    elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+        temp_data = ANALYSIS.RES.trimmean_subj_acc(:, 1);
+        fprintf('\n%i percent trimmed mean used for plotting group average accuracy\n\n', ANALYSIS.plot_robust_trimming);
+
+    elseif ANALYSIS.plot_robust == 2 % If plotting medians
+
+        temp_data = ANALYSIS.RES.median_subj_acc(:, 1);
+        fprintf('\nMedian used for plotting group average accuracy\nError bars represent standard errors\n\n');
+
+    end % of if ANALYSIS.plot_robust
+    
+    % Estimate of location for permutation decoding results (depends on plotting preferences)
+    if ANALYSIS.permstats == 1 % If testing against theoretical chance
+        
+        temp_perm_data(1:size(ANALYSIS.RES.mean_subj_acc, 1)) = ANALYSIS.chancelevel;
+        
+    elseif ANALYSIS.permstats == 2 % If testing against permutation results
+
+        if ANALYSIS.plot_robust == 0 % If plotting the arithmetic mean
+
+            temp_perm_data = ANALYSIS.RES.mean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 1 % If plotting trimmed means 
+
+            temp_perm_data = ANALYSIS.RES.trimmean_subj_perm_acc(:, 1);
+
+        elseif ANALYSIS.plot_robust == 2 % If plotting medians
+            
+            temp_perm_data = ANALYSIS.RES.median_subj_perm_acc(:, 1);
+            
+        end % of if ANALYSIS.plot_robust
+    end % of if ANALYSIS.permstats
+
+    % Plot estimate of group decoding accuracy (mean/median/trimmed mean)
+    figure;
+    
+    topoplot_decoding(temp_data, FW_ANALYSIS.chanlocs, ...
+        'style', 'both', ...
+        'electrodes', 'labelpoint', ...
+        'maplimits', 'minmax', ...
+        'chaninfo', FW_ANALYSIS.chaninfo, ...
+        'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    
+    % Title
+    title([PLOT.TitleString, ANALYSIS.DCG, ' N=',  num2str(ANALYSIS.nsbj)], ...
+                'FontSize', PLOT.TitleFontSize, ...
+                'FontWeight', PLOT.TitleFontWeight);
+        
+    % Plot estimate of group decoding accuracy relative to chance or permutation
+    % decoding accuracy (actual - chance | actual - permutation)
+    figure;
+    
+    topoplot_decoding(temp_data - temp_perm_data, FW_ANALYSIS.chanlocs, ...
+        'style', 'both', ...
+        'electrodes', 'ptslabels', ...
+        'maplimits', 'minmax', ...
+        'chaninfo', FW_ANALYSIS.chaninfo, ...
+        'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    
+    % Title
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Decoding Results Minus Chance, N=',  num2str(ANALYSIS.nsbj)], ...
+                'FontSize', PLOT.TitleFontSize, ...
+                'FontWeight', PLOT.TitleFontWeight);
+        
+            
+    % Plot statistically significant channels (corrected for multiple
+    % comparisons)
+    sig_locations = ANALYSIS.RES.h; % Mask based on statistical significance
+    
+    figure;
+    
+    topoplot_decoding(sig_locations, FW_ANALYSIS.chanlocs, ...
+        'style', 'fill', ...
+        'electrodes', 'ptslabels', ...
+        'numcontour', 1, ...
+        'conv', 'off', ...
+        'maplimits', [0 2], ...
+        'ccolor', [0 0 0], ...
+        'ecolor', [1 1 1], ...
+        'chaninfo', FW_ANALYSIS.chaninfo, ...
+        'colormap', ANALYSIS.disp.temporal_decoding_colormap);
+    hold on;
+    
+    % Title
+    title([PLOT.TitleString, ANALYSIS.DCG, ' Masked by stat. sig., N=',  num2str(ANALYSIS.nsbj)], ...
+                'FontSize', PLOT.TitleFontSize, ...
+                'FontWeight', PLOT.TitleFontWeight);
+            
+end % of if ANALYSIS.stmode
