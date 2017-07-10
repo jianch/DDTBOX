@@ -1,9 +1,8 @@
-[![DOI](https://zenodo.org/badge/20756/DDTBOX/DDTBOX.svg)](https://zenodo.org/badge/latestdoi/20756/DDTBOX/DDTBOX)
 # DDTBOX
 Decision Decoding Toolbox
 
 
-Copyright (c) 2013--2016 Stefan Bode and contributors.
+Copyright (c) 2013--2017 Stefan Bode and contributors.
 
 Unless otherwise specified, code is distributed under the GNU Public License (GPL) version 2, and documentation under a Creative Commons Attribution-Share-Alike 4.0 International license.
 
@@ -11,14 +10,14 @@ Unless otherwise specified, code is distributed under the GNU Public License (GP
 
 We hope that you find the software and documentation useful.
 If you publish an analysis using the toolbox, we ask that you cite us. 
-For now, please cite us via GitHub, but we are currently preparing on a publication to submit to peer review. 
-A sample citation would be:
+We are currently preparing on a publication to submit to peer review. 
+For now, please cite our BioRxiv preprint:
 
-Bode, S., Bennett, D., Feuerriegel, D., & Alday, P. (2016). The Decision Decoding Toolbox -- a multivariate pattern analysis toolbox for event-related potentials. DOI: 10.5281/zenodo.48143
+Bode, S., Feuerriegel, D., Bennett, D., & Alday, P.M. (2017). The Decision Decoding ToolBOX (DDTBOX) -- A multivariate pattern analysis toolbox for event-related potentials. DOI: 10.1101/153189 
 
 # External Dependencies
 
-The code in the toolbox depends on the functionality supplied by [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/).
-In the future, we hope to offer support for LIBSVM's specialised and often faster cousin, [LIBLINEAR](https://www.csie.ntu.edu.tw/~cjlin/liblinear/), as well as potentially other backends for other classifiers. 
-You need to configure MATLAB to use these external dependencies.
+The code in the toolbox depends on the functionality supplied by [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) and it's specialised and often faster cousin, [LIBLINEAR](https://www.csie.ntu.edu.tw/~cjlin/liblinear/).
+These libraries are included in releases from v1.0 onwards.
+In some cases you may need to configure MATLAB to use these external dependencies.
 Please see their respective documentation for more information. 

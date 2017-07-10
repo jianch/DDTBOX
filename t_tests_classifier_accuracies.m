@@ -549,7 +549,7 @@ case 6 % Benjamini-Hochberg FDR Control
             
             [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(na,:), 'alpha', ANALYSIS.pstats);
             ANALYSIS.RES.h_ttest(na, :) = MCC_Results.corrected_h;
-            ANALYSIS.RES.bky_crit_alpha(na) = MCC_Results.critical_alpha;
+            ANALYSIS.RES.bh_crit_alpha(na) = MCC_Results.critical_alpha;
             fprintf('The adjusted critical alpha for analysis %i is %1.6f \n\n', na, MCC_Results.critical_alpha(na));
             
         end % of for na
@@ -560,7 +560,7 @@ case 6 % Benjamini-Hochberg FDR Control
             
             [MCC_Results] = multcomp_fdr_bh(ANALYSIS.RES.p_ttest(:, step), 'alpha', ANALYSIS.pstats);
             ANALYSIS.RES.h_ttest(:, step) = MCC_Results.corrected_h;
-            ANALYSIS.RES.bky_crit_alpha(step) = MCC_Results.critical_alpha;
+            ANALYSIS.RES.bh_crit_alpha(step) = MCC_Results.critical_alpha;
             fprintf('The adjusted critical alpha for step %i is %1.6f \n\n', step, MCC_Results.critical_alpha(step));
             
         end % of for step
