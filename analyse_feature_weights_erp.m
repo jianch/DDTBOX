@@ -543,6 +543,7 @@ for p_corr = 1:2 % run for corrected/uncorrected
                         'tail', ANALYSIS.fw.ttest_tail);
                     
                     FW_ANALYSIS.h_matrix_z_averagestep_corr = FW_MCC_Results.corrected_h;
+                    FW_ANALYSIS.p_matrix_z_averagestep_corr = FW_MCC_Results.corrected_p;
                     FW_ANALYSIS.p_matrix_z_averagestep_corr_label = FW_MCC_Results.corrected_p;
                     clear real_decoding_fw;
                     clear fw_chance_level;

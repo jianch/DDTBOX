@@ -155,6 +155,10 @@ for s = 1:ANALYSIS.nsbj
         ptz = find(ANALYSIS.data(2,:) == ANALYSIS.pointzero); % find data with PointZero
         ANALYSIS.data(3,ptz) = 1; clear ptz; % for line location in plot
 
+        % copy parameters from the config file
+        ANALYSIS.step_width = cfg.step_width;
+        ANALYSIS.window_width = cfg.window_width;
+        
         % extract Tick/Labels for x-axis
         for datastep = 1:ANALYSIS.laststep
             
